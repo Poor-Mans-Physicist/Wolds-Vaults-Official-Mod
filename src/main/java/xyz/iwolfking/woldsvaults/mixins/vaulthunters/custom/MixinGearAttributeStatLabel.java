@@ -12,7 +12,9 @@ import xyz.iwolfking.woldsvaults.config.forge.WoldsVaultsConfig;
 
 @Mixin(value = GearAttributeStatLabel.class, remap = false)
 public class MixinGearAttributeStatLabel {
-    @WrapOperation(method = "of(Lnet/minecraft/world/entity/player/Player;Liskallia/vault/gear/attribute/VaultGearAttribute;Liskallia/vault/gear/attribute/type/VaultGearAttributeTypeMerger;Ljava/util/function/Function;)Liskallia/vault/client/gui/screen/player/element/StatLabelElementBuilder;", at = @At(value = "INVOKE", target = "Lnet/minecraft/network/chat/TextColor;fromRgb(I)Lnet/minecraft/network/chat/TextColor;"))
+    // remap=true: the INVOKE target is a vanilla method (TextColor.fromRgb) that must be remapped
+    // to its obfuscated name outside dev; without it the injection fails and the class can't load.
+    @WrapOperation(method = "of(Lnet/minecraft/world/entity/player/Player;Liskallia/vault/gear/attribute/VaultGearAttribute;Liskallia/vault/gear/attribute/type/VaultGearAttributeTypeMerger;Ljava/util/function/Function;)Liskallia/vault/client/gui/screen/player/element/StatLabelElementBuilder;", at = @At(value = "INVOKE", target = "Lnet/minecraft/network/chat/TextColor;fromRgb(I)Lnet/minecraft/network/chat/TextColor;"), remap = true)
     private static TextColor colorLabelOne(int pColor, Operation<TextColor> original, @Local(argsOnly = true) VaultGearAttribute<?> attribute) {
         if(WoldsVaultsConfig.CLIENT.coloredStatisticsScreen.get()) {
             return TextColor.fromRgb(attribute.getReader().getRgbColor());
@@ -21,7 +23,7 @@ public class MixinGearAttributeStatLabel {
         return original.call(pColor);
     }
 
-    @WrapOperation(method = "of(Lnet/minecraft/world/entity/player/Player;Liskallia/vault/gear/attribute/VaultGearAttribute;Ljava/util/function/Function;Ljava/util/function/Function;)Liskallia/vault/client/gui/screen/player/element/StatLabelElementBuilder;", at = @At(value = "INVOKE", target = "Lnet/minecraft/network/chat/TextColor;fromRgb(I)Lnet/minecraft/network/chat/TextColor;"))
+    @WrapOperation(method = "of(Lnet/minecraft/world/entity/player/Player;Liskallia/vault/gear/attribute/VaultGearAttribute;Ljava/util/function/Function;Ljava/util/function/Function;)Liskallia/vault/client/gui/screen/player/element/StatLabelElementBuilder;", at = @At(value = "INVOKE", target = "Lnet/minecraft/network/chat/TextColor;fromRgb(I)Lnet/minecraft/network/chat/TextColor;"), remap = true)
     private static TextColor colorLabelTwo(int pColor, Operation<TextColor> original, @Local(argsOnly = true) VaultGearAttribute<?> attribute) {
         if(WoldsVaultsConfig.CLIENT.coloredStatisticsScreen.get()) {
             return TextColor.fromRgb(attribute.getReader().getRgbColor());
