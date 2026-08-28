@@ -1,5 +1,6 @@
 package xyz.iwolfking.woldsvaults.gods.trees.tenos;
 
+import iskallia.vault.VaultMod;
 import iskallia.vault.config.sigil.SigilConfig;
 import iskallia.vault.core.vault.Vault;
 import iskallia.vault.core.vault.VaultLevel;
@@ -14,7 +15,7 @@ import xyz.iwolfking.woldsvaults.api.util.VaultModifierUtils;
 public final class TenosChallengeTackler {
     public static final ResourceLocation CRATE_TIER = WoldsVaults.id("tenos_challenge_tackler");
 
-    private static final ResourceLocation SIGIL_CRATE_TIER = new ResourceLocation("the_vault", "crate_tier");
+    private static final ResourceLocation SIGIL_CRATE_TIER = VaultMod.id("crate_tier");
 
     private TenosChallengeTackler() {
     }

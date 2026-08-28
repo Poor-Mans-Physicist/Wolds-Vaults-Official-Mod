@@ -2,6 +2,7 @@ package xyz.iwolfking.woldsvaults.items.gear;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
+import iskallia.vault.VaultMod;
 import iskallia.vault.client.data.ClientPrestigePowersData;
 import iskallia.vault.gear.VaultGearState;
 import iskallia.vault.gear.attribute.VaultGearAttribute;
@@ -45,7 +46,7 @@ import java.util.UUID;
  * keybind-toggled temporal blessing. Re-materializes from its stored draws on every piety change.
  */
 public class MythicVaultCharmItem extends VaultCharmItem implements VaultGearTooltipItem {
-    private static final ResourceLocation BASE_CHARM_ID = new ResourceLocation("the_vault", "vault_god_charm");
+    private static final ResourceLocation BASE_CHARM_ID = VaultMod.id("vault_god_charm");
     private static final String MYTHIC_ROLL_TYPE = "Mythic";
 
     public MythicVaultCharmItem(ResourceLocation id) {

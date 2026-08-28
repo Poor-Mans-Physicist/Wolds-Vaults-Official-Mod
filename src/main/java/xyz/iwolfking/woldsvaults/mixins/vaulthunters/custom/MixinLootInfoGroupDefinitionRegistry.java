@@ -51,6 +51,7 @@ public abstract class MixinLootInfoGroupDefinitionRegistry {
         register("treasure_pillar", () -> new ItemStack(iskallia.vault.init.ModBlocks.TREASURE_PEDESTAL));
         register("trove_sand", () -> new ItemStack(iskallia.vault.init.ModBlocks.TREASURE_SAND));
         register("trove_sand_map", () -> new ItemStack(iskallia.vault.init.ModBlocks.TREASURE_SAND));
+        register("greedy_crate", () -> new ItemStack(iskallia.vault.init.ModBlocks.VAULT_CRATE));
     }
 
     @Shadow

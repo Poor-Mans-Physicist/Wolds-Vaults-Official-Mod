@@ -32,8 +32,8 @@ import java.util.List;
  * {@code config/the_vault/gen/1.0/loot_tables/}); the objective is only a scalar coin multiplier.
  */
 public final class GreedCrateLoot {
+    public static final int MAX_TABLE = 7;
     private static final String TABLE_PREFIX = "greed_crate_loot_";
-    private static final int MAX_TABLE = 7;
     private static final double DEFAULT_MULTIPLIER = 1.0D;
     private static final double MINOR_MULTIPLIER = 1.2D;
     private static final double MAJOR_MULTIPLIER = 1.5D;
@@ -58,7 +58,7 @@ public final class GreedCrateLoot {
         return VaultUtils.isRoyaleVault(vault)
                 || VaultUtils.isBrazierVault(vault)
                 || VaultUtils.isCakeVault(vault)
-                || VaultUtils.isSpecialVault(vault)
+                || VaultUtils.isSpecialVault(vault) // allow ascension?
                 || !objectives(vault, HauntedBraziersObjective.class).isEmpty();
     }
 

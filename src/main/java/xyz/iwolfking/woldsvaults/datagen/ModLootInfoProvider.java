@@ -8,6 +8,7 @@ import net.minecraft.resources.ResourceLocation;
 import xyz.iwolfking.vhapi.api.datagen.AbstractLootInfoProvider;
 import xyz.iwolfking.vhapi.api.util.ResourceLocUtils;
 import xyz.iwolfking.woldsvaults.WoldsVaults;
+import xyz.iwolfking.woldsvaults.medallions.GreedCrateLoot;
 
 public class ModLootInfoProvider extends AbstractLootInfoProvider {
     protected ModLootInfoProvider(DataGenerator generator) {
@@ -71,6 +72,8 @@ public class ModLootInfoProvider extends AbstractLootInfoProvider {
             genericSingleton("Treasure Chest Idona Map", VaultMod.id("treasure_chest_idona_map"), 100, builder);
             genericSingleton("Trove Sand", WoldsVaults.id("trove_sand"), 0, builder);
             genericSingleton("Trove Sand Map", WoldsVaults.id("trove_sand_map"), 100, builder);
+
+            greedyCrate(builder);
         });
 
         add("vanilla_completion_overrides", builder -> {
@@ -147,5 +150,15 @@ public class ModLootInfoProvider extends AbstractLootInfoProvider {
             map.put(getLootTableForCrateForLevel(objectiveId, 50), 50);
             map.put(getLootTableForCrateForLevel(objectiveId, 100), 100);
         });
+    }
+
+    public void greedyCrate(Builder builder) {
+        builder.lootInfo(VaultMod.id("greedy_crate"), ResourceLocUtils.formatReadableName(VaultMod.id("greedy_crate")), map -> {
+            for (int i = 1; i <= GreedCrateLoot.MAX_TABLE; i++) {
+                map.put(GreedCrateLoot.tableId(i), i);
+            }
+        });
+
+
     }
 }
