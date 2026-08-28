@@ -1,5 +1,6 @@
 package xyz.iwolfking.woldsvaults.mixins.vaulthunters.gods;
 
+import iskallia.vault.VaultMod;
 import iskallia.vault.core.vault.player.ClassicListenersLogic;
 import net.minecraft.resources.ResourceLocation;
 import org.spongepowered.asm.mixin.Mixin;
@@ -10,7 +11,7 @@ import xyz.iwolfking.woldsvaults.WoldsVaults;
 @Mixin(value = ClassicListenersLogic.class, remap = false)
 public abstract class MixinClassicListenersLogicMythicCharm {
     private static final ResourceLocation MYTHIC_CHARM_ID = WoldsVaults.id("mythic_vault_charm");
-    private static final ResourceLocation BASE_CHARM_ID = new ResourceLocation("the_vault", "vault_god_charm");
+    private static final ResourceLocation BASE_CHARM_ID = VaultMod.id("vault_god_charm");
 
     /**
      * @author PoorMansPhysicist

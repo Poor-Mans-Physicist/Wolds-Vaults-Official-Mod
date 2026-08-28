@@ -356,6 +356,7 @@ public class ModLanguageProvider extends LanguageProvider {
         add("jei.the_vault.treasure_chest_wendarr_map_loot", "Treasure Chest (Wendarr - Map)");
         add("jei.the_vault.treasure_chest_velara_loot", "Treasure Chest (Velara)");
         add("jei.the_vault.treasure_chest_velara_map_loot", "Treasure Chest (Velara - Map)");
+        add("jei.the_vault.greedy_crate_loot", "Greedy Crate");
         add("jei.the_vault.trove_sand_loot", "Trove Sand");
         add("jei.the_vault.trove_sand_map_loot", "Trove Sand (Map)");
         add("jei.woldsvaults.trinket_fusion", "Trinket Fusion Forge");

@@ -16,7 +16,7 @@ plugins {
     id 'eclipse'
     id 'idea'
     id 'net.minecraftforge.gradle' version '[6.0.36,6.2)'
-    id 'com.radimous.vh-addon-dev' version '0.3.6'
+    id 'com.radimous.vh-addon-dev' version '0.3.8'
 }
 
 apply plugin: 'org.spongepowered.mixin'
@@ -212,8 +212,10 @@ repositories {
 vhaddon {
     allowedItemNamespaces = ["minecraft", "the_vault", 'woldsvaults']
     moddedConfigDestinations = ["run-data"]
-    zipUrl = "https://github.com/iwolfking/Wolds-Vaults/archive/refs/heads/master.zip"
-    overridesDir = "Wolds-Vaults-master"
+//    zipUrl = "https://github.com/iwolfking/Wolds-Vaults/archive/refs/heads/master.zip"
+//    overridesDir = "Wolds-Vaults-master"
+    zipUrl = "https://github.com/Poor-Mans-Physicist/Wolds-Vaults/archive/refs/heads/redesign/greed-rework.zip"
+    overridesDir = "Wolds-Vaults-redesign-greed-rework"
 }
 tasks.matching { it.name in ["getVersionInfo", "updateVHJarVersion", "printAvailableVersions"] }.configureEach { group = null }
 
