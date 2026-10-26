@@ -47,6 +47,7 @@ public final class RiptideDash {
     private static final ThreadLocal<Boolean> STARTING_COOLDOWN = ThreadLocal.withInitial(() -> false);
     private static final ThreadLocal<LivingEntity> CONTACT = new ThreadLocal<>();
     private static final ThreadLocal<Integer> CONTACT_TICKER = new ThreadLocal<>();
+    private static final ThreadLocal<Float> CONTACT_FALL = new ThreadLocal<>();
     private static final ThreadLocal<ServerPlayer> EQUIPMENT_SCAN = new ThreadLocal<>();
     private static final List<Listener> LISTENERS = List.of(new RiptideShockCone(), new RiptideStorm());
 
@@ -159,6 +160,8 @@ public final class RiptideDash {
      * Starts a riptide contact on {@code target}. A vault trident contact is a full-strength swing: the attack
      * strength ticker is filled for the attack and the player's own swing timer is put back by {@link #endContact},
      * so attack-strength gates (Battle Cry, Rampage, lucky hits, on-hit procs) treat every contact as a full swing.
+     * The fall distance is cleared for the attack too: a dash is airborne, and the base mod reads an airborne full
+     * swing as a jump crit, which skips lucky hits and on-hit procs.
      */
     public static void beginContact(Player player, LivingEntity target) {
         CONTACT.set(target);
@@ -166,7 +169,9 @@ public final class RiptideDash {
             return;
         }
         CONTACT_TICKER.set(player.attackStrengthTicker);
+        CONTACT_FALL.set(player.fallDistance);
         player.attackStrengthTicker = (int) (1.0 / player.getAttributeValue(Attributes.ATTACK_SPEED) * 20.0) + 1;
+        player.fallDistance = 0.0F;
     }
 
     public static void endContact(Player player) {
@@ -175,6 +180,11 @@ public final class RiptideDash {
         CONTACT_TICKER.remove();
         if (ticker != null) {
             player.attackStrengthTicker = ticker;
+        }
+        Float fall = CONTACT_FALL.get();
+        CONTACT_FALL.remove();
+        if (fall != null) {
+            player.fallDistance = fall;
         }
     }
 
