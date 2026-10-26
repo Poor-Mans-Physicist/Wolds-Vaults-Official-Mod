@@ -11,8 +11,11 @@ import iskallia.vault.util.calc.LuckyHitHelper;
 import iskallia.vault.world.data.PlayerTalentsData;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import xyz.iwolfking.woldsvaults.WoldsVaults;
+import xyz.iwolfking.woldsvaults.gods.ActiveGodResolver;
+import xyz.iwolfking.woldsvaults.gods.ClientGodAlignmentData;
 
 import java.util.List;
 
@@ -21,12 +24,20 @@ public final class IdonaLuckyHit {
     private IdonaLuckyHit() {
     }
 
-    /** Luckiest Hit's chance side: scales the unlimited lucky hit chance down, once per point. */
+    /**
+     * Luckiest Hit's chance side: scales the unlimited lucky hit chance down, once per point. On the client the
+     * points come from the synced tree of the local player, so the stat screen shows the chance the server rolls.
+     */
     public static float scaleChance(LivingEntity entity, float chance) {
-        if (!(entity instanceof ServerPlayer player)) {
+        int points;
+        if (entity instanceof ServerPlayer player) {
+            points = IdonaNodes.points(player, IdonaNodes.LUCKIEST_HIT);
+        } else if (entity instanceof Player player && player.level.isClientSide
+                && ActiveGodResolver.isActive(player, IdonaNodes.GOD)) {
+            points = ClientGodAlignmentData.getSpentLedger(IdonaNodes.GOD).getOrDefault(IdonaNodes.LUCKIEST_HIT, 0);
+        } else {
             return chance;
         }
-        int points = IdonaNodes.points(player, IdonaNodes.LUCKIEST_HIT);
         if (points <= 0) {
             return chance;
         }
