@@ -26,7 +26,9 @@ import xyz.iwolfking.woldsvaults.items.trinket_pouch.PouchCapability;
 import xyz.iwolfking.woldsvaults.items.trinket_pouch.PouchContents;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
@@ -318,7 +320,29 @@ public final class ItemCodec {
             }
         }
         contents.setActive(active);
+        checkCapacity(pouch, contents, active, path, report);
         return pouch;
+    }
+
+    /**
+     * Reports active trinkets the pouch has no slot for. A fused trinket takes the slot colour of its first trinket,
+     * so a pair listed in the wrong order can overflow one colour while another has room.
+     */
+    private static void checkCapacity(ItemStack pouch, PouchContents contents, List<Integer> active, String path,
+                                      BuildReport report) {
+        Map<String, Integer> capacities = PouchHelper.capacities(pouch);
+        Map<String, List<Integer>> byColor = new LinkedHashMap<>();
+        for (int index : active) {
+            byColor.computeIfAbsent(PouchHelper.color(contents.getStackInSlot(index)), color -> new ArrayList<>()).add(index);
+        }
+        byColor.forEach((color, indices) -> {
+            int capacity = capacities.getOrDefault(color, 0);
+            if (indices.size() > capacity) {
+                report.fallback(path + ": " + indices.size() + " active trinkets take a "
+                        + (color.isEmpty() ? "no-colour" : color) + " slot (indices " + indices + ") but the pouch has "
+                        + capacity + "; the extra ones will not apply. A fused trinket takes the slot of its first trinket.");
+            }
+        });
     }
 
     /** A short human name for an item, for reports. */
