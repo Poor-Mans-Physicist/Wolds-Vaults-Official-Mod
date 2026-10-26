@@ -118,7 +118,7 @@ final class LightningArcEffect implements RiptideFx.Effect {
     }
 
     @Override
-    public void renderGlow(VertexConsumer consumer, Matrix4f pose, Vec3 camera, float partialTick, boolean refracted) {
+    public void renderGlow(VertexConsumer consumer, Matrix4f pose, Vec3 camera, float partialTick) {
         ClientLevel level = net.minecraft.client.Minecraft.getInstance().level;
         if (level == null) {
             return;

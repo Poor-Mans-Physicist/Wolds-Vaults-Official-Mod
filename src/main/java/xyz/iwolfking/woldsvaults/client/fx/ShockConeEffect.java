@@ -1,6 +1,5 @@
 package xyz.iwolfking.woldsvaults.client.fx;
 
-import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Matrix4f;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -12,16 +11,19 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * One pulse of the riptide shock cone, left in the world where the dash was on that tick: a refracting shell from
- * the apex ahead of the player to the base ring behind, with bright shock rings and streaks running back along it.
- * Successive pulses overlap into a trailing bow shock.
+ * One pulse of the riptide shock cone, left in the world where the dash was on that tick: pulsing shock rings at the
+ * base and inside the cone, and a braid of streamers that swirl back along its length from the apex ahead of the
+ * player to the base ring behind. Successive pulses overlap into a trailing, spiralling bow shock.
  */
 @OnlyIn(Dist.CLIENT)
 final class ShockConeEffect implements RiptideFx.Effect {
     private static final int LIFETIME = 7;
     private static final int SEGMENTS = 28;
-    private static final int RINGS = 7;
-    private static final int STREAKS = 9;
+    private static final int SWIRLS = 6;
+    private static final int SWIRL_POINTS = 12;
+    private static final float SWIRL_TWIST = 2.4F;
+    private static final float SWIRL_SPIN = 2.8F;
+    private static final float SWIRL_LENGTH = 0.5F;
     private static final float GROWTH = 0.45F;
     private static final float DRIFT = 0.8F;
 
@@ -52,11 +54,6 @@ final class ShockConeEffect implements RiptideFx.Effect {
         return ++this.age < LIFETIME;
     }
 
-    @Override
-    public boolean refracts() {
-        return true;
-    }
-
     private float progress(float partialTick) {
         return Math.min(1.0F, (this.age + partialTick) / LIFETIME);
     }
@@ -71,46 +68,10 @@ final class ShockConeEffect implements RiptideFx.Effect {
                 .subtract(camera);
     }
 
-    private static float shellStrength(float s, float fade) {
-        return fade * FxGeometry.smoothstep(0.0F, 0.2F, s) * (1.0F - FxGeometry.smoothstep(0.82F, 1.0F, s));
-    }
-
     @Override
-    public void renderRefraction(BufferBuilder builder, Matrix4f pose, Vec3 camera, float partialTick) {
-        float t = progress(partialTick);
-        float fade = (float) Math.pow(1.0F - t, 1.4F);
-        for (int ring = 0; ring < RINGS; ring++) {
-            float s0 = (float) ring / RINGS;
-            float s1 = (float) (ring + 1) / RINGS;
-            float a0 = shellStrength(s0, fade);
-            float a1 = shellStrength(s1, fade);
-            for (int seg = 0; seg < SEGMENTS; seg++) {
-                double th0 = Math.PI * 2.0 * seg / SEGMENTS;
-                double th1 = Math.PI * 2.0 * (seg + 1) / SEGMENTS;
-                float u0 = (float) seg / SEGMENTS;
-                float u1 = (float) (seg + 1) / SEGMENTS;
-                refractVertex(builder, pose, point(s0, th0, t, camera), a0, u0, s0);
-                refractVertex(builder, pose, point(s1, th0, t, camera), a1, u0, s1);
-                refractVertex(builder, pose, point(s1, th1, t, camera), a1, u1, s1);
-                refractVertex(builder, pose, point(s0, th1, t, camera), a0, u1, s0);
-            }
-        }
-    }
-
-    private static void refractVertex(BufferBuilder builder, Matrix4f pose, Vec3 p, float strength, float u, float v) {
-        builder.vertex(pose, (float) p.x, (float) p.y, (float) p.z)
-                .color(RiptideFx.TEAL[0], RiptideFx.TEAL[1], RiptideFx.TEAL[2], strength)
-                .uv(u, v)
-                .endVertex();
-    }
-
-    @Override
-    public void renderGlow(VertexConsumer consumer, Matrix4f pose, Vec3 camera, float partialTick, boolean refracted) {
+    public void renderGlow(VertexConsumer consumer, Matrix4f pose, Vec3 camera, float partialTick) {
         float t = progress(partialTick);
         float fade = (float) Math.pow(1.0F - t, 1.6F);
-        if (!refracted) {
-            renderShell(consumer, pose, camera, t, fade * 0.14F);
-        }
         float[] rimRgb = FxGeometry.lerp(RiptideFx.TEAL, RiptideFx.VIOLET, t);
         renderRing(consumer, pose, camera, 1.0F, t, 0.16F, FxGeometry.rgba(rimRgb, 0.85F * fade));
         renderRing(consumer, pose, camera, 1.0F, t, 0.05F, FxGeometry.rgba(RiptideFx.WHITE, 0.9F * fade));
@@ -118,15 +79,35 @@ final class ShockConeEffect implements RiptideFx.Effect {
             float s = 0.35F + 0.6F * ((k * 0.5F + t * 1.5F) % 1.0F);
             renderRing(consumer, pose, camera, s, t, 0.07F, FxGeometry.rgba(RiptideFx.VIOLET, 0.5F * fade * (1.0F - s * 0.4F)));
         }
-        for (int i = 0; i < STREAKS; i++) {
-            double theta = Math.PI * 2.0 * (i + this.phase) / STREAKS;
-            List<Vec3> streak = new ArrayList<>();
-            for (int j = 0; j <= 6; j++) {
-                float s = 0.12F + 0.88F * j / 6.0F;
-                streak.add(point(s, theta + 0.25 * s, t, camera));
+        renderSwirls(consumer, pose, camera, t, fade);
+    }
+
+    /**
+     * Streamers wound around the cone as helices. Each one's bright head runs from near the apex to the base over the
+     * pulse's life with a fading tail behind it; alternate streamers wind the other way and glow violet, so the set
+     * reads as a turning braid.
+     */
+    private void renderSwirls(VertexConsumer consumer, Matrix4f pose, Vec3 camera, float t, float fade) {
+        float head = Math.min(1.0F, 0.15F + t * 1.05F);
+        float tail = Math.max(0.06F, head - SWIRL_LENGTH);
+        if (head - tail < 0.02F) {
+            return;
+        }
+        for (int i = 0; i < SWIRLS; i++) {
+            boolean counter = i % 2 == 1;
+            double sign = counter ? -1.0 : 1.0;
+            double start = Math.PI * 2.0 * (this.phase + (double) i / SWIRLS);
+            List<Vec3> streamer = new ArrayList<>(SWIRL_POINTS + 1);
+            for (int j = 0; j <= SWIRL_POINTS; j++) {
+                float s = tail + (head - tail) * j / SWIRL_POINTS;
+                double theta = start + sign * (SWIRL_TWIST * s + SWIRL_SPIN * t);
+                streamer.add(point(s, theta, t, camera));
             }
-            FxGeometry.ribbon(consumer, pose, streak, 0.015F, 0.07F,
-                    FxGeometry.rgba(RiptideFx.WHITE, 0.0F), FxGeometry.rgba(RiptideFx.TEAL, 0.45F * fade));
+            float[] tip = counter ? RiptideFx.VIOLET : RiptideFx.TEAL;
+            FxGeometry.ribbon(consumer, pose, streamer, 0.02F, 0.09F,
+                    FxGeometry.rgba(tip, 0.0F), FxGeometry.rgba(tip, 0.7F * fade));
+            FxGeometry.ribbon(consumer, pose, streamer, 0.006F, 0.03F,
+                    FxGeometry.rgba(RiptideFx.WHITE, 0.0F), FxGeometry.rgba(RiptideFx.WHITE, 0.85F * fade));
         }
     }
 
@@ -136,20 +117,5 @@ final class ShockConeEffect implements RiptideFx.Effect {
             ring.add(point(s, Math.PI * 2.0 * seg / SEGMENTS, t, camera));
         }
         FxGeometry.ribbon(consumer, pose, ring, width, width, color, color);
-    }
-
-    private void renderShell(VertexConsumer consumer, Matrix4f pose, Vec3 camera, float t, float alpha) {
-        for (int ring = 0; ring < RINGS; ring++) {
-            float s0 = (float) ring / RINGS;
-            float s1 = (float) (ring + 1) / RINGS;
-            float[] c0 = FxGeometry.rgba(RiptideFx.TEAL, shellStrength(s0, alpha));
-            float[] c1 = FxGeometry.rgba(RiptideFx.TEAL, shellStrength(s1, alpha));
-            for (int seg = 0; seg < SEGMENTS; seg++) {
-                double th0 = Math.PI * 2.0 * seg / SEGMENTS;
-                double th1 = Math.PI * 2.0 * (seg + 1) / SEGMENTS;
-                FxGeometry.quad(consumer, pose, point(s0, th0, t, camera), point(s1, th0, t, camera),
-                        point(s1, th1, t, camera), point(s0, th1, t, camera), c0, c1, c1, c0);
-            }
-        }
     }
 }

@@ -1,6 +1,5 @@
 package xyz.iwolfking.woldsvaults.client.fx;
 
-import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Matrix4f;
 import com.mojang.math.Vector3f;
@@ -57,14 +56,7 @@ public final class RiptideFx {
     interface Effect {
         boolean tick(ClientLevel level);
 
-        default boolean refracts() {
-            return false;
-        }
-
-        default void renderRefraction(BufferBuilder builder, Matrix4f pose, Vec3 camera, float partialTick) {
-        }
-
-        void renderGlow(VertexConsumer consumer, Matrix4f pose, Vec3 camera, float partialTick, boolean refracted);
+        void renderGlow(VertexConsumer consumer, Matrix4f pose, Vec3 camera, float partialTick);
     }
 
     public static void accept(RiptideFxMessage message) {
@@ -227,25 +219,11 @@ public final class RiptideFx {
         float partialTick = event.getPartialTick();
         List<Effect> snapshot = new ArrayList<>(EFFECTS);
         try {
-            boolean refracted = false;
-            if (snapshot.stream().anyMatch(Effect::refracts) && RiptideRefraction.begin()) {
-                refracted = true;
-                try {
-                    BufferBuilder builder = RiptideRefraction.builder();
-                    for (Effect effect : snapshot) {
-                        if (effect.refracts()) {
-                            effect.renderRefraction(builder, pose, camera, partialTick);
-                        }
-                    }
-                } finally {
-                    RiptideRefraction.end();
-                }
-            }
             MultiBufferSource.BufferSource source = Minecraft.getInstance().renderBuffers().bufferSource();
             VertexConsumer consumer = source.getBuffer(RenderType.lightning());
             try {
                 for (Effect effect : snapshot) {
-                    effect.renderGlow(consumer, pose, camera, partialTick, refracted);
+                    effect.renderGlow(consumer, pose, camera, partialTick);
                 }
             } finally {
                 source.endBatch(RenderType.lightning());
