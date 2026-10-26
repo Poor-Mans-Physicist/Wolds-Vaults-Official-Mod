@@ -34,6 +34,7 @@ public class MixinStatisticsElementContainerScreenData {
         result.add( GearAttributeStatLabel.ofFloat(this.player, xyz.iwolfking.woldsvaults.init.ModGearAttributes.AP_SCALING_DAMAGE));
         result.add( GearAttributeStatLabel.ofFloat(this.player, xyz.iwolfking.woldsvaults.init.ModGearAttributes.CHAINING_DAMAGE));
         result.add( GearAttributeStatLabel.ofFloat(this.player, xyz.iwolfking.woldsvaults.init.ModGearAttributes.THORNS_SCALING_DAMAGE));
+        result.add( GearAttributeStatLabel.ofFloat(this.player, xyz.iwolfking.woldsvaults.init.ModGearAttributes.THORNS_FLAT_PERCENT));
         result.add( GearAttributeStatLabel.ofFloat(this.player, xyz.iwolfking.woldsvaults.init.ModGearAttributes.CHANNELING_CHANCE));
         result.add( GearAttributeStatLabel.ofFloat(this.player, xyz.iwolfking.woldsvaults.init.ModGearAttributes.DISMANTLE_CHANCE));
         result.add( GearAttributeStatLabel.ofFloat(this.player, xyz.iwolfking.woldsvaults.init.ModGearAttributes.ECHOING_CHANCE));

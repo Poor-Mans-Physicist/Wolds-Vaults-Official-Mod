@@ -48,6 +48,7 @@ public class ModGearAttributes {
     public static final VaultGearAttribute<Integer> RICOCHET = attr("ricochet", VaultGearAttributeType.intType(), ModGearAttributeGenerators.intRange(), ModGearAttributeReaders.addedIntReader("Ricochet", 3093151), VaultGearAttributeComparator.intComparator());
     public static final VaultGearAttribute<Float> RETURNING_DAMAGE = attr("returning_damage", VaultGearAttributeType.floatType(), ModGearAttributeGenerators.floatRange(), ModGearAttributeReaders.percentageReader("Returning Damage", 8833629), VaultGearAttributeComparator.floatComparator());
     public static final VaultGearAttribute<Float> THORNS_SCALING_DAMAGE = attr("thorns_scaling_damage", VaultGearAttributeType.floatType(), ModGearAttributeGenerators.floatRange(), ModGearAttributeReaders.percentageReader("Thorns Scaling", 3134464), VaultGearAttributeComparator.floatComparator());
+    public static final VaultGearAttribute<Float> THORNS_FLAT_PERCENT = attr("thorns_damage_flat_percentile", VaultGearAttributeType.floatType(), ModGearAttributeGenerators.floatRange(), ModGearAttributeReaders.percentageReader("Increased Thorns", 3134464), VaultGearAttributeComparator.floatComparator());
     public static final VaultGearAttribute<Float> AP_SCALING_DAMAGE = attr("ap_scaling_damage", VaultGearAttributeType.floatType(), ModGearAttributeGenerators.floatRange(), ModGearAttributeReaders.percentageReader("Ability Power Scaling", 11422101), VaultGearAttributeComparator.floatComparator());
     public static final VaultGearAttribute<Float> EXECUTION_DAMAGE = attr("execution_damage", VaultGearAttributeType.floatType(), ModGearAttributeGenerators.floatRange(), ModGearAttributeReaders.percentageReader("Execute Threshold", 10302464), VaultGearAttributeComparator.floatComparator());
     public static final VaultGearAttribute<Float> CHAINING_DAMAGE = attr("chaining_damage", VaultGearAttributeType.floatType(), ModGearAttributeGenerators.floatRange(), ModGearAttributeReaders.percentageReader("Reduced Chaining Falloff", 6119096), VaultGearAttributeComparator.floatComparator());
@@ -170,6 +171,7 @@ public class ModGearAttributes {
                       registry.register(REAVING_DAMAGE);
                       registry.register(ROTATING_TOOL);
                       registry.register(PIERCING);
+                      registry.register(THORNS_FLAT_PERCENT);
                       registry.register(RETURNING_DAMAGE);
                       registry.register(HEXING_CHANCE);
                       registry.register(THEME);

@@ -36,6 +36,7 @@
     "RangedAttributeAccessor",
     "ThrownTridentAccessor",
     "accessors.ChaosTaskAccessor",
+    "vaulthunters.accessors.DeckModifierValueAccessor",
     "accessors.EvokerFangsAccessor",
     "accessors.MobEffectInstanceAccessor",
     "accessors.ResultSlotAccessor",
