@@ -1,5 +1,6 @@
 package xyz.iwolfking.woldsvaults.gods.trees.idona;
 
+import iskallia.vault.item.gear.VaultCharmItem;
 import iskallia.vault.skill.base.Skill;
 import iskallia.vault.skill.talent.type.luckyhit.DamageLuckyHitTalent;
 import iskallia.vault.skill.talent.type.luckyhit.HealthLeechLuckyHitTalent;
@@ -14,7 +15,6 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import xyz.iwolfking.woldsvaults.WoldsVaults;
-import xyz.iwolfking.woldsvaults.gods.ActiveGodResolver;
 import xyz.iwolfking.woldsvaults.gods.ClientGodAlignmentData;
 
 import java.util.List;
@@ -33,7 +33,7 @@ public final class IdonaLuckyHit {
         if (entity instanceof ServerPlayer player) {
             points = IdonaNodes.points(player, IdonaNodes.LUCKIEST_HIT);
         } else if (entity instanceof Player player && player.level.isClientSide
-                && ActiveGodResolver.isActive(player, IdonaNodes.GOD)) {
+                && VaultCharmItem.getCharm(player).flatMap(VaultCharmItem::getGod).filter(god -> god == IdonaNodes.GOD).isPresent()) {
             points = ClientGodAlignmentData.getSpentLedger(IdonaNodes.GOD).getOrDefault(IdonaNodes.LUCKIEST_HIT, 0);
         } else {
             return chance;
