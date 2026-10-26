@@ -9,7 +9,6 @@ import iskallia.vault.entity.entity.PetEntity;
 import iskallia.vault.gear.attribute.VaultGearAttributeInstance;
 import iskallia.vault.gear.etching.EtchingGearAttributes;
 import iskallia.vault.gear.etching.EtchingHelper;
-import iskallia.vault.mana.ManaAction;
 import iskallia.vault.skill.ability.effect.spi.core.InstantManaAbility;
 import iskallia.vault.skill.base.SkillContext;
 import iskallia.vault.util.calc.AreaOfEffectHelper;
@@ -36,9 +35,12 @@ import xyz.iwolfking.woldsvaults.init.ModEffects;
 import xyz.iwolfking.woldsvaults.init.ModEtchingGearAttributes;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
+import java.util.UUID;
 import java.util.function.Supplier;
 
 public class ConcentrateAbility extends InstantManaAbility {
@@ -49,8 +51,12 @@ public class ConcentrateAbility extends InstantManaAbility {
     private float amplitudeScaleChance;
     private int particleSteps;
     private int particleDelay;
+    private int maxChainProcs = UNSET_MAX_CHAIN_PROCS;
+    private boolean loggedChainProcsFallback = false;
 
     private final int MAX_EFFECT_DURATION = 600;
+    private static final int UNSET_MAX_CHAIN_PROCS = -1;
+    private static final Map<UUID, Map<MobEffect, Integer>> CHAIN_PROCS = new HashMap<>();
     private static final List<MobEffect> EFFECTS = List.of(ModEffects.QUICKENING, ModEffects.EMPOWER, ModEffects.STEADFAST, ModEffects.ARMORED, ModEffects.BLITZ);
 
     public ConcentrateAbility(int unlockLevel, int learnPointCost, int regretPointCost, int cooldownTicks, float manaCost, double radius, int baseEffectDuration, int baseAmplitude, float amplitudeScaleChance, int particleSteps, int particleDelay) {
@@ -70,7 +76,7 @@ public class ConcentrateAbility extends InstantManaAbility {
 
     @Override
     protected ActionResult doAction(SkillContext context) {
-        context.getSource().as(ServerPlayer.class).map(serverPlayer -> {
+        return context.getSource().as(ServerPlayer.class).map(serverPlayer -> {
 
             ServerLevel level = (ServerLevel) serverPlayer.level;
 
@@ -122,6 +128,10 @@ public class ConcentrateAbility extends InstantManaAbility {
                             return;
                         }
 
+                        if (!tryCountChainProc(serverPlayer, effect)) {
+                            return;
+                        }
+
                         int currentAmp = currentEffectInstance.getAmplifier();
 
                         float currentAmplitudeScaleChance = amplitudeScaleChance / (1.0F + (0.1F * currentAmp));
@@ -159,6 +169,7 @@ public class ConcentrateAbility extends InstantManaAbility {
                         }
 
                     } else {
+                        CHAIN_PROCS.computeIfAbsent(serverPlayer.getUUID(), id -> new HashMap<>()).put(effect, 1);
                         int initialDuration = Math.min(MAX_EFFECT_DURATION, (int) EffectDurationHelper.adjustEffectDuration(serverPlayer, baseEffectDuration));
                         serverPlayer.addEffect(new MobEffectInstance(
                                 effect,
@@ -171,15 +182,43 @@ public class ConcentrateAbility extends InstantManaAbility {
                 });
             }
 
-            context.getSource().getMana().ifPresent(manaPlayer -> {
-                manaPlayer.decreaseMana(ManaAction.PLAYER_ACTION, this.getManaCost());
-            });
-
-            this.putOnCooldown(context);
             return ActionResult.successCooldownImmediate();
         }).orElse(ActionResult.fail());
+    }
 
-        return super.doAction(context);
+    /**
+     * Counts one refresh of a running Concentrate chain for this player and effect. Returns false once the
+     * chain has reached its proc cap, so the effect is no longer refreshed and runs out; the next proc after it
+     * expires starts a new chain.
+     */
+    private boolean tryCountChainProc(ServerPlayer player, MobEffect effect) {
+        Map<MobEffect, Integer> procs = CHAIN_PROCS.computeIfAbsent(player.getUUID(), id -> new HashMap<>());
+        Integer count = procs.get(effect);
+        if (count == null) {
+            WoldsVaults.LOGGER.warn("Concentrate: no chain count for {} on {}, counting this refresh as the chain's first proc", effect.getRegistryName(), player.getScoreboardName());
+            count = 0;
+        }
+        if (count >= getMaxChainProcs(player)) {
+            return false;
+        }
+        procs.put(effect, count + 1);
+        return true;
+    }
+
+    /**
+     * The per-tier chain cap; falls back to 10 + floor(tier / 3) when the tier config has no
+     * {@code maxChainProcs}.
+     */
+    public int getMaxChainProcs(ServerPlayer player) {
+        if (this.maxChainProcs >= 0) {
+            return this.maxChainProcs;
+        }
+        int fallback = 10 + AbilityHelper.getAbilityLevel(player, "Concentrate_Base") / 3;
+        if (!this.loggedChainProcsFallback) {
+            this.loggedChainProcsFallback = true;
+            WoldsVaults.LOGGER.error("Concentrate tier {} has no maxChainProcs; using the fallback 10 + floor(tier / 3) = {}", this.getId(), fallback);
+        }
+        return fallback;
     }
 
 
@@ -323,6 +362,7 @@ public class ConcentrateAbility extends InstantManaAbility {
         Adapters.FLOAT.writeBits(this.amplitudeScaleChance, buffer);
         Adapters.INT.writeBits(this.particleSteps, buffer);
         Adapters.INT.writeBits(this.particleDelay, buffer);
+        Adapters.INT.writeBits(this.maxChainProcs, buffer);
     }
 
     @Override
@@ -334,6 +374,7 @@ public class ConcentrateAbility extends InstantManaAbility {
         this.amplitudeScaleChance = Adapters.FLOAT.readBits(buffer).orElseThrow();
         this.particleSteps = Adapters.INT.readBits(buffer).orElseThrow();
         this.particleDelay = Adapters.INT.readBits(buffer).orElseThrow();
+        this.maxChainProcs = Adapters.INT.readBits(buffer).orElseThrow();
     }
 
     @Override
@@ -345,6 +386,7 @@ public class ConcentrateAbility extends InstantManaAbility {
             Adapters.FLOAT.writeNbt(this.amplitudeScaleChance).ifPresent(tag -> nbt.put("amplitudeScaleChance",tag));
             Adapters.INT.writeNbt(this.particleSteps).ifPresent(tag -> nbt.put("particleSteps",tag));
             Adapters.INT.writeNbt(this.particleDelay).ifPresent(tag -> nbt.put("particleDelay",tag));
+            Adapters.INT.writeNbt(this.maxChainProcs).ifPresent(tag -> nbt.put("maxChainProcs",tag));
             return nbt;
         });
     }
@@ -358,6 +400,10 @@ public class ConcentrateAbility extends InstantManaAbility {
         this.amplitudeScaleChance = Adapters.FLOAT.readNbt(nbt.get("amplitudeScaleChance")).orElse(0F);
         this.particleSteps = Adapters.INT.readNbt(nbt.get("particleSteps")).orElse(0);
         this.particleDelay = Adapters.INT.readNbt(nbt.get("particleDelay")).orElse(0);
+        this.maxChainProcs = Adapters.INT.readNbt(nbt.get("maxChainProcs")).orElseGet(() -> {
+            WoldsVaults.LOGGER.error("Concentrate tier {} NBT has no maxChainProcs; the cap falls back to 10 + floor(tier / 3)", this.getId());
+            return UNSET_MAX_CHAIN_PROCS;
+        });
     }
 
     @Override
@@ -369,6 +415,9 @@ public class ConcentrateAbility extends InstantManaAbility {
             Adapters.FLOAT.writeJson(this.amplitudeScaleChance).ifPresent(jsonElement -> json.add("amplitudeScaleChance", jsonElement));
             Adapters.INT.writeJson(this.particleSteps).ifPresent(jsonElement -> json.add("particleSteps", jsonElement));
             Adapters.INT.writeJson(this.particleDelay).ifPresent(jsonElement -> json.add("particleDelay", jsonElement));
+            if (this.maxChainProcs >= 0) {
+                Adapters.INT.writeJson(this.maxChainProcs).ifPresent(jsonElement -> json.add("maxChainProcs", jsonElement));
+            }
             return json;
         });
     }
@@ -382,6 +431,10 @@ public class ConcentrateAbility extends InstantManaAbility {
         this.amplitudeScaleChance = Adapters.FLOAT.readJson(json.get("amplitudeScaleChance")).orElse(0F);
         this.particleSteps = Adapters.INT.readJson(json.get("particleSteps")).orElse(0);
         this.particleDelay = Adapters.INT.readJson(json.get("particleDelay")).orElse(0);
+        this.maxChainProcs = Adapters.INT.readJson(json.get("maxChainProcs")).orElseGet(() -> {
+            WoldsVaults.LOGGER.error("Concentrate tier {} config has no maxChainProcs; the cap falls back to 10 + floor(tier / 3)", this.getId());
+            return UNSET_MAX_CHAIN_PROCS;
+        });
     }
     public double getRadius() {
         return radius;
