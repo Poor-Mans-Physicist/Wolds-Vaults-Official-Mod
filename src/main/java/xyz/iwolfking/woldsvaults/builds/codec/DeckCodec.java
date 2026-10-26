@@ -11,6 +11,7 @@ import iskallia.vault.core.card.CardScaler;
 import iskallia.vault.core.card.modifier.deck.DeckModifier;
 import iskallia.vault.core.random.JavaRandom;
 import iskallia.vault.core.random.RandomSource;
+import iskallia.vault.core.util.WeightedList;
 import iskallia.vault.init.ModConfigs;
 import iskallia.vault.init.ModItems;
 import iskallia.vault.item.CardDeckItem;
@@ -22,6 +23,10 @@ import net.minecraft.world.item.ItemStack;
 import xyz.iwolfking.woldsvaults.builds.BuildException;
 import xyz.iwolfking.woldsvaults.builds.BuildReport;
 import xyz.iwolfking.woldsvaults.builds.Json;
+import xyz.iwolfking.woldsvaults.api.util.DeckModifiersHelper;
+import xyz.iwolfking.woldsvaults.config.ImplicitDeckModifiersConfig;
+import xyz.iwolfking.vhapi.mixin.accessors.DeckModifiersConfigAccessor;
+import xyz.iwolfking.woldsvaults.modifiers.deck.ImplicitDeckModifier;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -40,6 +45,7 @@ public final class DeckCodec {
     private static final Set<String> CARD_KEYS = Set.of("row", "col", "card", "tier", "color", "scaler", "groups", "value");
     private static final Set<String> CORE_KEYS = Set.of("id", "value", "roll");
     private static final int LAYOUT_TRIES = 500;
+    private static final String MYSTERY_POOL = "card_deck_implicits";
     private static final float VALUE_TOLERANCE = 1.0E-4F;
 
     private DeckCodec() {
@@ -91,12 +97,63 @@ public final class DeckCodec {
             deck.setSocketCount(coreCount);
         }
         addModifiers(deck, cores, path + ".cores", random, report);
-        addModifiers(deck, Json.optArray(json, "implicits", path), path + ".implicits", random, report);
+        addImplicits(deck, id, Json.optArray(json, "implicits", path), path + ".implicits", random, report);
+        long socketed = deck.getModifiers().stream().filter(modifier -> !(modifier instanceof ImplicitDeckModifier)).count();
+        if (socketed > deck.getSocketCount()) {
+            report.bypassed(path + ": " + socketed + " cores need more than the deck's " + deck.getSocketCount()
+                    + " sockets; sockets raised to " + socketed);
+            deck.setSocketCount((int) socketed);
+        }
         ItemStack stack = new ItemStack(ModItems.CARD_DECK);
         CardDeckItem.setId(stack, id);
         CardDeckItem.setVersion(stack, 1);
         CardDeckItem.setCardDeck(stack, deck);
         return stack;
+    }
+
+    /**
+     * Adds a deck's implicits the way the deck forge does: a Mystery deck takes the listed ids from the Mystery
+     * implicit pool, each wrapped as an implicit so it holds no socket; any other deck takes its own configured
+     * implicit, whatever the build lists.
+     */
+    private static void addImplicits(CardDeck deck, String deckId, JsonArray listed, String path, RandomSource random,
+                                     BuildReport report) {
+        if (DeckModifiersHelper.MYSTERY_DECK_ID.equals(deckId)) {
+            if (listed == null) {
+                report.bypassed(path + ": a Mystery deck always has two implicits; the build lists none");
+                return;
+            }
+            WeightedList<String> pool = ((DeckModifiersConfigAccessor) ModConfigs.DECK_MODIFIERS).getPools().get(MYSTERY_POOL);
+            for (int i = 0; i < listed.size(); i++) {
+                String entryPath = path + "[" + i + "]";
+                String implicitId = Json.asString(listed.get(i), entryPath);
+                if (pool == null || !pool.containsKey(implicitId)) {
+                    report.bypassed(entryPath + ": " + implicitId + " is not in the Mystery implicit pool");
+                }
+                DeckModifier<?> modifier = DeckModifiersHelper.createModifierWithId(implicitId);
+                if (modifier == null) {
+                    throw new BuildException(entryPath + ": no deck modifier '" + implicitId + "' exists in this game");
+                }
+                deck.addModifier(new ImplicitDeckModifier(modifier), random);
+            }
+            if (listed.size() != 2) {
+                report.bypassed(path + ": a Mystery deck rolls two implicits; the build lists " + listed.size());
+            }
+            return;
+        }
+        DeckModifier<?> own = ImplicitDeckModifiersConfig.getImplicitDeckModifier(deckId).orElse(null);
+        if (own != null) {
+            DeckModifier<?> clone = DeckModifiersHelper.cloneModifier(own);
+            if (clone == null) {
+                throw new BuildException(path + ": the implicit of deck " + deckId + " could not be copied");
+            }
+            deck.addModifier(clone, random);
+            report.note(path + ": deck " + deckId + " carries its own implicit, as forged decks do");
+        }
+        if (listed != null && listed.size() > 0) {
+            report.note(path + ": deck " + deckId + " is not a Mystery deck, so the listed implicits " + listed
+                    + " are replaced by its own");
+        }
     }
 
     /** A deck of template {@code id} whose layout holds every requested slot; templates may roll their layout. */
