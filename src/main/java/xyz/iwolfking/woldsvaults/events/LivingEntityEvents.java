@@ -34,6 +34,7 @@ import iskallia.vault.gear.item.VaultGearItem;
 import iskallia.vault.gear.trinket.TrinketHelper;
 import iskallia.vault.gear.trinket.effects.MultiJumpTrinket;
 import iskallia.vault.item.gear.VaultAxeItem;
+import iskallia.vault.skill.ability.effect.RampageAbility;
 import iskallia.vault.skill.base.Skill;
 import iskallia.vault.skill.talent.type.JavelinConductTalent;
 import iskallia.vault.skill.tree.TalentTree;
@@ -43,6 +44,7 @@ import iskallia.vault.util.calc.*;
 import iskallia.vault.util.damage.DamageUtil;
 import iskallia.vault.world.data.PlayerTalentsData;
 import iskallia.vault.world.data.ServerVaults;
+import xyz.iwolfking.woldsvaults.gods.combat.RampageAccess;
 import xyz.iwolfking.woldsvaults.gods.trees.velara.VelaraCounterstrike;
 import xyz.iwolfking.woldsvaults.milestones.MilestoneIds;
 import xyz.iwolfking.woldsvaults.milestones.Milestones;
@@ -470,14 +472,16 @@ public class LivingEntityEvents {
     }
 
     /**
-     * Stores echoes, then adds the flat bonuses (cleaving, reaving) in a fixed order ahead of every damage
-     * multiplier. Separate same-priority handlers ran in an order Forge does not define, so a flat add could land
-     * before or after damage increase depending on the session. Thorns and ability power scaling are added later,
-     * by {@link PostMultiplierFlatAdds}.
+     * Stores echoes, then applies Spectral Strike and the flat bonuses (cleaving, reaving) in a fixed order ahead
+     * of every damage multiplier. Separate same-priority handlers ran in an order Forge does not define, so a flat
+     * add could land before or after damage increase depending on the session. Echoes are stored before Spectral
+     * Strike, so they do not carry its bonus. Thorns and ability power scaling are added later, by
+     * {@link PostMultiplierFlatAdds}.
      */
     @SubscribeEvent(priority = EventPriority.HIGH)
     public static void preMultiplierHit(LivingHurtEvent event) {
         echoingHit(event);
+        SpectralStrikeDamage.apply(event);
         cleavingDamage(event);
         reavingDamage(event);
     }
@@ -641,6 +645,9 @@ public class LivingEntityEvents {
                         newFlags = oldInstance.getFlags();
                     } else {
                         newDamage = event.getAmount() * (1+echoingDamage) * 0.667F;
+                        if (player instanceof ServerPlayer sPlayer && RampageAbility.isDirectMeleeHit(event)) {
+                            newDamage *= 1.0F + RampageAccess.effectiveDamageIncrease(sPlayer);
+                        }
                         newSource = event.getSource();
                         newDuration = EffectDurationHelper.adjustEffectDurationFloor(player, 1) * 10;
                         newDecay = 1.0F;
