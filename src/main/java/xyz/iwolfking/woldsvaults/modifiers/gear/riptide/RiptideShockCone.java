@@ -3,8 +3,6 @@ package xyz.iwolfking.woldsvaults.modifiers.gear.riptide;
 import iskallia.vault.entity.entity.EternalEntity;
 import iskallia.vault.entity.entity.PetEntity;
 import iskallia.vault.gear.attribute.type.VaultGearAttributeTypeMerger;
-import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -14,6 +12,7 @@ import xyz.iwolfking.woldsvaults.WoldsVaults;
 import xyz.iwolfking.woldsvaults.api.gear.sets.GearSetHelper;
 import xyz.iwolfking.woldsvaults.config.GearSetConfig;
 import xyz.iwolfking.woldsvaults.init.ModGearAttributes;
+import xyz.iwolfking.woldsvaults.network.message.RiptideFxMessage;
 
 import java.util.List;
 
@@ -47,7 +46,7 @@ public class RiptideShockCone implements RiptideDash.Listener {
                 dash.getPendingShock().add(target);
             }
         }
-        spawnWake(player.getLevel(), origin, axis, tuning);
+        RiptideFxMessage.send(player, RiptideFxMessage.cone(player, origin, axis, tuning.shockConeAhead, tuning.shockConeBehind, tuning.shockConeRadius));
     }
 
     @Override
@@ -84,8 +83,7 @@ public class RiptideShockCone implements RiptideDash.Listener {
 
     private static void hit(ServerPlayer player, LivingEntity target, float amount) {
         RiptideDerivedHits.queue(player, target, amount);
-        player.getLevel().sendParticles(ParticleTypes.ELECTRIC_SPARK, target.getX(), target.getY() + target.getBbHeight() * 0.5, target.getZ(),
-                12, target.getBbWidth() * 0.4, target.getBbHeight() * 0.4, target.getBbWidth() * 0.4, 0.4);
+        RiptideFxMessage.send(player, RiptideFxMessage.burst(player, target, RiptideStorm.isChilled(target)));
     }
 
     static boolean isTarget(Player player, LivingEntity entity) {
@@ -103,22 +101,5 @@ public class RiptideShockCone implements RiptideDash.Listener {
         double length = tuning.shockConeAhead + tuning.shockConeBehind;
         double allowed = tuning.shockConeRadius * (tuning.shockConeAhead - along) / length + entity.getBbWidth() * 0.5;
         return offset.subtract(axis.scale(along)).length() <= allowed;
-    }
-
-    private static void spawnWake(ServerLevel level, Vec3 origin, Vec3 axis, GearSetConfig.Riptide tuning) {
-        Vec3 side = axis.cross(new Vec3(0.0, 1.0, 0.0));
-        if (side.lengthSqr() < 1.0E-4) {
-            side = new Vec3(1.0, 0.0, 0.0);
-        }
-        side = side.normalize();
-        Vec3 up = side.cross(axis).normalize();
-        double length = tuning.shockConeAhead + tuning.shockConeBehind;
-        for (int i = 0; i < 6; i++) {
-            double along = tuning.shockConeAhead - level.random.nextDouble() * length;
-            double radius = tuning.shockConeRadius * (tuning.shockConeAhead - along) / length;
-            double angle = level.random.nextDouble() * Math.PI * 2.0;
-            Vec3 point = origin.add(axis.scale(along)).add(side.scale(Math.cos(angle) * radius)).add(up.scale(Math.sin(angle) * radius));
-            level.sendParticles(ParticleTypes.ELECTRIC_SPARK, point.x, point.y, point.z, 1, 0.0, 0.0, 0.0, 0.0);
-        }
     }
 }

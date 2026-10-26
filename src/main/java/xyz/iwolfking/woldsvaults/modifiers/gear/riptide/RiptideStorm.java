@@ -2,14 +2,10 @@ package xyz.iwolfking.woldsvaults.modifiers.gear.riptide;
 
 import iskallia.vault.gear.attribute.type.VaultGearAttributeTypeMerger;
 import iskallia.vault.snapshot.AttributeSnapshot;
-import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.effect.MobEffectInstance;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -19,10 +15,11 @@ import xyz.iwolfking.woldsvaults.api.gear.sets.GearSetHelper;
 import xyz.iwolfking.woldsvaults.gods.combat.FinalDamageStage;
 import xyz.iwolfking.woldsvaults.init.ModEffects;
 import xyz.iwolfking.woldsvaults.init.ModGearAttributes;
+import xyz.iwolfking.woldsvaults.network.message.RiptideFxMessage;
 
 /**
- * The riptide storm: a crackling cloud while dashing, a lightning strike on every mob the dash touches for
- * {@link ModGearAttributes#RIPTIDE_BOLT} times the contact's final damage ({@link ModGearAttributes#RIPTIDE_BOLT_CHILLED}
+ * The riptide storm: an arcane crackle around the player while dashing, a lightning arc from the player to every
+ * mob the dash touches for {@link ModGearAttributes#RIPTIDE_BOLT} times the contact's final damage ({@link ModGearAttributes#RIPTIDE_BOLT_CHILLED}
  * against chilled or frozen mobs), less damage taken while the spin is active, and a hover after the dash.
  */
 @Mod.EventBusSubscriber(modid = WoldsVaults.MOD_ID)
@@ -52,11 +49,9 @@ public class RiptideStorm implements RiptideDash.Listener {
         if (bolt(RiptideDash.snapshot(player)) <= 0.0F) {
             return;
         }
-        ServerLevel level = player.getLevel();
-        level.sendParticles(ParticleTypes.ELECTRIC_SPARK, player.getX(), player.getY() + player.getBbHeight() * 0.5, player.getZ(), 10, 0.9, 0.9, 0.9, 0.25);
-        level.sendParticles(ParticleTypes.CLOUD, player.getX(), player.getY() + player.getBbHeight() * 0.5, player.getZ(), 3, 0.7, 0.7, 0.7, 0.02);
+        RiptideFxMessage.send(player, RiptideFxMessage.aura(player));
         if (dash.getTicks() % 6 == 1) {
-            level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.TRIDENT_THUNDER, SoundSource.PLAYERS, 0.35F, 1.6F);
+            player.getLevel().playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.TRIDENT_THUNDER, SoundSource.PLAYERS, 0.35F, 1.6F);
         }
     }
 
@@ -70,16 +65,12 @@ public class RiptideStorm implements RiptideDash.Listener {
             return;
         }
         RiptideDerivedHits.queue(player, target, multiplier * finalDamage);
+        boolean chilled = isChilled(target);
         if (dash.countVisualBolt() <= GearSetHelper.config().getRiptide().stormVisualBoltsPerDash) {
-            LightningBolt visual = EntityType.LIGHTNING_BOLT.create(player.level);
-            if (visual != null) {
-                visual.moveTo(target.getX(), target.getY(), target.getZ());
-                visual.setVisualOnly(true);
-                player.level.addFreshEntity(visual);
-            }
+            RiptideFxMessage.send(player, RiptideFxMessage.arc(player, target, chilled));
+            player.getLevel().playSound(null, target.getX(), target.getY(), target.getZ(), SoundEvents.TRIDENT_THUNDER, SoundSource.PLAYERS, 0.7F, 1.35F + player.getRandom().nextFloat() * 0.3F);
         } else {
-            player.getLevel().sendParticles(ParticleTypes.ELECTRIC_SPARK, target.getX(), target.getY() + target.getBbHeight() * 0.5, target.getZ(),
-                    20, target.getBbWidth() * 0.5, target.getBbHeight() * 0.5, target.getBbWidth() * 0.5, 0.6);
+            RiptideFxMessage.send(player, RiptideFxMessage.burst(player, target, chilled));
         }
     }
 
