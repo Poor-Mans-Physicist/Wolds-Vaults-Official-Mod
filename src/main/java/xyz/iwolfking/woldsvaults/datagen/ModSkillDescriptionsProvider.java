@@ -1505,6 +1505,7 @@ public class ModSkillDescriptionsProvider extends AbstractSkillDescriptionsProvi
             description.add(JsonDescription.text("Multiplies your global damage based on Movement Speed - "));
             description.add(JsonDescription.text("1% per 10% speed", ember));
             description.add(JsonDescription.text(", measured after the boots cap."));
+            description.add(JsonDescription.text("\n\nExamples: +50% speed gives x1.05, +100% gives x1.10, +200% gives x1.20."));
         });
         builder.addDescription("idona_surrounded", description -> {
             description.add(JsonDescription.text("+2.5% global damage", ember));
@@ -1513,25 +1514,30 @@ public class ModSkillDescriptionsProvider extends AbstractSkillDescriptionsProvi
         builder.addDescription("idona_under_pressure", description -> {
             description.add(JsonDescription.text("Deal more damage the closer the vault is to ending - up to "));
             description.add(JsonDescription.text("2x", ember));
-            description.add(JsonDescription.text(" as the timer runs out, scaling over the last 15 minutes."));
+            description.add(JsonDescription.text(" as the timer runs out, scaling evenly over the last 15 minutes."));
+            description.add(JsonDescription.text("\n\nExamples: 10 minutes left gives x1.33, 5 minutes gives x1.67, 0 gives x2."));
         });
         builder.addDescription("idona_pincushion", description -> {
-            description.add(JsonDescription.text("The more you hit an enemy, the more damage they take - "));
-            description.add(JsonDescription.text("+0.5% per hit", ember));
-            description.add(JsonDescription.text(", stacking."));
+            description.add(JsonDescription.text("Your melee attacks deal "));
+            description.add(JsonDescription.text("+0.5% damage", ember));
+            description.add(JsonDescription.text(" for every melee attack you already landed on that enemy, with no cap. Resets when it dies."));
+            description.add(JsonDescription.text("\n\nExamples: the 21st hit deals +10%, the 101st +50%, the 201st x2."));
         });
         builder.addDescription("idona_banked_anger", description -> {
             description.add(JsonDescription.text("Gain an increasing "));
             description.add(JsonDescription.text("global damage multiplier", ember));
-            description.add(JsonDescription.text(" the more damage you take in the vault."));
+            description.add(JsonDescription.text(" the more damage you take in the vault: "));
+            description.add(JsonDescription.text("log100000(100000 + damage taken)", ember));
+            description.add(JsonDescription.text(", with no cap."));
+            description.add(JsonDescription.text("\n\nExamples: 100k damage taken gives x1.06, 1M gives x1.21, 10M gives x1.40."));
         });
-        godNode(builder, "idona_soulstealer", "1.5x Soul Shards", ember, ".");
+        godNode(builder, "idona_soulstealer", "1.5x Soul Shard Chance", ember, ".");
         builder.addDescription("idona_luckiest_hit", description -> {
             description.add(JsonDescription.text("Lucky Hit chance is multiplied by "));
             description.add(JsonDescription.text("0.1", ember));
-            description.add(JsonDescription.text(", but the effects of your lucky hit modifiers are "));
-            description.add(JsonDescription.text("doubled", ember));
-            description.add(JsonDescription.text("."));
+            description.add(JsonDescription.text(", but Fatal Strike, Mana Leech and Health Leech "));
+            description.add(JsonDescription.text("trigger twice", ember));
+            description.add(JsonDescription.text(" on every lucky hit. Fatal Strike multiplies twice, so +50% becomes x2.25. Other lucky hit effects trigger once."));
         });
         builder.addDescription("idona_thwack", description -> {
             description.add(JsonDescription.text("Double Stun Chance", ember));
@@ -1540,8 +1546,8 @@ public class ModSkillDescriptionsProvider extends AbstractSkillDescriptionsProvi
         builder.addDescription("idona_weaponmaster", description -> {
             description.add(JsonDescription.text("Deal "));
             description.add(JsonDescription.text("1.5x on hit damage", ember));
-            description.add(JsonDescription.text(" with two handed weapons, or attack "));
-            description.add(JsonDescription.text("1.3x faster", ember));
+            description.add(JsonDescription.text(" with two handed weapons, or gain "));
+            description.add(JsonDescription.text("+30% Attack Speed", ember));
             description.add(JsonDescription.text(" while dual wielding."));
         });
         builder.addDescription("idona_cleave_expert", description -> {
@@ -1578,35 +1584,39 @@ public class ModSkillDescriptionsProvider extends AbstractSkillDescriptionsProvi
             description.add(JsonDescription.text(" to greed assassins and the greed champion."));
         });
         builder.addDescription("idona_power_dump", description -> {
-            description.add(JsonDescription.text("Abilities cast "));
+            description.add(JsonDescription.text("Instant abilities cast "));
             description.add(JsonDescription.text("while sneaking", ember));
             description.add(JsonDescription.text(" consume your whole mana bar. Your max mana sets the largest bonus, "));
             description.add(JsonDescription.text("0.25% x sqrt(2000 x max mana)", ember));
             description.add(JsonDescription.text(", and each cast multiplies its damage by "));
             description.add(JsonDescription.text("1 + that bonus x the share of your bar it spent above its cost", ember));
-            description.add(JsonDescription.text(". Held channels drain 50% of your bar per second and count the drain above their cost. Every Implode gets the bonus for the mana it consumes, sneaking or not. Each cast keeps its own bonus for its own hits; casts made standing up are unaffected."));
+            description.add(JsonDescription.text(". Each cast keeps its own bonus for its own hits; damage over time is not boosted. Casts made standing up and toggles are unaffected."));
+            description.add(JsonDescription.text("\n\nHeld channels cast while sneaking drain 50% of your bar per second; each tick counts only its own drain above its cost. Every Implode gets the bonus for the mana it consumes, sneaking or not, and so does a Starforge nova that procs while you sneak."));
+            description.add(JsonDescription.text("\n\nExamples, ignoring the spell's own cost: a cast from a full bar gets x4.5 at 1,000 max mana, x17 at 20,000 and x44 at 150,000. From a half-full bar: x2.8, x8.9, x23. A held channel's ticks get x1.09, x1.4, x2.1."));
         });
         builder.addDescription("idona_overcrit", description -> {
-            description.add(JsonDescription.text("Lucky Hit chance over 100%", "gold"));
-            description.add(JsonDescription.text(" now allows you to overcrit, dealing an additional "));
-            description.add(JsonDescription.text("damage multiplier", ember));
-            description.add(JsonDescription.text(" for stacked lucky hits."));
+            description.add(JsonDescription.text("Lucky Hit chance over your cap (56.2%)", "gold"));
+            description.add(JsonDescription.text(" lets your lucky hits overcrit: every full 100% over the cap adds "));
+            description.add(JsonDescription.text("+100% damage", ember));
+            description.add(JsonDescription.text(" to each lucky hit, and the remainder is the chance of one more +100%."));
+            description.add(JsonDescription.text("\n\nExamples: at 80% chance, 24% of lucky hits deal x2. At 156.2%, every lucky hit deals x2. At 250%, lucky hits deal x2 or x3, x2.94 on average."));
         });
         builder.addDescription("idona_grand_archmage", description -> {
             description.add(JsonDescription.text("Turn into an archmage: "));
-            description.add(JsonDescription.text("2x mana capacity, +200 flat mana, greatly increased mana regen, 3x Ability Damage and +5% CDR cap", ember));
-            description.add(JsonDescription.text(" - but you lose the ability to swing vault weapons."));
+            description.add(JsonDescription.text("+100% Mana, +200 flat Mana, greatly increased Mana Regeneration, 3x Ability Damage and +5% Cooldown Reduction cap", ember));
+            description.add(JsonDescription.text(" - but your melee attacks deal no damage."));
         });
         builder.addDescription("idona_ultra_rampaging", description -> {
             description.add(JsonDescription.text("Hitting, killing and being hurt build "));
             description.add(JsonDescription.text("Fury", ember));
-            description.add(JsonDescription.text(", which bleeds away in seconds. Fury both "));
+            description.add(JsonDescription.text(" (100 per hit, 200 per kill, up to 6,000 for losing your whole health bar; cap 15,000), which loses about half every 2.3 seconds, faster above 6,000. While Rampage is active, Fury both "));
             description.add(JsonDescription.text("adds to and multiplies your Rampage damage", ember));
             description.add(JsonDescription.text(", so a fight that keeps moving keeps you at a far higher multiplier."));
             description.add(JsonDescription.text("\n\nBosses pay double on hit and ten times on death."));
             description.add(JsonDescription.text("\n\nWhile you hold Fury you also "));
             description.add(JsonDescription.text("take up to 1.5x damage at full Fury", "#C23627"));
-            description.add(JsonDescription.text("."));
+            description.add(JsonDescription.text(", with or without Rampage active."));
+            description.add(JsonDescription.text("\n\nExamples with a +100% Rampage: 5 hits a second holds about 1,650 Fury, making it +266% and 1.17x damage taken. 5 boss hits a second holds about 3,300, for +477% and 1.23x taken. 6,000 Fury gives +1163% and 1.32x taken; full Fury gives +1652% and 1.5x taken."));
         });
         godRoot(builder, "idona_start_sw", "Idona's sword", "attack damage, up close", ember, "+10% Ability Power and +10% Attack Damage");
         godRoot(builder, "idona_start_st", "Idona's staff", "ability power and range", ember, "+10% Ability Power and +10% Attack Damage");
@@ -1634,6 +1644,7 @@ public class ModSkillDescriptionsProvider extends AbstractSkillDescriptionsProvi
             description.add(JsonDescription.text("Slightly reduces the "));
             description.add(JsonDescription.text("max health lost per fruit", gold));
             description.add(JsonDescription.text(" you eat, letting you eat more."));
+            description.add(JsonDescription.text("\n\nExamples: after 5 fruits you keep 51% of your max health instead of 42%, after 10 fruits 24% instead of 16%."));
         });
         godNode(builder, "wendarr_pristine_condition", "15% chance", gold, " to not gain a rot stack when you otherwise would - calculated separately from other rot reductions.");
         builder.addDescription("wendarr_glutton", description -> {
@@ -1646,14 +1657,15 @@ public class ModSkillDescriptionsProvider extends AbstractSkillDescriptionsProvi
         godNode(builder, "wendarr_fruity", "+25% Fruit Efficiency", gold, ".");
         godNode(builder, "wendarr_clock_artificier", "+50% duration", gold, " on temporal shards you consume.");
         builder.addDescription("wendarr_paced_strikes", description -> {
-            description.add(JsonDescription.text("Multiplies all damage you deal by "));
+            description.add(JsonDescription.text("Multiplies your damage by "));
             description.add(JsonDescription.text(GodNodePreviews.PACED_STRIKES_FORMULA, gold));
-            description.add(JsonDescription.text(", scaling with the vault time left."));
+            description.add(JsonDescription.text(", where t is the minutes left on the vault timer. Damage over time is not boosted."));
+            description.add(JsonDescription.text("\n\nExamples: 10 minutes left gives x1.10, 30 minutes gives x1.26, 100 minutes gives x1.73."));
         });
         builder.addDescription("wendarr_temporal_shielding", description -> {
             description.add(JsonDescription.text("Take "));
             description.add(JsonDescription.text("90% less damage", gold));
-            description.add(JsonDescription.text(", but every hit taken drains "));
+            description.add(JsonDescription.text(" after armor and resistance, but every hit taken drains "));
             description.add(JsonDescription.text("1-3 seconds", gold));
             description.add(JsonDescription.text(" of vault time."));
         });
@@ -1668,30 +1680,35 @@ public class ModSkillDescriptionsProvider extends AbstractSkillDescriptionsProvi
             description.add(JsonDescription.text("immunity", gold));
             description.add(JsonDescription.text(" to time acceleration."));
         });
-        godNode(builder, "wendarr_plushie_lover", "Doubles the rolled stats", gold, " of an equipped plushie.");
+        godNode(builder, "wendarr_plushie_lover", "Doubles the rolled stats", gold, " of a plushie held in your offhand.");
         builder.addDescription("wendarr_pylon_whisperer", description -> {
             description.add(JsonDescription.text("Pylons grant "));
             description.add(JsonDescription.text("50% greater effects", gold));
             description.add(JsonDescription.text("."));
         });
         builder.addDescription("wendarr_gardener", description -> {
-            description.add(JsonDescription.text("+50% fruit", gold));
-            description.add(JsonDescription.text(" from Woldian Gardens, and a much higher "));
-            description.add(JsonDescription.text("Starfruit", gold));
-            description.add(JsonDescription.text(" drop rate."));
+            description.add(JsonDescription.text("Each fruit stack from Woldian Gardens has a "));
+            description.add(JsonDescription.text("5% chance to become Starfruit", gold));
+            description.add(JsonDescription.text(", and otherwise a "));
+            description.add(JsonDescription.text("50% chance to double", gold));
+            description.add(JsonDescription.text("."));
         });
         godNode(builder, "wendarr_the_deckless", "+1% Fruit Efficiency, +5% Movement Speed and +5% Cooldown Reduction", gold, " for every empty slot in your card deck.");
         builder.addDescription("wendarr_speed_demon", description -> {
-            description.add(JsonDescription.text("-25% timer tick duration", gold));
-            description.add(JsonDescription.text(", but "));
-            description.add(JsonDescription.text("1.1x", gold));
-            description.add(JsonDescription.text(" to most looting and combat stats, for everyone in the vault. Does not stack."));
+            description.add(JsonDescription.text("The vault timer runs 1.33x faster", gold));
+            description.add(JsonDescription.text(", but everyone in the vault deals "));
+            description.add(JsonDescription.text("1.1x damage", gold));
+            description.add(JsonDescription.text(" and gets "));
+            description.add(JsonDescription.text("1.1x Item Quantity, Item Rarity and Trap Disarming", gold));
+            description.add(JsonDescription.text(" and "));
+            description.add(JsonDescription.text("+10% Armor", gold));
+            description.add(JsonDescription.text(", added to other Armor %. Does not stack."));
         });
         builder.addDescription("wendarr_quick_search", description -> {
-            description.add(JsonDescription.text("4x omega room chance", gold));
-            description.add(JsonDescription.text(", but "));
-            description.add(JsonDescription.text("-30% timer tick duration", gold));
-            description.add(JsonDescription.text(". Does not stack, multiplicative with other tick-duration sources."));
+            description.add(JsonDescription.text("4x omega room weight", gold));
+            description.add(JsonDescription.text(", but the "));
+            description.add(JsonDescription.text("vault timer runs 1.43x faster", gold));
+            description.add(JsonDescription.text(". Does not stack; with Speed Demon the timer runs 1.9x faster."));
         });
         builder.addDescription("wendarr_armored_extractors", description -> {
             description.add(JsonDescription.text("Extractors you place take "));
@@ -1700,14 +1717,17 @@ public class ModSkillDescriptionsProvider extends AbstractSkillDescriptionsProvi
             description.add(JsonDescription.text("Coming soon.", "gray"));
         });
         builder.addDescription("wendarr_legend_of_the_pear", description -> {
-            description.add(JsonDescription.text("Fruit efficiency scales the time a fruit grants on a "));
-            description.add(JsonDescription.text("square-root curve", gold));
-            description.add(JsonDescription.text(" instead of the flattening one - far better gains at high efficiency."));
+            description.add(JsonDescription.text("Fruit grants "));
+            description.add(JsonDescription.text("1 + sqrt(e)", gold));
+            description.add(JsonDescription.text(" times its time instead of "));
+            description.add(JsonDescription.text("1 + e / (1 + e)", gold));
+            description.add(JsonDescription.text(", where e is your Fruit Efficiency. The normal curve never reaches 2x; this one keeps growing. Rot chance is unchanged."));
+            description.add(JsonDescription.text("\n\nExamples: +50% efficiency gives 1.71x time instead of 1.33x, +150% gives 2.23x instead of 1.60x, +300% gives 2.73x instead of 1.75x."));
         });
         builder.addDescription("wendarr_edge_of_time", description -> {
             description.add(JsonDescription.text("Deal "));
-            description.add(JsonDescription.text("10x all damage", gold));
-            description.add(JsonDescription.text(", but every instance of damage you deal consumes "));
+            description.add(JsonDescription.text("10x damage", gold));
+            description.add(JsonDescription.text(" (not damage over time), but every instance of damage you deal, damage over time included, consumes "));
             description.add(JsonDescription.text("1-3 seconds", gold));
             description.add(JsonDescription.text(" of vault time."));
         });
@@ -1738,21 +1758,21 @@ public class ModSkillDescriptionsProvider extends AbstractSkillDescriptionsProvi
         godNode(builder, "velara_pious_devotion", "+10 Piety", leaf, ".");
         godNode(builder, "velara_counterstrike", "50% chance", leaf, " to land a free attack on an enemy whose melee strike you blocked or dodged.");
         builder.addDescription("velara_magic_armor", description -> {
-            description.add(JsonDescription.text("Your armor's damage reduction now applies to magic damage at "));
-            description.add(JsonDescription.text("50% efficiency", leaf));
+            description.add(JsonDescription.text("Magic damage that ignores armor is now reduced by your armor as if you had "));
+            description.add(JsonDescription.text("half your Armor", leaf));
             description.add(JsonDescription.text("."));
         });
         godNode(builder, "velara_defender_of_the_faith", "+5% Health and Armor", leaf, " for each distinct god carried on a charm by your vault party, yourself included.");
         godNode(builder, "velara_perserverence", "+50% longer downed timer", leaf, ".");
         godNode(builder, "velara_adaptive_armor", "-10% damage taken per stack, up to 6 stacks", leaf, ". Every consecutive hit from the same enemy adds a stack; a hit from anything else starts the run over.");
         builder.addDescription("velara_bounce_back", description -> {
-            description.add(JsonDescription.text("2x Healing Efficiency", leaf));
-            description.add(JsonDescription.text(" while below "));
+            description.add(JsonDescription.text("Doubles your Healing Efficiency", leaf));
+            description.add(JsonDescription.text(" (+100% becomes +300%) while below "));
             description.add(JsonDescription.text("10% max health", leaf));
             description.add(JsonDescription.text("."));
         });
         godNode(builder, "velara_indomitable", "+3 Regeneration levels", leaf, ". Stacks with other sources of regeneration.");
-        godNode(builder, "velara_field_medic", "1.5x healing", leaf, " on every heal you give an ally. Never applies to healing yourself.");
+        godNode(builder, "velara_field_medic", "1.5x healing", leaf, " on the heals your Heal Group ability gives allies. Never applies to healing yourself.");
         builder.addDescription("velara_the_stonewall", description -> {
             description.add(JsonDescription.text("0.4x Movement Speed", leaf));
             description.add(JsonDescription.text(", but "));
@@ -1768,29 +1788,31 @@ public class ModSkillDescriptionsProvider extends AbstractSkillDescriptionsProvi
         builder.addDescription("velara_malediction", description -> {
             description.add(JsonDescription.text("Multiplies thorns by "));
             description.add(JsonDescription.text(GodNodePreviews.MALEDICTION_FORMULA, leaf));
-            description.add(JsonDescription.text(", but forces your healing efficiency to "));
+            description.add(JsonDescription.text(", where healing efficiency is from your gear, but caps your healing efficiency at "));
             description.add(JsonDescription.text("-50%", leaf));
-            description.add(JsonDescription.text(" and stops you raising it."));
+            description.add(JsonDescription.text("."));
+            description.add(JsonDescription.text("\n\nExamples: +50% gear healing efficiency gives x1.14 thorns, +200% gives x1.44, +700% gives x2."));
         });
         builder.addDescription("velara_immortal", description -> {
             description.add(JsonDescription.text("1.25x max Health and Armor, 1.33x Healing Efficiency, +15 base Health, +30 base Armor, +8 Regeneration levels", leaf));
             description.add(JsonDescription.text(", and you "));
-            description.add(JsonDescription.text("revive yourself every 600 seconds", leaf));
-            description.add(JsonDescription.text(" - but your attack damage and ability power are "));
-            description.add(JsonDescription.text("halved", leaf));
+            description.add(JsonDescription.text("revive yourself at most once every 600 seconds", leaf));
+            description.add(JsonDescription.text(" - but you deal "));
+            description.add(JsonDescription.text("half damage", leaf));
             description.add(JsonDescription.text(". Sacrifice cannot syphon through you."));
         });
         builder.addDescription("velara_fleeting_physicality", description -> {
             description.add(JsonDescription.text("10 seconds of damage immunity", leaf));
             description.add(JsonDescription.text(", then "));
             description.add(JsonDescription.text("20 seconds taking 3x damage", leaf));
-            description.add(JsonDescription.text(", over and over. The vault timer still gets through."));
+            description.add(JsonDescription.text(", over and over on the world clock. The vault timer still gets through."));
         });
         builder.addDescription("velara_steadfast", description -> {
             description.add(JsonDescription.text("Knockback Resistance above 100%", leaf));
             description.add(JsonDescription.text(" is converted to "));
             description.add(JsonDescription.text("Armor %", leaf));
             description.add(JsonDescription.text(" at 2 to 1, added to your other Armor %."));
+            description.add(JsonDescription.text("\n\nExamples: 150% Knockback Resistance gives +25% Armor, 200% gives +50%, 300% gives +100%."));
         });
         builder.addDescription("velara_sanitation", description -> {
             description.add(JsonDescription.text("Negative effects on you and allies within 50 blocks last "));
@@ -1807,9 +1829,9 @@ public class ModSkillDescriptionsProvider extends AbstractSkillDescriptionsProvi
         godNode(builder, "velara_utilized", "+3 to all Utility ability levels", leaf, ".");
         builder.addDescription("velara_sacrifice", description -> {
             description.add(JsonDescription.text("Syphon 66% of all damage", leaf));
-            description.add(JsonDescription.text(" dealt to your party members onto yourself, with an additional "));
+            description.add(JsonDescription.text(" your party members take, after their armor and resistance, onto yourself, with an additional "));
             description.add(JsonDescription.text("33% resistance", leaf));
-            description.add(JsonDescription.text(" against what you syphon. Several shepherds split the flock evenly instead of overlapping."));
+            description.add(JsonDescription.text(" against what you syphon on top of your own. Several shepherds split the flock evenly instead of overlapping."));
         });
         godRoot(builder, "velara_start_bulwark", "the Bulwark", "armour, thorns and taking the hit", leaf, "+10% Health and +10% Armor");
         godRoot(builder, "velara_start_mercy", "the Mercy", "healing, allies and staying up", leaf, "+10% Health and +10% Armor");
@@ -1840,7 +1862,8 @@ public class ModSkillDescriptionsProvider extends AbstractSkillDescriptionsProvi
         builder.addDescription("tenos_mana_starved", description -> {
             description.add(JsonDescription.text("Up to "));
             description.add(JsonDescription.text("2x Mana Regeneration", sky));
-            description.add(JsonDescription.text(" as your mana falls from half empty to empty."));
+            description.add(JsonDescription.text(" as your mana falls from half full to empty."));
+            description.add(JsonDescription.text("\n\nExamples: at 50% mana x1, at 25% x1.5, at 10% x1.8."));
         });
         godNode(builder, "tenos_deep_reserves", "1.5x Maximum Mana", sky, ".");
         godNode(builder, "tenos_barter_expert", "Significantly improves", sky,
@@ -1850,14 +1873,16 @@ public class ModSkillDescriptionsProvider extends AbstractSkillDescriptionsProvi
             description.add(JsonDescription.text("Up to "));
             description.add(JsonDescription.text("1.5x Area of Effect", sky));
             description.add(JsonDescription.text(" the further you are from the portal - "));
-            description.add(JsonDescription.text("+0.025x per block", sky));
-            description.add(JsonDescription.text(" of taxicab distance."));
+            description.add(JsonDescription.text("+0.025x per vault grid cell", sky));
+            description.add(JsonDescription.text(" (47 blocks; rooms are two cells apart) of taxicab distance, so +0.05x per room."));
+            description.add(JsonDescription.text("\n\nExamples: 2 rooms out gives x1.1, 5 rooms x1.25, 10 rooms or more x1.5."));
         });
         builder.addDescription("tenos_indiana_jones", description -> {
             description.add(JsonDescription.text("You no longer benefit from Trap Disarming", sky));
             description.add(JsonDescription.text(", but it multiplies your Item Quantity and Rarity by "));
             description.add(JsonDescription.text(GodNodePreviews.INDIANA_JONES_FORMULA, sky));
-            description.add(JsonDescription.text("."));
+            description.add(JsonDescription.text(", with trap disarm in percent from your gear."));
+            description.add(JsonDescription.text("\n\nExamples: 50% trap disarm gives x1.016, 100% gives x1.032, 300% gives x1.091."));
         });
         builder.addDescription("tenos_expert_looter", description -> {
             description.add(JsonDescription.text("Chests can roll up to "));
@@ -1871,22 +1896,30 @@ public class ModSkillDescriptionsProvider extends AbstractSkillDescriptionsProvi
         builder.addDescription("tenos_sack_of_mobs", description -> {
             description.add(JsonDescription.text("Multiplies your damage by "));
             description.add(JsonDescription.text(GodNodePreviews.SACK_OF_MOBS_FORMULA, sky));
-            description.add(JsonDescription.text(", counting only kills scored this vault while holding a vault sack."));
+            description.add(JsonDescription.text(", counting only kills scored this vault while holding a vault sack in your offhand. Damage over time is not boosted."));
+            description.add(JsonDescription.text("\n\nExamples: 100 kills gives x1.014, 1,000 gives x1.10, 5,000 gives x1.26."));
         });
-        godNode(builder, "tenos_unstoppable_greed", "Adds 5%", sky, " of your Item Quantity and Rarity, summed, to your Attack Damage and Ability Power.");
-        godNode(builder, "tenos_wealthy_patron", "+3% Item Quantity and Rarity", sky, " per unique piece of armor equipped, multiplicative.");
+        builder.addDescription("tenos_unstoppable_greed", description -> {
+            description.add(JsonDescription.text("Multiplies your damage by "));
+            description.add(JsonDescription.text("1 + 5% of your Item Quantity and Rarity, summed", sky));
+            description.add(JsonDescription.text(". Counts the Quantity and Rarity on your gear, before other Tenos stars change them. Damage over time is not boosted."));
+            description.add(JsonDescription.text("\n\nExamples: +50% summed gives x1.025, +130% gives x1.065, +500% gives x1.25, +1850% gives x1.93."));
+        });
+        godNode(builder, "tenos_wealthy_patron", "+3% Item Quantity and Rarity", sky, " per Unique armor piece equipped, multiplicative.");
         builder.addDescription("tenos_gold_plating", description -> {
-            description.add(JsonDescription.text("-75% damage from every attack", sky));
-            description.add(JsonDescription.text(", but each hit costs you "));
+            description.add(JsonDescription.text("-75% damage taken", sky));
+            description.add(JsonDescription.text(" after armor and resistance, but each hit costs you "));
             description.add(JsonDescription.text("2 x log10(10 + damage blocked)", sky));
-            description.add(JsonDescription.text(" gold."));
+            description.add(JsonDescription.text(" gold. The reduction holds even when you cannot pay; the cost is kept as a debt and charged when you can, until you leave the vault."));
+            description.add(JsonDescription.text("\n\nExamples: blocking 10 damage costs 2.5 gold, 100 costs 3.9, 1,000 costs 5.8."));
         });
         godNode(builder, "tenos_cash_hunter", "Applies your Item Quantity to coin piles", sky, " at 25% efficiency.");
         godNode(builder, "tenos_challenge_tackler", "+50% crate tiers", sky, " from the sigil you went in with.");
         builder.addDescription("tenos_looting_engine", description -> {
             description.add(JsonDescription.text("Multiplies Item Quantity and Rarity by "));
             description.add(JsonDescription.text(GodNodePreviews.LOOTING_ENGINE_FORMULA, sky));
-            description.add(JsonDescription.text(", scaling with your chests per minute averaged over the last five minutes."));
+            description.add(JsonDescription.text(", where c is your chests per minute averaged over the last five minutes."));
+            description.add(JsonDescription.text("\n\nExamples: 10 chests a minute gives x1.003, 30 gives x1.008, 60 gives x1.016."));
         });
         builder.addDescription("tenos_massive_chests", description -> {
             description.add(JsonDescription.text("Chests can roll up to "));

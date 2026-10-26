@@ -94,11 +94,14 @@
         "text": " the further you are from the portal - "
       },
       {
-        "text": "+0.025x per block",
+        "text": "+0.025x per vault grid cell",
         "color": "#5ad8ff"
       },
       {
-        "text": " of taxicab distance."
+        "text": " (47 blocks; rooms are two cells apart) of taxicab distance, so +0.05x per room."
+      },
+      {
+        "text": "\n\nExamples: 2 rooms out gives x1.1, 5 rooms x1.25, 10 rooms or more x1.5."
       }
     ],
     "tenos_start_chalice": [
@@ -142,7 +145,10 @@
         "color": "#5ad8ff"
       },
       {
-        "text": "."
+        "text": ", with trap disarm in percent from your gear."
+      },
+      {
+        "text": "\n\nExamples: 50% trap disarm gives x1.016, 100% gives x1.032, 300% gives x1.091."
       }
     ],
     "tenos_master_of_chests": [
@@ -163,16 +169,25 @@
         "color": "#5ad8ff"
       },
       {
-        "text": ", counting only kills scored this vault while holding a vault sack."
+        "text": ", counting only kills scored this vault while holding a vault sack in your offhand. Damage over time is not boosted."
+      },
+      {
+        "text": "\n\nExamples: 100 kills gives x1.014, 1,000 gives x1.10, 5,000 gives x1.26."
       }
     ],
     "tenos_unstoppable_greed": [
       {
-        "text": "Adds 5%",
+        "text": "Multiplies your damage by "
+      },
+      {
+        "text": "1 + 5% of your Item Quantity and Rarity, summed",
         "color": "#5ad8ff"
       },
       {
-        "text": " of your Item Quantity and Rarity, summed, to your Attack Damage and Ability Power."
+        "text": ". Counts the Quantity and Rarity on your gear, before other Tenos stars change them. Damage over time is not boosted."
+      },
+      {
+        "text": "\n\nExamples: +50% summed gives x1.025, +130% gives x1.065, +500% gives x1.25, +1850% gives x1.93."
       }
     ],
     "tenos_omega_vault": [
@@ -213,18 +228,21 @@
     ],
     "tenos_gold_plating": [
       {
-        "text": "-75% damage from every attack",
+        "text": "-75% damage taken",
         "color": "#5ad8ff"
       },
       {
-        "text": ", but each hit costs you "
+        "text": " after armor and resistance, but each hit costs you "
       },
       {
         "text": "2 x log10(10 + damage blocked)",
         "color": "#5ad8ff"
       },
       {
-        "text": " gold."
+        "text": " gold. The reduction holds even when you cannot pay; the cost is kept as a debt and charged when you can, until you leave the vault."
+      },
+      {
+        "text": "\n\nExamples: blocking 10 damage costs 2.5 gold, 100 costs 3.9, 1,000 costs 5.8."
       }
     ],
     "tenos_wide_influence_ii": [
@@ -263,7 +281,10 @@
         "color": "#5ad8ff"
       },
       {
-        "text": ", scaling with your chests per minute averaged over the last five minutes."
+        "text": ", where c is your chests per minute averaged over the last five minutes."
+      },
+      {
+        "text": "\n\nExamples: 10 chests a minute gives x1.003, 30 gives x1.008, 60 gives x1.016."
       }
     ],
     "tenos_reserves_ii": [
@@ -385,7 +406,7 @@
         "color": "#5ad8ff"
       },
       {
-        "text": " per unique piece of armor equipped, multiplicative."
+        "text": " per Unique armor piece equipped, multiplicative."
       }
     ],
     "tenos_massive_chests": [
@@ -444,7 +465,10 @@
         "color": "#5ad8ff"
       },
       {
-        "text": " as your mana falls from half empty to empty."
+        "text": " as your mana falls from half full to empty."
+      },
+      {
+        "text": "\n\nExamples: at 50% mana x1, at 25% x1.5, at 10% x1.8."
       }
     ],
     "tenos_start_compass": [

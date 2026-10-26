@@ -37,7 +37,7 @@
         "color": "#ffc854"
       },
       {
-        "text": ", but every hit taken drains "
+        "text": " after armor and resistance, but every hit taken drains "
       },
       {
         "text": "1-3 seconds",
@@ -108,18 +108,32 @@
     ],
     "wendarr_speed_demon": [
       {
-        "text": "-25% timer tick duration",
+        "text": "The vault timer runs 1.33x faster",
         "color": "#ffc854"
       },
       {
-        "text": ", but "
+        "text": ", but everyone in the vault deals "
       },
       {
-        "text": "1.1x",
+        "text": "1.1x damage",
         "color": "#ffc854"
       },
       {
-        "text": " to most looting and combat stats, for everyone in the vault. Does not stack."
+        "text": " and gets "
+      },
+      {
+        "text": "1.1x Item Quantity, Item Rarity and Trap Disarming",
+        "color": "#ffc854"
+      },
+      {
+        "text": " and "
+      },
+      {
+        "text": "+10% Armor",
+        "color": "#ffc854"
+      },
+      {
+        "text": ", added to other Armor %. Does not stack."
       }
     ],
     "wendarr_plushie_lover": [
@@ -128,7 +142,7 @@
         "color": "#ffc854"
       },
       {
-        "text": " of an equipped plushie."
+        "text": " of a plushie held in your offhand."
       }
     ],
     "wendarr_start_spanner": [
@@ -242,14 +256,24 @@
     ],
     "wendarr_legend_of_the_pear": [
       {
-        "text": "Fruit efficiency scales the time a fruit grants on a "
+        "text": "Fruit grants "
       },
       {
-        "text": "square-root curve",
+        "text": "1 + sqrt(e)",
         "color": "#ffc854"
       },
       {
-        "text": " instead of the flattening one - far better gains at high efficiency."
+        "text": " times its time instead of "
+      },
+      {
+        "text": "1 + e / (1 + e)",
+        "color": "#ffc854"
+      },
+      {
+        "text": ", where e is your Fruit Efficiency. The normal curve never reaches 2x; this one keeps growing. Rot chance is unchanged."
+      },
+      {
+        "text": "\n\nExamples: +50% efficiency gives 1.71x time instead of 1.33x, +150% gives 2.23x instead of 1.60x, +300% gives 2.73x instead of 1.75x."
       }
     ],
     "wendarr_edge_of_time": [
@@ -257,11 +281,11 @@
         "text": "Deal "
       },
       {
-        "text": "10x all damage",
+        "text": "10x damage",
         "color": "#ffc854"
       },
       {
-        "text": ", but every instance of damage you deal consumes "
+        "text": " (not damage over time), but every instance of damage you deal, damage over time included, consumes "
       },
       {
         "text": "1-3 seconds",
@@ -310,18 +334,21 @@
     ],
     "wendarr_gardener": [
       {
-        "text": "+50% fruit",
+        "text": "Each fruit stack from Woldian Gardens has a "
+      },
+      {
+        "text": "5% chance to become Starfruit",
         "color": "#ffc854"
       },
       {
-        "text": " from Woldian Gardens, and a much higher "
+        "text": ", and otherwise a "
       },
       {
-        "text": "Starfruit",
+        "text": "50% chance to double",
         "color": "#ffc854"
       },
       {
-        "text": " drop rate."
+        "text": "."
       }
     ],
     "wendarr_temporal_breaking": [
@@ -350,18 +377,18 @@
     ],
     "wendarr_quick_search": [
       {
-        "text": "4x omega room chance",
+        "text": "4x omega room weight",
         "color": "#ffc854"
       },
       {
-        "text": ", but "
+        "text": ", but the "
       },
       {
-        "text": "-30% timer tick duration",
+        "text": "vault timer runs 1.43x faster",
         "color": "#ffc854"
       },
       {
-        "text": ". Does not stack, multiplicative with other tick-duration sources."
+        "text": ". Does not stack; with Speed Demon the timer runs 1.9x faster."
       }
     ],
     "wendarr_start_top": [
@@ -385,14 +412,17 @@
     ],
     "wendarr_paced_strikes": [
       {
-        "text": "Multiplies all damage you deal by "
+        "text": "Multiplies your damage by "
       },
       {
         "text": "sqrt((50 + t) / 50)",
         "color": "#ffc854"
       },
       {
-        "text": ", scaling with the vault time left."
+        "text": ", where t is the minutes left on the vault timer. Damage over time is not boosted."
+      },
+      {
+        "text": "\n\nExamples: 10 minutes left gives x1.10, 30 minutes gives x1.26, 100 minutes gives x1.73."
       }
     ],
     "wendarr_speedy": [
@@ -426,6 +456,9 @@
       },
       {
         "text": " you eat, letting you eat more."
+      },
+      {
+        "text": "\n\nExamples: after 5 fruits you keep 51% of your max health instead of 42%, after 10 fruits 24% instead of 16%."
       }
     ],
     "wendarr_efficient_steps": [

@@ -43,7 +43,7 @@
         "color": "#6ef08c"
       },
       {
-        "text": " on every heal you give an ally. Never applies to healing yourself."
+        "text": " on the heals your Heal Group ability gives allies. Never applies to healing yourself."
       }
     ],
     "velara_immune": [
@@ -108,22 +108,25 @@
         "color": "#6ef08c"
       },
       {
-        "text": ", but forces your healing efficiency to "
+        "text": ", where healing efficiency is from your gear, but caps your healing efficiency at "
       },
       {
         "text": "-50%",
         "color": "#6ef08c"
       },
       {
-        "text": " and stops you raising it."
+        "text": "."
+      },
+      {
+        "text": "\n\nExamples: +50% gear healing efficiency gives x1.14 thorns, +200% gives x1.44, +700% gives x2."
       }
     ],
     "velara_magic_armor": [
       {
-        "text": "Your armor's damage reduction now applies to magic damage at "
+        "text": "Magic damage that ignores armor is now reduced by your armor as if you had "
       },
       {
-        "text": "50% efficiency",
+        "text": "half your Armor",
         "color": "#6ef08c"
       },
       {
@@ -237,14 +240,14 @@
         "text": ", and you "
       },
       {
-        "text": "revive yourself every 600 seconds",
+        "text": "revive yourself at most once every 600 seconds",
         "color": "#6ef08c"
       },
       {
-        "text": " - but your attack damage and ability power are "
+        "text": " - but you deal "
       },
       {
-        "text": "halved",
+        "text": "half damage",
         "color": "#6ef08c"
       },
       {
@@ -289,7 +292,7 @@
         "color": "#6ef08c"
       },
       {
-        "text": ", over and over. The vault timer still gets through."
+        "text": ", over and over on the world clock. The vault timer still gets through."
       }
     ],
     "velara_sanitation": [
@@ -319,14 +322,14 @@
         "color": "#6ef08c"
       },
       {
-        "text": " dealt to your party members onto yourself, with an additional "
+        "text": " your party members take, after their armor and resistance, onto yourself, with an additional "
       },
       {
         "text": "33% resistance",
         "color": "#6ef08c"
       },
       {
-        "text": " against what you syphon. Several shepherds split the flock evenly instead of overlapping."
+        "text": " against what you syphon on top of your own. Several shepherds split the flock evenly instead of overlapping."
       }
     ],
     "velara_start_bulwark": [
@@ -398,15 +401,18 @@
       },
       {
         "text": " at 2 to 1, added to your other Armor %."
+      },
+      {
+        "text": "\n\nExamples: 150% Knockback Resistance gives +25% Armor, 200% gives +50%, 300% gives +100%."
       }
     ],
     "velara_bounce_back": [
       {
-        "text": "2x Healing Efficiency",
+        "text": "Doubles your Healing Efficiency",
         "color": "#6ef08c"
       },
       {
-        "text": " while below "
+        "text": " (+100% becomes +300%) while below "
       },
       {
         "text": "10% max health",
