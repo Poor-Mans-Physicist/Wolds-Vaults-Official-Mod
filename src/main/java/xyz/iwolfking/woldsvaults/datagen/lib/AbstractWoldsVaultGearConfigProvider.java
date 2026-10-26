@@ -10,6 +10,8 @@ import net.minecraft.world.item.Item;
 import xyz.iwolfking.vhapi.api.datagen.AbstractVaultGearConfigProvider;
 import xyz.iwolfking.woldsvaults.WoldsVaults;
 import xyz.iwolfking.woldsvaults.modifiers.gear.scepter.ScepterInvokeAttribute;
+import xyz.iwolfking.woldsvaults.modifiers.gear.unique.SteelInfernoAttribute;
+import xyz.iwolfking.woldsvaults.modifiers.gear.unique.StormTrackingAttribute;
 import xyz.iwolfking.woldsvaults.modifiers.vault.lib.StringValueGenerator;
 
 import java.util.List;
@@ -148,6 +150,27 @@ public abstract class AbstractWoldsVaultGearConfigProvider extends AbstractVault
         );
 
         return builder.add(new VaultGearTierConfig.ModifierTier<>(minLevel, weight, config), maxLevel);
+    }
+
+    public static VaultGearModifierTiersBuilder addSteelInferno(
+            VaultGearModifierTiersBuilder builder,
+            int minLevel, int maxLevel, int weight,
+            float minRadius, float maxRadius, float stepRadius,
+            float minBonus, float maxBonus, float stepBonus) {
+
+        SteelInfernoAttribute.Config config = new SteelInfernoAttribute.Config(
+                new FloatRollRangeEntry(minRadius, maxRadius, stepRadius),
+                new FloatRollRangeEntry(minBonus, maxBonus, stepBonus)
+        );
+
+        return builder.add(new VaultGearTierConfig.ModifierTier<>(minLevel, weight, config), maxLevel);
+    }
+
+    public static VaultGearModifierTiersBuilder addStormTracking(
+            VaultGearModifierTiersBuilder builder,
+            int minLevel, int maxLevel, int weight,
+            String abilityKey, float speed) {
+        return builder.add(new VaultGearTierConfig.ModifierTier<>(minLevel, weight, new StormTrackingAttribute.Config(true, abilityKey, speed)), maxLevel);
     }
 
     public static VaultGearModifierTiersBuilder addString(
