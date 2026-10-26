@@ -40,6 +40,8 @@ public final class ItemCodec {
     private static final Set<String> ITEM_KEYS = Set.of("item", "count", "gear", "extra", "raw", "about", "pouch",
             "trinkets", "active", "trinket", "uses", "deck", "combined");
 
+    private static final String CLIENT_CACHE = "clientCache";
+
     private ItemCodec() {
     }
 
@@ -76,7 +78,7 @@ public final class ItemCodec {
         JsonObject json = new JsonObject();
         json.addProperty("item", String.valueOf(copy.getItem().getRegistryName()));
         json.addProperty("count", copy.getCount());
-        CompoundTag extra = save.copy();
+        CompoundTag extra = withoutCache(save);
         extra.remove("id");
         extra.remove("Count");
         if (any instanceof VaultGearData gear && !(copy.getItem() instanceof CardDeckItem)) {
@@ -110,8 +112,8 @@ public final class ItemCodec {
         if (original.getCount() != rebuilt.getCount()) {
             return "the count changed";
         }
-        CompoundTag a = withoutGearData(original.save(new CompoundTag()));
-        CompoundTag b = withoutGearData(rebuilt.save(new CompoundTag()));
+        CompoundTag a = withoutGearData(withoutCache(original.save(new CompoundTag())));
+        CompoundTag b = withoutGearData(withoutCache(rebuilt.save(new CompoundTag())));
         if (!a.equals(b)) {
             return "the stack NBT outside the gear data differs";
         }
@@ -142,6 +144,21 @@ public final class ItemCodec {
             return "the vault uses differ";
         }
         return null;
+    }
+
+    /** A copy of a saved stack without the gear data cache the game rebuilds on every read ({@code clientCache}). */
+    private static CompoundTag withoutCache(CompoundTag save) {
+        CompoundTag copy = save.copy();
+        if (copy.contains("tag")) {
+            CompoundTag tag = copy.getCompound("tag");
+            tag.remove(CLIENT_CACHE);
+            if (tag.isEmpty()) {
+                copy.remove("tag");
+            } else {
+                copy.put("tag", tag);
+            }
+        }
+        return copy;
     }
 
     private static CompoundTag withoutGearData(CompoundTag save) {

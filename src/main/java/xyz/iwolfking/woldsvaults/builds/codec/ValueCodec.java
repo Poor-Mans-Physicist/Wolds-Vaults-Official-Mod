@@ -122,7 +122,7 @@ public final class ValueCodec {
             return new JsonPrimitive(numeric.getAsLong());
         }
         if (tag instanceof StringTag) {
-            if (readable != null && readable.isJsonPrimitive() && readable.getAsJsonPrimitive().isBoolean()) {
+            if (readable != null && readable.isJsonPrimitive()) {
                 return readable;
             }
             return new JsonPrimitive(tag.getAsString());
