@@ -36,7 +36,45 @@ public class GearSetConfig extends PackAuthoredConfig {
         @Expose public float shockConeBehind;
         @Expose public float shockConeRadius;
         @Expose public int stormVisualBoltsPerDash;
+        @Expose public Float contactInflate;
+        @Expose public Float stallSpeed;
+        @Expose public Integer launchGraceTicks;
+
+        /** Blocks the swept box that finds riptide contacts grows by on every side. */
+        public float contactInflate() {
+            if (this.contactInflate == null) {
+                warnMissing("contactInflate", DEFAULT_CONTACT_INFLATE);
+                this.contactInflate = DEFAULT_CONTACT_INFLATE;
+            }
+            return this.contactInflate;
+        }
+
+        /** Horizontal blocks per tick below which a dash that runs into a wall ends; faster dashes slide along it. */
+        public float stallSpeed() {
+            if (this.stallSpeed == null) {
+                warnMissing("stallSpeed", DEFAULT_STALL_SPEED);
+                this.stallSpeed = DEFAULT_STALL_SPEED;
+            }
+            return this.stallSpeed;
+        }
+
+        /** Ticks after a launch during which a wall never ends the dash. */
+        public int launchGraceTicks() {
+            if (this.launchGraceTicks == null) {
+                warnMissing("launchGraceTicks", DEFAULT_LAUNCH_GRACE_TICKS);
+                this.launchGraceTicks = DEFAULT_LAUNCH_GRACE_TICKS;
+            }
+            return this.launchGraceTicks;
+        }
+
+        private static void warnMissing(String key, Object value) {
+            WoldsVaults.LOGGER.warn("gear_sets.json riptide section has no {}; using the built-in {}.", key, value);
+        }
     }
+
+    private static final float DEFAULT_CONTACT_INFLATE = 0.5F;
+    private static final float DEFAULT_STALL_SPEED = 0.1F;
+    private static final int DEFAULT_LAUNCH_GRACE_TICKS = 3;
 
     public static class GearSet {
         @Expose public String name;
@@ -75,7 +113,7 @@ public class GearSetConfig extends PackAuthoredConfig {
         this.documentation = new LinkedHashMap<>();
         this.documentation.put("sets", "Set id -> name, colours, pieces (unique ids from unique_gear) and tiers. A piece counts while it sits in the player's attribute snapshot (worn in its intended slot, not broken, not above the player's level). Each unique counts once.");
         this.documentation.put("tiers", "pieces = pieces needed; text = the tooltip line; grants = gear attributes added to the wearer's snapshot while the tier is active (values in the attribute's own units, 1.0 = 100%)");
-        this.documentation.put("riptide", "Shared riptide tuning: hover friction is the extra per-tick horizontal speed multiplier during the hover, vertical damping the per-tick vertical one; the shock cone spans shockConeAhead blocks ahead of the player to shockConeBehind blocks behind, widening to shockConeRadius");
+        this.documentation.put("riptide", "Shared riptide tuning: hover friction is the extra per-tick horizontal speed multiplier during the hover, vertical damping the per-tick vertical one; the shock cone spans shockConeAhead blocks ahead of the player to shockConeBehind blocks behind, widening to shockConeRadius; contactInflate grows the box that finds dash contacts by that many blocks per side; a dash that hits a wall ends only once its horizontal speed is below stallSpeed blocks per tick, and never in its first launchGraceTicks ticks");
 
         this.riptide = new Riptide();
         this.riptide.hoverHorizontalFriction = 0.8F;
@@ -84,6 +122,9 @@ public class GearSetConfig extends PackAuthoredConfig {
         this.riptide.shockConeBehind = 3.0F;
         this.riptide.shockConeRadius = 4.0F;
         this.riptide.stormVisualBoltsPerDash = 3;
+        this.riptide.contactInflate = DEFAULT_CONTACT_INFLATE;
+        this.riptide.stallSpeed = DEFAULT_STALL_SPEED;
+        this.riptide.launchGraceTicks = DEFAULT_LAUNCH_GRACE_TICKS;
 
         GearSet tidebreaker = new GearSet();
         tidebreaker.name = "Tidebreaker";
@@ -98,7 +139,7 @@ public class GearSetConfig extends PackAuthoredConfig {
                         grant("woldsvaults:riptide_damage_more", new JsonPrimitive(1.0F))),
                 tier(4, "Riptide releases a shock cone, striking enemies from 2 blocks ahead of you to a 4-block radius 3 blocks behind you.",
                         grant("woldsvaults:riptide_shock_cone", new JsonPrimitive(1.0F))),
-                tier(6, "While dashing, a storm shrouds you: you hover briefly after each dash, take 75% less damage, and lightning strikes every enemy you hit for 5x damage (15x if chilled).",
+                tier(6, "While dashing, a storm shrouds you: you hover briefly after each dash, take 75% less damage, and lightning strikes every enemy your dash or its shock cone hits for 5x damage (15x if chilled).",
                         grant("woldsvaults:riptide_hover", new JsonPrimitive(30)),
                         grant("woldsvaults:riptide_boost_damage_reduction", new JsonPrimitive(0.75F)),
                         grant("woldsvaults:riptide_bolt", new JsonPrimitive(5.0F)),

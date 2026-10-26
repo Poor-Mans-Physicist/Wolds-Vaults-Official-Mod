@@ -57,14 +57,23 @@ public class RiptideStorm implements RiptideDash.Listener {
 
     @Override
     public void onContact(ServerPlayer player, RiptideDash.Dash dash, LivingEntity target, float finalDamage) {
+        strike(player, dash, target, finalDamage);
+    }
+
+    /**
+     * Strikes {@code target} with the storm's lightning for its bolt multiplier times {@code reference}, at most once
+     * per mob per dash: mobs the dash touches (their own contact damage) and mobs the shock cone hits (the dash's
+     * contact damage).
+     */
+    public static void strike(ServerPlayer player, RiptideDash.Dash dash, LivingEntity target, float reference) {
         AttributeSnapshot snapshot = RiptideDash.snapshot(player);
         float multiplier = isChilled(target)
                 ? snapshot.getAttributeValue(ModGearAttributes.RIPTIDE_BOLT_CHILLED, VaultGearAttributeTypeMerger.floatSum())
                 : bolt(snapshot);
-        if (multiplier <= 0.0F || finalDamage <= 0.0F) {
+        if (multiplier <= 0.0F || reference <= 0.0F || !dash.markStruck(target)) {
             return;
         }
-        RiptideDerivedHits.queue(player, target, multiplier * finalDamage);
+        RiptideDerivedHits.queue(player, target, multiplier * reference);
         boolean chilled = isChilled(target);
         if (dash.countVisualBolt() <= GearSetHelper.config().getRiptide().stormVisualBoltsPerDash) {
             RiptideFxMessage.send(player, RiptideFxMessage.arc(player, target, chilled));

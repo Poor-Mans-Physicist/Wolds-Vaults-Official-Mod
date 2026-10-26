@@ -71,6 +71,9 @@ import java.util.Optional;
 import java.util.Random;
 
 public class VaultTridentItem extends TridentItem implements VaultGearItem, DyeableLeatherItem {
+    /** Ticks a riptide launch spins for; the spin's elapsed ticks are this minus the ticks left. */
+    public static final int RIPTIDE_SPIN_TICKS = 20;
+
     public VaultTridentItem(ResourceLocation id, Properties builder) {
         super(builder);
         setRegistryName(id);
@@ -244,7 +247,7 @@ public class VaultTridentItem extends TridentItem implements VaultGearItem, Dyea
                         f2 *= f5 / f4;
                         f3 *= f5 / f4;
                         player.push(f1, f2, f3);
-                        player.startAutoSpinAttack(20);
+                        player.startAutoSpinAttack(RIPTIDE_SPIN_TICKS);
                         RiptideDash.start(player);
                         if (player.isOnGround()) {
                             float f6 = 1.1999999F;

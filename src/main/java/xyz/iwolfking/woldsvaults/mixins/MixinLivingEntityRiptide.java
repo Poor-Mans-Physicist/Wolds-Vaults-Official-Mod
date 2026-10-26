@@ -14,7 +14,11 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import xyz.iwolfking.woldsvaults.api.gear.sets.GearSetHelper;
+import xyz.iwolfking.woldsvaults.config.GearSetConfig;
+import xyz.iwolfking.woldsvaults.items.gear.VaultTridentItem;
 import xyz.iwolfking.woldsvaults.modifiers.gear.riptide.RiptideDash;
+import xyz.iwolfking.woldsvaults.modifiers.gear.riptide.RiptideShockCone;
 
 import java.util.Map;
 
@@ -31,22 +35,40 @@ public abstract class MixinLivingEntityRiptide extends Entity {
     @Shadow protected abstract void setLivingEntityFlag(int flag, boolean set);
 
     /**
-     * Piercing riptide: every living entity the spin sweeps through is hit once per dash and the dash carries on,
-     * instead of stopping and bouncing back on the first one. Walls still end it. Runs on both sides, since the
-     * player's movement is client-driven.
+     * Vault trident riptide. Contacts are found in the swept box grown by the set's contactInflate, so a mob next to
+     * the dash's line is hit. With piercing every mob the spin sweeps through is hit once per dash and the dash
+     * carries on; without it the first one stops and bounces the dash, as in vanilla. A wall ends the dash only once
+     * it has stalled (horizontal speed below stallSpeed) and never in its first launchGraceTicks ticks, so a dash
+     * slides along walls and corners in tight rooms. Runs on both sides, since the player's movement is client-driven.
      */
     @Inject(method = "checkAutoSpinAttack", at = @At("HEAD"), cancellable = true)
-    private void pierceRiptide(AABB previous, AABB current, CallbackInfo ci) {
-        if (!((Object) this instanceof Player player) || !RiptideDash.hasPierce(player)) {
+    private void vaultRiptide(AABB previous, AABB current, CallbackInfo ci) {
+        if (!((Object) this instanceof Player player) || !(player.getMainHandItem().getItem() instanceof VaultTridentItem)) {
             return;
         }
-        for (Entity entity : this.level.getEntities(this, previous.minmax(current))) {
-            if (entity instanceof LivingEntity target && target.isAlive() && RiptideDash.markContact(player, target)) {
-                this.doAutoAttackOnTouch(target);
+        GearSetConfig.Riptide tuning = GearSetHelper.config().getRiptide();
+        boolean pierce = RiptideDash.hasPierce(player);
+        for (Entity entity : this.level.getEntities(this, previous.minmax(current).inflate(tuning.contactInflate()))) {
+            if (!(entity instanceof LivingEntity target) || !RiptideShockCone.isTarget(player, target)) {
+                continue;
             }
-        }
-        if (this.horizontalCollision) {
+            if (pierce) {
+                if (RiptideDash.markContact(player, target)) {
+                    this.doAutoAttackOnTouch(target);
+                }
+                continue;
+            }
+            RiptideDash.markContact(player, target);
+            this.doAutoAttackOnTouch(target);
             this.autoSpinAttackTicks = 0;
+            this.setDeltaMovement(this.getDeltaMovement().scale(-0.2));
+            break;
+        }
+        if (this.horizontalCollision && this.autoSpinAttackTicks > 0) {
+            int elapsed = VaultTridentItem.RIPTIDE_SPIN_TICKS - this.autoSpinAttackTicks;
+            if (elapsed > tuning.launchGraceTicks() && this.getDeltaMovement().horizontalDistance() < tuning.stallSpeed()) {
+                this.autoSpinAttackTicks = 0;
+            }
         }
         if (!this.level.isClientSide && this.autoSpinAttackTicks <= 0) {
             this.setLivingEntityFlag(4, false);

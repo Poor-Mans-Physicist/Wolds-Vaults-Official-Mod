@@ -14,14 +14,16 @@ import xyz.iwolfking.woldsvaults.config.GearSetConfig;
 import xyz.iwolfking.woldsvaults.init.ModGearAttributes;
 import xyz.iwolfking.woldsvaults.network.message.RiptideFxMessage;
 
+import java.util.Comparator;
 import java.util.List;
 
 /**
  * The riptide shock cone: every tick of a dash, mobs inside a cone from {@code shockConeAhead} blocks ahead of the
  * player to a {@code shockConeRadius} radius {@code shockConeBehind} blocks behind are shocked once per dash for
- * {@link ModGearAttributes#RIPTIDE_SHOCK_CONE} times the dash's first contact final damage. Mobs shocked before the
- * dash lands a contact wait for it; if it never lands one they take the player's previous dash value. Area of
- * effect does not scale the cone.
+ * {@link ModGearAttributes#RIPTIDE_SHOCK_CONE} times the dash's first contact final damage, and struck by the storm's
+ * lightning. A dash that has not touched a mob when the cone first finds one lands a contact on the nearest cone
+ * target ({@link RiptideDash#forceContact}), so the cone always has a contact to draw from; if that contact deals no
+ * damage the waiting mobs take the player's previous dash value. Area of effect does not scale the cone.
  */
 public class RiptideShockCone implements RiptideDash.Listener {
     @Override
@@ -36,12 +38,16 @@ public class RiptideShockCone implements RiptideDash.Listener {
         double reach = Math.max(tuning.shockConeRadius, Math.max(tuning.shockConeAhead, tuning.shockConeBehind)) + 1.0;
         List<LivingEntity> candidates = player.level.getEntitiesOfClass(LivingEntity.class, new AABB(origin, origin).inflate(reach),
                 entity -> isTarget(player, entity) && inCone(entity, origin, axis, tuning));
+        if (dash.getReferenceDamage() <= 0.0F && !candidates.isEmpty()) {
+            candidates.stream().min(Comparator.comparingDouble(player::distanceToSqr))
+                    .ifPresent(nearest -> RiptideDash.forceContact(player, nearest));
+        }
         for (LivingEntity target : candidates) {
             if (!dash.markShocked(target)) {
                 continue;
             }
             if (dash.getReferenceDamage() > 0.0F) {
-                hit(player, target, multiplier * dash.getReferenceDamage());
+                hit(player, dash, target, multiplier, dash.getReferenceDamage());
             } else {
                 dash.getPendingShock().add(target);
             }
@@ -72,8 +78,8 @@ public class RiptideShockCone implements RiptideDash.Listener {
         if (reference <= 0.0F || dash.getPendingShock().isEmpty()) {
             return;
         }
-        float amount = multiplier(player) * reference;
-        dash.getPendingShock().forEach(target -> hit(player, target, amount));
+        float multiplier = multiplier(player);
+        dash.getPendingShock().forEach(target -> hit(player, dash, target, multiplier, reference));
         dash.getPendingShock().clear();
     }
 
@@ -81,12 +87,15 @@ public class RiptideShockCone implements RiptideDash.Listener {
         return RiptideDash.snapshot(player).getAttributeValue(ModGearAttributes.RIPTIDE_SHOCK_CONE, VaultGearAttributeTypeMerger.floatSum());
     }
 
-    private static void hit(ServerPlayer player, LivingEntity target, float amount) {
-        RiptideDerivedHits.queue(player, target, amount);
+    /** The cone's hit on {@code target} for its multiplier times the dash's contact damage, and the storm's lightning. */
+    private static void hit(ServerPlayer player, RiptideDash.Dash dash, LivingEntity target, float multiplier, float reference) {
+        RiptideDerivedHits.queue(player, target, multiplier * reference);
         RiptideFxMessage.send(player, RiptideFxMessage.burst(player, target, RiptideStorm.isChilled(target)));
+        RiptideStorm.strike(player, dash, target, reference);
     }
 
-    static boolean isTarget(Player player, LivingEntity entity) {
+    /** A mob riptide may hit: not the player, another player, an eternal, a pet or an ally. */
+    public static boolean isTarget(Player player, LivingEntity entity) {
         return entity != player && entity.isAlive() && !(entity instanceof Player)
                 && !(entity instanceof EternalEntity) && !(entity instanceof PetEntity) && !player.isAlliedTo(entity);
     }
