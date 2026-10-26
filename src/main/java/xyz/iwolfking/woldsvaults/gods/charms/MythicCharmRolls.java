@@ -63,7 +63,8 @@ public final class MythicCharmRolls {
                         Kind kind, String conflictGroup, String target) {
     }
 
-    private record StoredRoll(VaultGearModifier.AffixType slot, String key, int quality, boolean legendary) {
+    /** One identification draw: its affix slot, roll key, quality step and legendary flag. */
+    public record StoredRoll(VaultGearModifier.AffixType slot, String key, int quality, boolean legendary) {
     }
 
     private MythicCharmRolls() {
@@ -609,7 +610,98 @@ public final class MythicCharmRolls {
         return null;
     }
 
-    private static void writeRolls(ItemStack stack, List<StoredRoll> rolls) {
+    /** True for a temporal blessing draw, whose key names the vault modifier it grants. */
+    public static boolean isTemporal(String key) {
+        return key.startsWith("temporal:");
+    }
+
+    /** True when a {@code god} charm can draw {@code key} into {@code slot}. */
+    public static boolean knowsKey(VaultGod god, VaultGearModifier.AffixType slot, String key) {
+        if (isTemporal(key)) {
+            ResourceLocation id = ResourceLocation.tryParse(key.substring("temporal:".length()));
+            return slot == VaultGearModifier.AffixType.IMPLICIT && id != null && temporalPool(god).contains(id)
+                    && implicits(god).stream().anyMatch(roll -> roll.kind() == Kind.TEMPORAL);
+        }
+        return lookup(god, new StoredRoll(slot, key, 0, false)) != null;
+    }
+
+    /** The modifier one draw materializes to at {@code units}; empty when it is dormant, temporal or unknown. */
+    public static java.util.Optional<VaultGearModifier<?>> materializeDraw(VaultGod god, StoredRoll draw, int units) {
+        if (isTemporal(draw.key())) {
+            return java.util.Optional.empty();
+        }
+        Roll roll = lookup(god, draw);
+        return roll == null ? java.util.Optional.empty() : java.util.Optional.ofNullable(buildModifier(roll, draw, units + 1));
+    }
+
+    /**
+     * Every way {@code draws} differ from what identifying a {@code god} mythic charm can produce: affix counts,
+     * repeated keys or conflict groups, quality outside the roll range, and the legendary rule (one prefix or suffix,
+     * at its top quality). Empty when an identification could roll exactly these draws.
+     */
+    public static List<String> legalityIssues(VaultGod god, List<StoredRoll> draws) {
+        List<String> issues = new ArrayList<>();
+        int implicits = 0;
+        int prefixes = 0;
+        int suffixes = 0;
+        int legendaries = 0;
+        Set<String> keys = new HashSet<>();
+        Set<String> groups = new HashSet<>();
+        for (StoredRoll draw : draws) {
+            switch (draw.slot()) {
+                case IMPLICIT -> implicits++;
+                case PREFIX -> prefixes++;
+                case SUFFIX -> suffixes++;
+            }
+            String slotKey = draw.slot().name() + "|" + (isTemporal(draw.key()) ? "temporal" : draw.key());
+            if (!keys.add(slotKey)) {
+                issues.add(draw.slot().name().toLowerCase(java.util.Locale.ROOT) + " " + draw.key()
+                        + " is drawn twice; identification draws each roll once");
+            }
+            if (draw.legendary()) {
+                legendaries++;
+            }
+            if (isTemporal(draw.key())) {
+                if (draw.legendary()) {
+                    issues.add("temporal " + draw.key() + " is legendary; only a prefix or suffix can be");
+                }
+                continue;
+            }
+            Roll roll = lookup(god, draw);
+            if (roll == null) {
+                continue;
+            }
+            if (!roll.conflictGroup().isEmpty() && !groups.add(draw.slot().name() + "|" + roll.conflictGroup())) {
+                issues.add(draw.key() + " shares conflict group " + roll.conflictGroup() + " with another draw");
+            }
+            int max = maxQuality(roll);
+            if (draw.quality() < 0 || draw.quality() > max) {
+                issues.add(draw.key() + " quality " + draw.quality() + " is outside the roll range 0 to " + max);
+            }
+            if (draw.legendary() && draw.slot() == VaultGearModifier.AffixType.IMPLICIT) {
+                issues.add("implicit " + draw.key() + " is legendary; only a prefix or suffix can be");
+            } else if (draw.legendary() && draw.quality() != max) {
+                issues.add("legendary " + draw.key() + " has quality " + draw.quality() + "; a legendary draw is at its top "
+                        + "quality " + max);
+            }
+        }
+        if (implicits < 2 || implicits > 3) {
+            issues.add(implicits + " implicits; identification draws 2 or 3");
+        }
+        if (prefixes != Math.min(PREFIX_COUNT, prefixes(god).size())) {
+            issues.add(prefixes + " prefixes; identification draws " + Math.min(PREFIX_COUNT, prefixes(god).size()));
+        }
+        if (suffixes != Math.min(SUFFIX_COUNT, suffixes(god).size())) {
+            issues.add(suffixes + " suffixes; identification draws " + Math.min(SUFFIX_COUNT, suffixes(god).size()));
+        }
+        if (legendaries > 1) {
+            issues.add(legendaries + " legendary draws; identification makes at most one");
+        }
+        return issues;
+    }
+
+    /** Stores {@code rolls} as the charm's identification draws, replacing any it had. */
+    public static void writeRolls(ItemStack stack, List<StoredRoll> rolls) {
         ListTag list = new ListTag();
         for (StoredRoll roll : rolls) {
             CompoundTag entry = new CompoundTag();
@@ -622,7 +714,8 @@ public final class MythicCharmRolls {
         stack.getOrCreateTag().put(ROLLS_TAG, list);
     }
 
-    private static List<StoredRoll> readRolls(ItemStack stack) {
+    /** The charm's stored identification draws, in order. */
+    public static List<StoredRoll> readRolls(ItemStack stack) {
         CompoundTag tag = stack.getTag();
         if (tag == null || !tag.contains(ROLLS_TAG, Tag.TAG_LIST)) {
             return List.of();

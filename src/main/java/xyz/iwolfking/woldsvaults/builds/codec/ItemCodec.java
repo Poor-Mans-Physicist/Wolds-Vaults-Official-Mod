@@ -40,7 +40,7 @@ import java.util.Set;
  */
 public final class ItemCodec {
     private static final Set<String> ITEM_KEYS = Set.of("item", "count", "gear", "extra", "raw", "about", "pouch",
-            "trinkets", "active", "trinket", "uses", "deck", "combined");
+            "trinkets", "active", "trinket", "uses", "deck", "combined", "mythic_charm");
 
     private static final String CLIENT_CACHE = "clientCache";
 
@@ -194,6 +194,9 @@ public final class ItemCodec {
         }
         if (json.has("deck")) {
             return DeckCodec.read(Json.object(json, "deck", path), path + ".deck", report);
+        }
+        if (json.has("mythic_charm")) {
+            return MythicCharmCodec.read(Json.object(json, "mythic_charm", path), path + ".mythic_charm", report);
         }
         ResourceLocation id = Json.id(Json.string(json, "item", path), path + ".item");
         Item item = ForgeRegistries.ITEMS.getValue(id);
