@@ -243,7 +243,7 @@ public final class GearCodec {
         if (json.has("value") || json.has("snbt")) {
             modifier = withValue(modifier, json, path);
         } else {
-            report.fallback(path + ": no etching value given; rolled " + modifier.getValue() + " at greed tier " + tier);
+            report.fallback(path + ": no etching value given; rolled " + readable(modifier) + " at greed tier " + tier);
         }
         VaultGearData data = VaultGearData.read(stack);
         data.setRarity(VaultGearRarity.UNIQUE);
@@ -251,6 +251,14 @@ public final class GearCodec {
         data.addModifier(VaultGearModifier.AffixType.IMPLICIT, modifier, true);
         data.write(stack);
         stack.setHoverName(new TextComponent(entry.getName() + " " + stack.getHoverName().getString()));
+    }
+
+    private static <T> String readable(VaultGearModifier<T> modifier) {
+        try {
+            return String.valueOf(modifier.getAttribute().getType().serialize(modifier.getValue()));
+        } catch (RuntimeException e) {
+            return String.valueOf(modifier.getValue());
+        }
     }
 
     private static <T> VaultGearModifier<T> withValue(VaultGearModifier<T> template, JsonObject json, String path) {
@@ -381,7 +389,7 @@ public final class GearCodec {
                 throw new BuildException(path + ": " + identifier + " has no tier to generate a value from at level " + level);
             }
             modifier = source.makeModifier(tierGroup, RANDOM);
-            report.fallback(path + ": no value given for " + identifier + "; generated " + modifier.getValue()
+            report.fallback(path + ": no value given for " + identifier + "; generated " + readable(modifier)
                     + " from the game's tier T" + (source.getModifierTier() + 1) + " config");
         } else {
             modifier = modifier(attribute, entry, path);

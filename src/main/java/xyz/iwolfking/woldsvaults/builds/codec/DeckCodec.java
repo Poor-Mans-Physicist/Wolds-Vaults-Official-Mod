@@ -36,7 +36,7 @@ import java.util.Set;
  * allows it.
  */
 public final class DeckCodec {
-    private static final Set<String> DECK_KEYS = Set.of("deck", "sockets", "cards", "cores", "implicits");
+    private static final Set<String> DECK_KEYS = Set.of("deck", "sockets", "cards", "cores", "implicits", "layout");
     private static final Set<String> CARD_KEYS = Set.of("row", "col", "card", "tier", "color", "scaler", "groups", "value");
     private static final Set<String> CORE_KEYS = Set.of("id", "value", "roll");
     private static final int LAYOUT_TRIES = 500;
@@ -68,7 +68,9 @@ public final class DeckCodec {
             }
         }
         RandomSource random = JavaRandom.ofNanoTime();
-        CardDeck deck = layout(id, wanted.keySet(), path, random);
+        JsonArray forced = Json.optArray(json, "layout", path);
+        CardDeck deck = forced == null ? layout(id, wanted.keySet(), path, random)
+                : forcedLayout(id, forced, wanted.keySet(), path, random, report);
         Map<String, CardPos> slots = new HashMap<>();
         deck.getSlots().forEach(pos -> slots.put(pos.x + "," + pos.y, pos));
         for (Map.Entry<String, JsonObject> entry : wanted.entrySet()) {
@@ -109,6 +111,44 @@ public final class DeckCodec {
             }
         }
         throw new BuildException(path + ": no layout of deck '" + id + "' has a slot at every listed column,row");
+    }
+
+    /**
+     * A deck of template {@code id} with exactly the listed slots. Used when the build needs a shape the template
+     * cannot roll (Construction cores add slots at random); reported as a bypassed rule when no template layout fits.
+     */
+    private static CardDeck forcedLayout(String id, JsonArray slots, Set<String> wanted, String path, RandomSource random,
+                                         BuildReport report) {
+        CardDeck template = ModConfigs.CARD_DECK.generate(id, random).orElseThrow(
+                () -> new BuildException(path + ".deck: the game could not generate deck '" + id + "'"));
+        CardDeck deck = new CardDeck();
+        deck.setSocketCount(template.getSocketCount());
+        Set<String> have = new HashSet<>();
+        for (int i = 0; i < slots.size(); i++) {
+            String slotPath = path + ".layout[" + i + "]";
+            JsonObject slot = Json.asObject(slots.get(i), slotPath);
+            Json.onlyKeys(slot, slotPath, Set.of("row", "col", "arcane"));
+            int row = Json.intValue(slot, "row", slotPath);
+            int col = Json.intValue(slot, "col", slotPath);
+            if (row < 0 || col < 0) {
+                throw new BuildException(slotPath + ": rows and columns start at 0");
+            }
+            if (!have.add(col + "," + row)) {
+                throw new BuildException(slotPath + ": the slot at column,row " + col + "," + row + " is listed twice");
+            }
+            boolean arcane = Boolean.TRUE.equals(Json.optBoolean(slot, "arcane", slotPath));
+            deck.setCard(arcane ? new CardPos(col, row, "Arcane") : new CardPos(col, row), null);
+        }
+        if (!have.containsAll(wanted)) {
+            throw new BuildException(path + ".layout: a card sits in a slot the layout does not list");
+        }
+        Set<String> templateSlots = new HashSet<>();
+        template.getSlots().forEach(pos -> templateSlots.add(pos.x + "," + pos.y));
+        if (!templateSlots.equals(have)) {
+            report.bypassed(path + ": deck " + id + " uses the build's own " + have.size() + "-slot layout; the game's "
+                    + id + " template rolls " + templateSlots.size() + " slots (Construction cores add slots at random)");
+        }
+        return deck;
     }
 
     private static Card card(JsonObject json, CardPos pos, String path, BuildReport report) {
