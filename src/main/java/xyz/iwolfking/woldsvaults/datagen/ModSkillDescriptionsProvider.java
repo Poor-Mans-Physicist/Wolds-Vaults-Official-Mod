@@ -1531,6 +1531,8 @@ public class ModSkillDescriptionsProvider extends AbstractSkillDescriptionsProvi
             description.add(JsonDescription.text("0.1", ember));
             description.add(JsonDescription.text(", but the effects of your lucky hit modifiers are "));
             description.add(JsonDescription.text("doubled", ember));
+            description.add(JsonDescription.text(". Lucky Strike Battle Cry's bonus chance is added after this and is "));
+            description.add(JsonDescription.text("not reduced", ember));
             description.add(JsonDescription.text("."));
         });
         builder.addDescription("idona_thwack", description -> {

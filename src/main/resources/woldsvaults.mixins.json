@@ -636,6 +636,7 @@
     "vaulthunters.objectives.MixinScavengerBingoObjectiveTargets",
     "vaulthunters.objectives.MixinScavengerObjectiveTargets",
     "vaulthunters.objectives.MixinVaultRuneBossCrystalObjective",
+    "MixinItemCooldownsRiptide",
     "MixinLivingEntityRiptide",
     "MixinPlayerRiptideContact",
     "MixinServerItemCooldownsRiptide",

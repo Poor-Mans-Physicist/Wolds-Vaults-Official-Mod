@@ -62,6 +62,7 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.targeting.TargetingConditions;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -70,6 +71,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.level.entity.EntityTypeTest;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.living.*;
 import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
@@ -123,6 +125,7 @@ public class LivingEntityEvents {
     public static void init() {
          ANCHOR_SLAM_SOUND  = Registry.SOUND_EVENT.get(ResourceLocation.parse("bettercombat:anchor_slam"));
          registerLeechHealingEfficiencyExclusion();
+         MinecraftForge.EVENT_BUS.addListener(EventPriority.HIGH, false, LivingHurtEvent.class, LivingEntityEvents::applyRiptideDamageMore);
     }
 
     /** Clamps healing effectiveness to 1.0 while {@link ActiveFlags#IS_LEECHING} is set, at lowest priority. */
@@ -748,6 +751,12 @@ public class LivingEntityEvents {
         }
     }
 
+    /**
+     * Sets the base damage of hits a player lands while spinning with a riptide vault trident. A riptide contact
+     * hits like a full-strength melee swing for twice the player's attack damage attribute; other hits during the
+     * spin (channeling chain hits) keep twice the trident's own attack damage. Runs first so every later stage of
+     * the hurt chain builds on this base.
+     */
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void onLivingHurt(LivingHurtEvent event) {
         if (!(event.getSource().getEntity() instanceof Player player)) {
@@ -760,20 +769,42 @@ public class LivingEntityEvents {
 
         ItemStack stack = player.getMainHandItem();
 
-        if (stack.getItem() instanceof VaultTridentItem &&
-                player.isAutoSpinAttack() && VaultTridentItem.isVaultTridentRiptide(stack)) {
+        if (isVaultRiptideSpin(player, stack)) {
             VaultGearData data = VaultGearData.read(stack);
             double d = 2 * data.get(iskallia.vault.init.ModGearAttributes.ATTACK_DAMAGE, VaultGearAttributeTypeMerger.doubleSum());
 
             if(!ActiveFlags.IS_CHAINING_ATTACKING.isSet()) {
-                ActiveFlags.IS_CHAINING_ATTACKING.runIfNotSet(() -> VaultTridentItem.triggerChannelingRiptide(stack, player.getLevel(), player));
                 if (RiptideDash.isContact(event.getEntityLiving())) {
-                    AttributeSnapshot snapshot = AttributeSnapshotHelper.getInstance().getSnapshot(player);
-                    d *= 1.0 + snapshot.getAttributeValue(ModGearAttributes.RIPTIDE_DAMAGE_MORE, VaultGearAttributeTypeMerger.floatSum());
+                    d = 2 * player.getAttributeValue(Attributes.ATTACK_DAMAGE);
                 }
+                ActiveFlags.IS_CHAINING_ATTACKING.runIfNotSet(() -> VaultTridentItem.triggerChannelingRiptide(stack, player.getLevel(), player));
             }
             event.setAmount((float) d);
         }
+    }
+
+    /**
+     * Multiplies a riptide contact by its More Riptide Damage. Registered at HIGH after the base mod's own HIGH
+     * listeners, so the additions they make to the contact (Battle Cry) are multiplied too.
+     */
+    private static void applyRiptideDamageMore(LivingHurtEvent event) {
+        if (!(event.getSource().getEntity() instanceof Player player)
+                || WoldActiveFlags.IS_FANG_ATTACKING.isSet()
+                || ActiveFlags.IS_CHAINING_ATTACKING.isSet()
+                || !RiptideDash.isContact(event.getEntityLiving())
+                || !isVaultRiptideSpin(player, player.getMainHandItem())
+                || !AttributeSnapshotHelper.canHaveSnapshot(player)) {
+            return;
+        }
+        AttributeSnapshot snapshot = AttributeSnapshotHelper.getInstance().getSnapshot(player);
+        float more = snapshot.getAttributeValue(ModGearAttributes.RIPTIDE_DAMAGE_MORE, VaultGearAttributeTypeMerger.floatSum());
+        if (more != 0.0F) {
+            event.setAmount(event.getAmount() * (1.0F + more));
+        }
+    }
+
+    private static boolean isVaultRiptideSpin(Player player, ItemStack stack) {
+        return stack.getItem() instanceof VaultTridentItem && player.isAutoSpinAttack() && VaultTridentItem.isVaultTridentRiptide(stack);
     }
 
     private static void withSnapshot(LivingEvent event, boolean serverOnly, BiConsumer<LivingEntity, AttributeSnapshot> fn) {
