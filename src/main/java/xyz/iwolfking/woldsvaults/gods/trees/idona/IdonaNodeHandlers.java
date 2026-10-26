@@ -224,7 +224,7 @@ public final class IdonaNodeHandlers {
     public record GreedbaneParams(float multiplier) implements GodEffectParams {
     }
 
-    public record PowerDumpParams(float per_mana, int surplus_ttl_ticks,
-                                  int continuous_grace_ticks) implements GodEffectParams {
+    public record PowerDumpParams(float per_mana, float sqrt_ref, float hold_drain_fraction,
+                                  int toggle_grace_ticks) implements GodEffectParams {
     }
 }

@@ -82,7 +82,7 @@ public final class GodNodeEffectDefaults {
         put(map, "idona_kinetic_impact", "idona_kinetic_impact", new float[]{}, "per_percent", 0.001F);
         put(map, "idona_surrounded", "idona_surrounded", new float[]{}, "per_mob", 0.025F, "radius", 20.0D);
         put(map, "idona_grand_archmage", "idona_grand_archmage", new float[]{},
-                "mana_percentile", 1.0F, "mana_flat", 200, "mana_regen", 8.0F, "ability_damage", 2.0F,
+                "mana_percentile", 1.0F, "mana_flat", 200, "mana_regen", 8.0F, "ability_damage", 3.0F,
                 "cooldown_reduction_cap", 0.05F);
         put(map, "idona_ultra_rampaging", "idona_ultra_rampaging", new float[]{},
                 "fury_per_hit", 100.0F, "fury_per_kill", 200.0F,
@@ -91,7 +91,7 @@ public final class GodNodeEffectDefaults {
                 "fury_decay_per_tick", 0.985F, "fury_decay_scale_from", 6000.0F,
                 "fury_decay_scale_divisor", 2000.0F, "fury_floor", 25.0F, "fury_cap", 15000.0F,
                 "cdm_additive_divisor", 6500.0F, "cdm_multiplier_base", 1.03F, "cdm_sqrt_from", 6000.0F,
-                "incoming_divisor", 3000.0F, "incoming_scale", 0.5F);
+                "incoming_divisor", 3000.0F, "incoming_scale", 0.2236068F);
         put(map, "idona_overcrit", "idona_overcrit", new float[]{});
         put(map, "idona_true_rage", "idona_true_rage", new float[]{}, "efficiency", 0.5F);
         put(map, "idona_crushing_blows", "idona_crushing_blows", new float[]{}, "multiplier", 1.15F);
@@ -110,7 +110,7 @@ public final class GodNodeEffectDefaults {
         put(map, "idona_prison_warden", "idona_prison_warden", new float[]{}, "multiplier", 2.0F, "duration_ticks", 600);
         put(map, "idona_greedbane", "idona_greedbane", new float[]{}, "multiplier", 1.5F);
         put(map, "idona_power_dump", "idona_power_dump", new float[]{},
-                "per_mana", 0.0025F, "surplus_ttl_ticks", 900, "continuous_grace_ticks", 30);
+                "per_mana", 0.0025F, "sqrt_ref", 2000.0F, "hold_drain_fraction", 0.025F, "toggle_grace_ticks", 1);
     }
 
     /** Velara's shipped effect table. */
@@ -152,16 +152,16 @@ public final class GodNodeEffectDefaults {
         put(map, "velara_indomitable", "velara_indomitable", new float[]{}, "regeneration_levels", 3);
         put(map, "velara_field_medic", "velara_field_medic", new float[]{}, "multiplier", 1.5F);
         put(map, "velara_the_stonewall", "velara_the_stonewall", new float[]{},
-                "speed_multiplier", 0.33F, "armor_multiplier", 1.5F);
+                "speed_multiplier", 0.4F, "armor_multiplier", 1.5F);
         put(map, "velara_cactus", "velara_cactus", new float[]{}, "armor_multiplier", 0.33F, "thorns_multiplier", 2.0F);
         put(map, "velara_malediction", "velara_malediction", new float[]{}, "forced_healing", 0.5F);
         put(map, "velara_immortal", "velara_immortal", new float[]{},
-                "health_multiplier", 1.33F, "armor_multiplier", 1.33F, "healing_multiplier", 1.5F,
-                "flat_health", 20.0F, "flat_armor", 50.0F, "regeneration_levels", 10, "damage_multiplier", 0.5F,
-                "revive_cooldown_ticks", 6000);
+                "health_multiplier", 1.25F, "armor_multiplier", 1.25F, "healing_multiplier", 1.33F,
+                "flat_health", 15.0F, "flat_armor", 30.0F, "regeneration_levels", 8, "damage_multiplier", 0.5F,
+                "revive_cooldown_ticks", 12000);
         put(map, "velara_fleeting_physicality", "velara_fleeting_physicality", new float[]{},
                 "immune_ticks", 200, "vulnerable_ticks", 400, "damage_multiplier", 3.0F);
-        put(map, "velara_steadfast", "velara_steadfast", new float[]{}, "knockback_floor", 1.0F, "armor_per_excess", 1.0F);
+        put(map, "velara_steadfast", "velara_steadfast", new float[]{}, "knockback_floor", 1.0F, "armor_per_excess", 0.5F);
         put(map, "velara_sanitation", "velara_sanitation", new float[]{}, "radius", 50.0F, "duration_divisor", 3);
         put(map, "velara_presence", "velara_presence", new float[]{},
                 "radius", 100.0F, "resistance", 0.1F, "healing", 1.0F, "regeneration_levels", 2);
@@ -271,7 +271,7 @@ public final class GodNodeEffectDefaults {
         put(map, "tenos_drillmaster", "tenos_drillmaster", new float[]{}, "raised_fortune_cap", 7);
         put(map, "tenos_sacked", "tenos_sacked", new float[]{});
         put(map, "tenos_sack_of_mobs", "tenos_sack_of_mobs", new float[]{}, "log_base", 1000.0F);
-        put(map, "tenos_unstoppable_greed", "tenos_unstoppable_greed", new float[]{}, "ratio", 0.1F);
+        put(map, "tenos_unstoppable_greed", "tenos_unstoppable_greed", new float[]{}, "ratio", 0.05F);
         put(map, "tenos_wealthy_patron", "tenos_wealthy_patron", new float[]{}, "per_unique", 0.03F);
         put(map, "tenos_gold_plating", "tenos_gold_plating", new float[]{},
                 "damage_multiplier", 0.25F, "cost_coefficient", 2.0F, "cost_offset", 10.0F);

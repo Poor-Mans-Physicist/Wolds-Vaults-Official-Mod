@@ -113,10 +113,16 @@ public final class GodTreeModel {
         return this.nodes.isEmpty();
     }
 
-    /** Whether a node exists, is enabled, is unowned, and is a root or touches an owned neighbour. */
+    /**
+     * Whether a node exists, is enabled, is unowned, is not a second major in this tree, and is a root or
+     * touches an owned neighbour.
+     */
     public boolean isPurchasable(String nodeId, Predicate<String> purchased) {
         GodNode node = this.nodes.get(nodeId);
         if (node == null || !node.enabled() || purchased.test(nodeId)) {
+            return false;
+        }
+        if (node.type() == GodNodeType.MAJOR && this.ownedMajor(purchased) != null) {
             return false;
         }
         if (node.isRoot()) {
@@ -128,5 +134,16 @@ public final class GodTreeModel {
             }
         }
         return false;
+    }
+
+    /** The id of an owned major node in this tree, or null when none is owned. A tree allows one major. */
+    @Nullable
+    public String ownedMajor(Predicate<String> purchased) {
+        for (GodNode node : this.nodes.values()) {
+            if (node.type() == GodNodeType.MAJOR && purchased.test(node.id())) {
+                return node.id();
+            }
+        }
+        return null;
     }
 }

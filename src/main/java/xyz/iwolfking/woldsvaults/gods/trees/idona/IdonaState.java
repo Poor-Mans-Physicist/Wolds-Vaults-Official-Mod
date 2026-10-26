@@ -23,12 +23,9 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @Mod.EventBusSubscriber(modid = WoldsVaults.MOD_ID)
 public final class IdonaState {
-    /** The Power Dump reservoir: banked mana, the windows that gate it, and the unpaid stage. */
+    /** Power Dump's per-player state: when a sneaking dump last emptied the bar. */
     public static final class PowerDump {
-        private float extra;
-        private long expiry;
-        private long continuousUntil;
-        private float pending;
+        private long lastSneakDrain = Long.MIN_VALUE;
     }
 
     private static final Map<Integer, Long> PRISON_MARKS = new ConcurrentHashMap<>();
@@ -72,54 +69,18 @@ public final class IdonaState {
         return true;
     }
 
-    /** Stages a surplus; nothing is live until {@link #commitPowerDumpExtra}. */
-    public static void stagePowerDumpExtra(ServerPlayer player, float extraMana) {
-        powerDump(player.getUUID()).pending = Math.max(extraMana, 0.0F);
+    /** Records that a sneaking Power Dump just emptied the player's mana bar. */
+    public static void markSneakDrain(ServerPlayer player) {
+        powerDump(player.getUUID()).lastSneakDrain = player.getLevel().getGameTime();
     }
 
-    /** Banks the staged surplus for {@code surplus_ttl_ticks}. A zero stage clears the live one. */
-    public static void commitPowerDumpExtra(ServerPlayer player) {
-        PowerDump reservoir = powerDump(player.getUUID());
-        float extraMana = reservoir.pending;
-        reservoir.pending = 0.0F;
-        if (extraMana <= 0.0F) {
-            reservoir.extra = 0.0F;
-            reservoir.expiry = 0L;
-            return;
+    /** Ticks since the last sneaking Power Dump drain, or {@link Long#MAX_VALUE} when there was none. */
+    public static long ticksSinceSneakDrain(ServerPlayer player) {
+        PowerDump state = GodNodeState.<PowerDump>peek(player.getUUID(), IdonaNodes.POWER_DUMP).orElse(null);
+        if (state == null || state.lastSneakDrain == Long.MIN_VALUE) {
+            return Long.MAX_VALUE;
         }
-        int ttl = IdonaNodeHandlers.params(IdonaNodes.POWER_DUMP,
-                IdonaNodeHandlers.PowerDumpParams.class).surplus_ttl_ticks();
-        reservoir.extra = extraMana;
-        reservoir.expiry = player.getLevel().getGameTime() + ttl;
-    }
-
-    public static void discardPowerDumpStage(ServerPlayer player) {
-        GodNodeState.<PowerDump>peek(player.getUUID(), IdonaNodes.POWER_DUMP)
-                .ifPresent(reservoir -> reservoir.pending = 0.0F);
-    }
-
-    public static float getPowerDumpExtra(ServerPlayer player) {
-        PowerDump reservoir = GodNodeState.<PowerDump>peek(player.getUUID(), IdonaNodes.POWER_DUMP).orElse(null);
-        if (reservoir == null || reservoir.extra <= 0.0F) {
-            return 0.0F;
-        }
-        long now = player.getLevel().getGameTime();
-        if (reservoir.expiry <= now) {
-            reservoir.extra = 0.0F;
-            reservoir.expiry = 0L;
-            return 0.0F;
-        }
-        if (reservoir.continuousUntil > now) {
-            return 0.0F;
-        }
-        return reservoir.extra;
-    }
-
-    /** Suppresses the Power Dump surplus for {@code continuous_grace_ticks}. */
-    public static void markContinuousManaPayment(ServerPlayer player) {
-        int grace = IdonaNodeHandlers.params(IdonaNodes.POWER_DUMP,
-                IdonaNodeHandlers.PowerDumpParams.class).continuous_grace_ticks();
-        powerDump(player.getUUID()).continuousUntil = player.getLevel().getGameTime() + grace;
+        return player.getLevel().getGameTime() - state.lastSneakDrain;
     }
 
     /** Enters a cleave sweep, returning the replaced scope. Pair with {@link #popCleave} in a finally. */

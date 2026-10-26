@@ -36,22 +36,13 @@ public final class IdonaStatHooks {
         data.setValue(data.getValue() * (float) Math.pow(multiplier, points));
     }
 
-    /** Grand Archmage's ability damage, on both sides, and Power Dump's, server-side only. */
+    /** Grand Archmage's ability damage, on both sides. */
     private static void abilityDamage(PlayerStatEvent.Data data) {
         if (data.getEntity() instanceof ServerPlayer player) {
             float multiplier = 1.0F;
             int archmage = IdonaNodes.points(player, IdonaNodes.GRAND_ARCHMAGE);
             if (archmage > 0) {
                 multiplier *= (float) Math.pow(archmageAbilityDamage(), archmage);
-            }
-            int powerDump = IdonaNodes.points(player, IdonaNodes.POWER_DUMP);
-            if (powerDump > 0) {
-                float extra = IdonaState.getPowerDumpExtra(player);
-                if (extra > 0.0F) {
-                    float perMana = IdonaNodeHandlers.params(IdonaNodes.POWER_DUMP,
-                            IdonaNodeHandlers.PowerDumpParams.class).per_mana();
-                    multiplier *= 1.0F + extra * perMana * powerDump;
-                }
             }
             if (multiplier != 1.0F) {
                 data.setValue(data.getValue() * multiplier);

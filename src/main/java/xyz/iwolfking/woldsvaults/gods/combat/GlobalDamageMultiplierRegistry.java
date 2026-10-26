@@ -16,6 +16,7 @@ import net.minecraftforge.fml.common.Mod;
 import xyz.iwolfking.woldsvaults.WoldsVaults;
 import xyz.iwolfking.woldsvaults.events.PostMultiplierFlatAdds;
 import xyz.iwolfking.woldsvaults.events.WoldActiveFlags;
+import xyz.iwolfking.woldsvaults.gods.trees.idona.IdonaPowerDump;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -106,7 +107,10 @@ public final class GlobalDamageMultiplierRegistry {
         EXCLUDED_SOURCES.add(damageSourceId);
     }
 
-    /** Applies the global damage product to hits the player is the true source of, before armour. */
+    /**
+     * Applies the global damage product, times the Power Dump multiplier of the cast the hit belongs to,
+     * to hits the player is the true source of, before armour.
+     */
     @SubscribeEvent(priority = EventPriority.LOW)
     public static void applyGlobalMultiplier(LivingHurtEvent event) {
         PostMultiplierFlatAdds.apply(event);
@@ -118,7 +122,8 @@ public final class GlobalDamageMultiplierRegistry {
         if (isPercentageBased(source) || WoldActiveFlags.IS_PROC_FANG_ATTACKING.isSet()) {
             return;
         }
-        float product = getProduct(player);
+        float product = getProduct(player) * IdonaPowerDump.damageMultiplier(player, source,
+                () -> ActiveFlags.IS_AP_ATTACKING.isSet());
         if (product != 1.0F) {
             event.setAmount(event.getAmount() * product);
         }
