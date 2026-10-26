@@ -72,7 +72,11 @@ final class FxGeometry {
     }
 
     static float[] lerp(float[] a, float[] b, float f) {
-        return new float[]{a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, a[2] + (b[2] - a[2]) * f, a[3] + (b[3] - a[3]) * f};
+        float[] out = new float[Math.min(a.length, b.length)];
+        for (int i = 0; i < out.length; i++) {
+            out[i] = a[i] + (b[i] - a[i]) * f;
+        }
+        return out;
     }
 
     static float[] rgba(float[] rgb, float alpha) {

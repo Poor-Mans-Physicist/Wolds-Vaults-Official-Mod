@@ -209,7 +209,12 @@ public final class RiptideFx {
         if (level == null || minecraft.isPaused()) {
             return;
         }
-        EFFECTS.removeIf(effect -> !effect.tick(level));
+        try {
+            EFFECTS.removeIf(effect -> !effect.tick(level));
+        } catch (RuntimeException e) {
+            WoldsVaults.LOGGER.error("Riptide fx tick failed; dropping {} active effects instead of crashing.", EFFECTS.size(), e);
+            EFFECTS.clear();
+        }
     }
 
     @SubscribeEvent
@@ -221,22 +226,33 @@ public final class RiptideFx {
         Vec3 camera = event.getCamera().getPosition();
         float partialTick = event.getPartialTick();
         List<Effect> snapshot = new ArrayList<>(EFFECTS);
-        boolean refracted = false;
-        if (snapshot.stream().anyMatch(Effect::refracts) && RiptideRefraction.begin()) {
-            refracted = true;
-            BufferBuilder builder = RiptideRefraction.builder();
-            for (Effect effect : snapshot) {
-                if (effect.refracts()) {
-                    effect.renderRefraction(builder, pose, camera, partialTick);
+        try {
+            boolean refracted = false;
+            if (snapshot.stream().anyMatch(Effect::refracts) && RiptideRefraction.begin()) {
+                refracted = true;
+                try {
+                    BufferBuilder builder = RiptideRefraction.builder();
+                    for (Effect effect : snapshot) {
+                        if (effect.refracts()) {
+                            effect.renderRefraction(builder, pose, camera, partialTick);
+                        }
+                    }
+                } finally {
+                    RiptideRefraction.end();
                 }
             }
-            RiptideRefraction.end();
+            MultiBufferSource.BufferSource source = Minecraft.getInstance().renderBuffers().bufferSource();
+            VertexConsumer consumer = source.getBuffer(RenderType.lightning());
+            try {
+                for (Effect effect : snapshot) {
+                    effect.renderGlow(consumer, pose, camera, partialTick, refracted);
+                }
+            } finally {
+                source.endBatch(RenderType.lightning());
+            }
+        } catch (RuntimeException e) {
+            WoldsVaults.LOGGER.error("Riptide fx render failed; dropping {} active effects instead of crashing.", EFFECTS.size(), e);
+            EFFECTS.clear();
         }
-        MultiBufferSource.BufferSource source = Minecraft.getInstance().renderBuffers().bufferSource();
-        VertexConsumer consumer = source.getBuffer(RenderType.lightning());
-        for (Effect effect : snapshot) {
-            effect.renderGlow(consumer, pose, camera, partialTick, refracted);
-        }
-        source.endBatch(RenderType.lightning());
     }
 }
