@@ -225,7 +225,7 @@ public final class AncientGearModifiers {
         config.prefix("the_vault:soul_chance_percentile", "ModSoulQuantity", "the_vault:mod_soul_quantity_fork", tags(),
                 tier(0, -1, 10, obj("min", 0.25D, "max", 0.33D, "step", 0.01D)));
         config.prefix("the_vault:added_ability_level", "ModAbility", "the_vault:u_coldsnap", tags("focusAbilityPower", "focusAbilityPowerStonefall"),
-                tier(0, -1, 20, obj("abilityKey", "Stonefall_Cold", "levelChange", 2)));
+                tier(0, -1, 20, obj("abilityKey", "Stonefall_Cold", "levelChange", 5)));
     }
 
     private static void sharedPrefix2(Config config) {
@@ -249,8 +249,8 @@ public final class AncientGearModifiers {
                 tier(0, -1, 600, obj("min", 0.35D, "max", 0.47D, "step", 0.01D)));
         config.prefix("the_vault:added_ability_level", "ModAPLvl", "the_vault:mod_added_ability_level_fireball", tags("focusAbilityPower", "focusAbilityPowerFireball"),
                 tier(0, -1, 60, obj("abilityKey", "Fireball_Base", "levelChange", 3)));
-        config.prefix("the_vault:ability_area_of_effect_percent", "ModEnhancement", "the_vault:fireball_aoe_increase", tags(),
-                tier(0, -1, 5, obj("min", 0.5D, "max", 0.67D, "step", 0.01D, "abilityKey", "Fireball_Base")));
+        config.suffix("the_vault:steel_inferno", "ModSteelInferno", "the_vault:u_steel_inferno", tags(),
+                tier(0, -1, 5, obj("radiusMultiplier", obj("min", 0.55D, "max", 0.65D, "step", 0.01D), "centreBonus", obj("min", 1.75D, "max", 2.25D, "step", 0.01D))));
         config.prefix("the_vault:cooldown_reduction", "ModCooldownReduction", "the_vault:mod_cooldown_reduction", tags("focusCooldown"),
                 tier(0, -1, 100, obj("min", 0.28D, "max", 0.37D, "step", 0.01D)));
         config.prefix("the_vault:damage_baby", "uDamageBaby", "the_vault:mod_damage_baby", tags("focusDamageToddler"),
@@ -368,6 +368,10 @@ public final class AncientGearModifiers {
                 tier(0, -1, 10, obj("min", 0.2D, "max", 0.27D, "step", 0.01D)));
         config.prefix("the_vault:trident_wind_up_percent", "ModTridentWindup", "woldsvaults:tidebreaker_tideripper/windup_time_zeus", tags(),
                 tier(0, -1, 10, obj("min", 0.8D, "max", 0.9D, "step", 0.01D)));
+        config.prefix("the_vault:javelin_multi_hit", "ModJavelinMultiHit", "the_vault:u_javelin_multi_hit", tags(),
+                tier(0, -1, 1, obj("flag", true)));
+        config.prefix("the_vault:storm_tracking", "ModStormTracking", "the_vault:u_storm_tracking", tags(),
+                tier(0, -1, 1, obj("flag", true, "abilityKey", "Storm_Arrow_Base", "speed", 10.0D)));
     }
 
     private static void sharedSuffix1(Config config) {
@@ -480,6 +484,8 @@ public final class AncientGearModifiers {
                 tier(0, -1, 100, obj("chance", obj("min", 0.4D, "max", 0.6D, "step", 0.05D), "amount", obj("min", 3.0D, "max", 3.0D, "step", 0.0D))));
         config.suffix("the_vault:splitting_javelins", "UniqueSplittingJavelins", "the_vault:u_splitting_javelins", tags(),
                 tier(0, -1, 10, obj("min", 2, "max", 3, "step", 1)));
+        config.suffix("the_vault:ability_special_modification", "ModImplodingJavelinDamage", "woldsvaults:u_imploding_javelin_damage", tags(),
+                tier(0, -1, 1, obj("specialModificationKey", "woldsvaults:imploding_javelin_damage", "abilityKey", "Javelin_Base", "textColor", 14076214, "highlightColor", 6082075, "min", 0.7D, "max", 0.9D, "step", 0.01D)));
         config.suffix("the_vault:effect_list_avoidance", "uEffectAvoidance", "the_vault:u_witch_effect_avoidance", tags("focusEffAvoidance"),
                 tier(0, -1, 250, obj("effectKeys", list("minecraft:poison", "minecraft:wither", "minecraft:levitation", "minecraft:slowness", "minecraft:blindness", "minecraft:hunger", "the_vault:bleed", "the_vault:chilled", "the_vault:corruption"), "name", "the_vault.gear_attribute.effect_avoidance.avoidance.bad_effects", "minChance", 0.8D, "maxChance", 1.0D, "step", 0.05D)));
         config.suffix("the_vault:effect_cloud", "ModOnHitAddition", "the_vault:mod_poison_cloud_zombie_horse", tags("focusPoisonCloud"),
@@ -507,7 +513,7 @@ public final class AncientGearModifiers {
         config.prefix("the_vault:ability_power", "BaseBonusPool", "the_vault:crystalplate/mod_ap", tags(),
                 tier(0, -1, 100, obj("min", 50.0D, "max", 80.0D, "step", 1.0D)));
         config.prefix("the_vault:armor", "ModArmor", "the_vault:frostguards/u_mod_armor", tags("focusArmor"),
-                tier(0, -1, 600, obj("min", 10, "max", 13, "step", 1)));
+                tier(0, -1, 600, obj("min", 12, "max", 16, "step", 1)));
         config.implicit("the_vault:ability_power", "BaseBonusPool", "the_vault:inferno_reach/base_ap", tags(),
                 tier(0, -1, 100, obj("min", 50.0D, "max", 90.0D, "step", 1.0D)));
         config.implicit("the_vault:jewel_size", "ModHealthMana", "the_vault:kaleidoscope/u_jewel_size", tags("focusHealth"),

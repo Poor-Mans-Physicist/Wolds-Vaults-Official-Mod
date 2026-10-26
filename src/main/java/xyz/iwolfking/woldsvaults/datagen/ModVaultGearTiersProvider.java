@@ -7,6 +7,7 @@ import iskallia.vault.config.entry.IntRollRangeEntry;
 import iskallia.vault.config.gear.VaultGearTierConfig;
 import iskallia.vault.gear.attribute.ability.AbilityFloatValueAttribute;
 import iskallia.vault.gear.attribute.ability.AbilityLevelAttribute;
+import iskallia.vault.gear.attribute.ability.special.base.template.config.FloatRangeConfig;
 import iskallia.vault.gear.attribute.custom.effect.EffectCloudAttribute;
 import iskallia.vault.gear.attribute.custom.effect.EffectGearAttribute;
 import iskallia.vault.gear.attribute.talent.TalentLevelAttribute;
@@ -22,6 +23,7 @@ import xyz.iwolfking.woldsvaults.WoldsVaults;
 import xyz.iwolfking.woldsvaults.api.data.gear.lib.UnusualModifierLib;
 import xyz.iwolfking.woldsvaults.datagen.lib.AbstractWoldsVaultGearConfigProvider;
 import xyz.iwolfking.woldsvaults.init.ModGearAttributes;
+import xyz.iwolfking.woldsvaults.modifiers.gear.special.ImplodingJavelinModification;
 import xyz.iwolfking.woldsvaults.api.util.UniqueRollTables;
 import java.util.List;
 
@@ -924,8 +926,22 @@ public class ModVaultGearTiersProvider extends AbstractWoldsVaultGearConfigProvi
                             vaultGearModifierTiersBuilder.add(50, -1, 10, new AbilityLevelAttribute.Config("Nova_Dot", 3));
                             vaultGearModifierTiersBuilder.add(75, -1, 10, new AbilityLevelAttribute.Config("Nova_Dot", 4));
                         });
+                vaultGearAttributeGroupBuilder
+                        .addModifier(ModGearAttributes.JAVELIN_MULTI_HIT, "ModJavelinMultiHit", "u_javelin_multi_hit", List.of(), vaultGearModifierTiersBuilder -> {
+                            vaultGearModifierTiersBuilder.add(0, -1, 1, true);
+                        });
+                vaultGearAttributeGroupBuilder
+                        .addModifier(ModGearAttributes.STORM_TRACKING, "ModStormTracking", "u_storm_tracking", List.of(), vaultGearModifierTiersBuilder -> {
+                            addStormTracking(vaultGearModifierTiersBuilder, 0, -1, 1, "Storm_Arrow_Base", 10.0F);
+                        });
             }).build();
             builder.key(VaultMod.id("unique")).add(VaultGearTierConfig.ModifierAffixTagGroup.SUFFIX, vaultGearAttributeGroupBuilder -> {
+                vaultGearAttributeGroupBuilder
+                        .addModifier(ModGearAttributes.STEEL_INFERNO, "ModSteelInferno", "u_steel_inferno", List.of(), vaultGearModifierTiersBuilder -> {
+                            addSteelInferno(vaultGearModifierTiersBuilder, 0, -1, 5, 0.5F, 0.6F, 0.01F, 1.5F, 2.0F, 0.01F);
+                        });
+                vaultGearAttributeGroupBuilder.addModifier(woldsIdentifier(iskallia.vault.init.ModGearAttributes.ABILITY_SPECIAL_MODIFICATION, "ModImplodingJavelinDamage", "u_imploding_javelin_damage",
+                        vaultGearModifierTiersBuilder -> vaultGearModifierTiersBuilder.add(0, -1, 1, "Javelin_Base", ImplodingJavelinModification.ID, new FloatRangeConfig(14076214, 6082075, 0.5F, 0.8F, 0.01F))));
                 vaultGearAttributeGroupBuilder
                         .addModifier(iskallia.vault.init.ModGearAttributes.SHOCKING_HIT_CHANCE, "ModShockingHit", "shocking_hit_zeus", List.of(), vaultGearModifierTiersBuilder -> {
                             vaultGearModifierTiersBuilder.add(0, -1, 10, 0.25F, 0.25F, 0F);
@@ -1674,6 +1690,16 @@ public class ModVaultGearTiersProvider extends AbstractWoldsVaultGearConfigProvi
                         });
             });
         });
+    }
+
+    /** A unique-table row whose identifier is in the woldsvaults namespace. */
+    private static VaultGearTierConfig.ModifierTierGroup woldsIdentifier(iskallia.vault.gear.attribute.VaultGearAttribute<?> attribute, String modifierGroup, String identifierPath,
+                                                                          java.util.function.Consumer<AbstractVaultGearConfigProvider.VaultGearModifierTiersBuilder> tiers) {
+        VaultGearTierConfig.ModifierTierGroup group = new VaultGearTierConfig.ModifierTierGroup(attribute.getRegistryName(), modifierGroup, WoldsVaults.id(identifierPath));
+        AbstractVaultGearConfigProvider.VaultGearModifierTiersBuilder builder = new AbstractVaultGearConfigProvider.VaultGearModifierTiersBuilder();
+        tiers.accept(builder);
+        group.addAll(builder.build());
+        return group;
     }
 
     /** A unique-table row scoped to one woldsvaults unique, which {@code UniqueRollTables} resolves before the plain identifier. */

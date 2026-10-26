@@ -83,6 +83,7 @@ public class ModUniqueGearProvider extends AbstractUniqueGearProvider {
                 .suffix("the_vault:javelin_mana_cost")
                 .suffix("the_vault:javelin_cooldown_increase")
                 .suffix("the_vault:mod_mana_regen")
+                .suffix("woldsvaults:u_imploding_javelin_damage")
                 .dropLocation("Laboratory")
                 .description("What an aggressive little penguin!", "$text")
                 .modelType("PLUSHIE")
