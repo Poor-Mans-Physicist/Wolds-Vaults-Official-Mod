@@ -18,7 +18,9 @@ import iskallia.vault.gear.data.VaultGearData;
 import iskallia.vault.gear.item.VaultGearItem;
 import iskallia.vault.init.ModConfigs;
 import iskallia.vault.init.ModGearAttributes;
+import iskallia.vault.core.random.JavaRandom;
 import iskallia.vault.item.gear.EtchingItem;
+import iskallia.vault.item.gear.VaultNecklaceItem;
 import iskallia.vault.item.tool.ToolItem;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.resources.ResourceLocation;
@@ -173,6 +175,15 @@ public final class GearCodec {
             data.setUsedRepairSlots(Json.intValue(repairs, "used", path + ".repairs"));
         }
         readUses(data, json, path);
+        if (authored && !json.has("uses") && data instanceof UsesGearData usesData) {
+            if (stack.getItem() instanceof VaultNecklaceItem) {
+                int uses = ModConfigs.VAULT_NECKLACE.getUses(JavaRandom.ofNanoTime());
+                usesData.setVaultUses(uses);
+                report.fallback(path + ": no vault uses given; rolled " + uses + " like a fresh necklace");
+            } else {
+                report.fallback(path + ": no vault uses given; the item has 0 uses (give \"uses\" to set them)");
+            }
+        }
 
         List<VaultGearAttributeInstance<?>> attributeList = ((AttributeGearDataAccessor) data).woldsvaults$getAttributeList();
         if (authored) {
