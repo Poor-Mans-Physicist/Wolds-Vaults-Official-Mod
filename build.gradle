@@ -30,6 +30,23 @@ base {
     archivesName = "wolds-vaults-official-mod"
 }
 
+// Location of the Wold's Vaults packwiz repo, whose config/the_vault datagen reads. Override with
+// -PwvPackDir=<path> or the WV_PACK_DIR environment variable; otherwise the nearest ancestor holding
+// a "Wolds-Vaults" checkout wins, which covers both the main clone and a git worktree.
+ext.wvPackDir = {
+    def explicit = project.findProperty('wvPackDir') ?: System.getenv('WV_PACK_DIR')
+    if (explicit != null && !explicit.toString().isEmpty()) {
+        return new File(explicit.toString())
+    }
+    for (File dir = projectDir; dir != null; dir = dir.parentFile) {
+        File candidate = new File(dir, 'Wolds-Vaults')
+        if (new File(candidate, 'config/the_vault').isDirectory()) {
+            return candidate
+        }
+    }
+    return null
+}()
+
 java {
     toolchain.languageVersion = JavaLanguageVersion.of(17)
 }
@@ -494,4 +511,32 @@ tasks.jarJar.finalizedBy(tasks.deleteSlimJar)
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8' // Use the UTF-8 charset for Java compilation
+}
+
+// Datagen reads the Vault Hunters configs out of config/the_vault under the run directory, the same
+// way the game does. An empty run-data leaves every one of them as the stub the_vault writes for a
+// missing config, so the pack configs are seeded first.
+tasks.register('seedRunDataConfigs') {
+    group = 'build setup'
+    description = 'Copies the shipped pack the_vault configs into run-data so datagen reads real data.'
+    outputs.upToDateWhen { false }
+    doLast {
+        if (wvPackDir == null) {
+            throw new GradleException('seedRunDataConfigs cannot run: no pack checkout found; ' +
+                    'pass -PwvPackDir=<pack repo root> or set WV_PACK_DIR. Datagen without the ' +
+                    'pack configs generates empty talent, description and gear data.')
+        }
+        def source = new File(wvPackDir, 'config/the_vault')
+        def target = file('run-data/config/the_vault')
+        copy {
+            from source
+            into target
+            duplicatesStrategy = DuplicatesStrategy.INCLUDE
+        }
+        logger.lifecycle("seedRunDataConfigs: seeded ${target} from ${source}")
+    }
+}
+
+tasks.matching { it.name == 'runData' }.configureEach {
+    dependsOn 'seedRunDataConfigs'
 }
