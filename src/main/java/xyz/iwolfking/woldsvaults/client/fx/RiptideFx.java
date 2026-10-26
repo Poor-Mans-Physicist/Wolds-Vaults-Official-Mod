@@ -11,10 +11,12 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.particles.DustColorTransitionOptions;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.client.event.RenderHandEvent;
 import net.minecraftforge.client.event.RenderLevelStageEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -237,6 +239,13 @@ public final class RiptideFx {
         }
         PENDING.forEach(RiptideFx::add);
         PENDING.clear();
+    }
+
+    @SubscribeEvent
+    public static void hideOffhandWhileRiptiding(RenderHandEvent event) {
+        if (event.getHand() == InteractionHand.OFF_HAND && Minecraft.getInstance().player != null && Minecraft.getInstance().player.isAutoSpinAttack()) {
+            event.setCanceled(true);
+        }
     }
 
     @SubscribeEvent
