@@ -41,7 +41,7 @@ public class RiptideStorm implements RiptideDash.Listener {
 
     @Override
     public void onStart(ServerPlayer player, RiptideDash.Dash dash) {
-        player.removeEffect(ModEffects.TIDAL_HOVER);
+        endHover(player);
     }
 
     @Override
@@ -79,14 +79,21 @@ public class RiptideStorm implements RiptideDash.Listener {
         int hover = RiptideDash.snapshot(player).getAttributeValue(ModGearAttributes.RIPTIDE_HOVER, VaultGearAttributeTypeMerger.intSum());
         if (hover > 0 && !player.isOnGround()) {
             player.addEffect(new MobEffectInstance(ModEffects.TIDAL_HOVER, hover, 0, false, false, true));
+            RiptideFxMessage.send(player, RiptideFxMessage.hover(player, hover));
         }
     }
 
     @SubscribeEvent
     public static void cancelHoverOnSneak(TickEvent.PlayerTickEvent event) {
         if (event.phase == TickEvent.Phase.END && event.player instanceof ServerPlayer player
-                && player.isShiftKeyDown() && player.hasEffect(ModEffects.TIDAL_HOVER)) {
-            player.removeEffect(ModEffects.TIDAL_HOVER);
+                && player.isShiftKeyDown()) {
+            endHover(player);
+        }
+    }
+
+    private static void endHover(ServerPlayer player) {
+        if (player.removeEffect(ModEffects.TIDAL_HOVER)) {
+            RiptideFxMessage.send(player, RiptideFxMessage.hover(player, 0));
         }
     }
 

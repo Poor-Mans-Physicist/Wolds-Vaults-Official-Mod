@@ -28,7 +28,7 @@ import java.util.Random;
 
 /**
  * Client side of the Tidebreaker riptide visuals: turns {@link RiptideFxMessage}s into shock cone pulses, lightning
- * arcs and arcane particles, ticks them, and draws them after particles each frame.
+ * arcs, the hover stance and halo, and arcane particles, ticks them, and draws them after particles each frame.
  */
 @OnlyIn(Dist.CLIENT)
 @Mod.EventBusSubscriber(modid = WoldsVaults.MOD_ID, value = Dist.CLIENT)
@@ -47,6 +47,8 @@ public final class RiptideFx {
     private static final int ARC_GROW_TICKS = 3;
 
     private static final List<Effect> EFFECTS = new ArrayList<>();
+    private static final List<Effect> PENDING = new ArrayList<>();
+    private static boolean ticking;
     private static final Random RANDOM = new Random();
     private static ClientLevel trackedLevel;
 
@@ -69,15 +71,33 @@ public final class RiptideFx {
             case RiptideFxMessage.ARC -> arc(level, message);
             case RiptideFxMessage.AURA -> aura(level, message);
             case RiptideFxMessage.BURST -> impactBurst(level, message.getFirst(), message.getAhead() * 0.6F, message.getBehind() * 0.6F, message.isChilled());
+            case RiptideFxMessage.HOVER -> hover(level, message);
             default -> WoldsVaults.LOGGER.error("Unknown riptide fx kind {}; message ignored.", message.getKind());
         }
     }
 
-    private static void add(Effect effect) {
+    static void add(Effect effect) {
+        if (ticking) {
+            PENDING.add(effect);
+            return;
+        }
         if (EFFECTS.size() >= MAX_EFFECTS) {
             EFFECTS.remove(0);
         }
         EFFECTS.add(effect);
+    }
+
+    private static void hover(ClientLevel level, RiptideFxMessage message) {
+        int id = message.getSourceId();
+        if (message.getTicks() <= 0) {
+            HoverStance.stop(id);
+            return;
+        }
+        HoverStance.start(level, id, message.getTicks());
+        boolean ringed = EFFECTS.stream().anyMatch(effect -> effect instanceof HoverRingEffect ring && ring.getEntityId() == id);
+        if (!ringed) {
+            add(new HoverRingEffect(id, RANDOM.nextFloat()));
+        }
     }
 
     private static void cone(ClientLevel level, RiptideFxMessage message) {
@@ -178,7 +198,7 @@ public final class RiptideFx {
         return new Vec3(r * Math.cos(theta), z, r * Math.sin(theta));
     }
 
-    private static int particleCount(int full) {
+    static int particleCount(int full) {
         ParticleStatus status = Minecraft.getInstance().options.particles;
         return switch (status) {
             case ALL -> full;
@@ -197,16 +217,26 @@ public final class RiptideFx {
         if (level != trackedLevel) {
             trackedLevel = level;
             EFFECTS.clear();
+            PENDING.clear();
+            HoverStance.clear();
         }
         if (level == null || minecraft.isPaused()) {
             return;
         }
         try {
+            HoverStance.tick(level);
+            ticking = true;
             EFFECTS.removeIf(effect -> !effect.tick(level));
         } catch (RuntimeException e) {
             WoldsVaults.LOGGER.error("Riptide fx tick failed; dropping {} active effects instead of crashing.", EFFECTS.size(), e);
             EFFECTS.clear();
+            PENDING.clear();
+            HoverStance.clear();
+        } finally {
+            ticking = false;
         }
+        PENDING.forEach(RiptideFx::add);
+        PENDING.clear();
     }
 
     @SubscribeEvent
