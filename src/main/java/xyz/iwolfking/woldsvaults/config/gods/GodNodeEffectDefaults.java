@@ -152,7 +152,7 @@ public final class GodNodeEffectDefaults {
         put(map, "velara_indomitable", "velara_indomitable", new float[]{}, "regeneration_levels", 3);
         put(map, "velara_field_medic", "velara_field_medic", new float[]{}, "multiplier", 1.5F);
         put(map, "velara_the_stonewall", "velara_the_stonewall", new float[]{},
-                "speed_multiplier", 0.4F, "armor_multiplier", 1.5F);
+                "speed_multiplier", 0.4F, "armor_multiplier", 1.25F);
         put(map, "velara_cactus", "velara_cactus", new float[]{}, "armor_multiplier", 0.33F, "thorns_multiplier", 2.0F);
         put(map, "velara_malediction", "velara_malediction", new float[]{}, "forced_healing", 0.5F);
         put(map, "velara_immortal", "velara_immortal", new float[]{},

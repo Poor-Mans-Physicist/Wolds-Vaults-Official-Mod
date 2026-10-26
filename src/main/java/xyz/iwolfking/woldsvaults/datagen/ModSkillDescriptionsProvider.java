@@ -1776,7 +1776,7 @@ public class ModSkillDescriptionsProvider extends AbstractSkillDescriptionsProvi
         builder.addDescription("velara_the_stonewall", description -> {
             description.add(JsonDescription.text("0.4x Movement Speed", leaf));
             description.add(JsonDescription.text(", but "));
-            description.add(JsonDescription.text("1.5x Armor", leaf));
+            description.add(JsonDescription.text("1.25x Armor", leaf));
             description.add(JsonDescription.text("."));
         });
         builder.addDescription("velara_cactus", description -> {
