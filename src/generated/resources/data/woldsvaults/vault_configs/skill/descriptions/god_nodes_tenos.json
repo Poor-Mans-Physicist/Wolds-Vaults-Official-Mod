@@ -148,7 +148,7 @@
         "text": ", with trap disarm in percent from your gear."
       },
       {
-        "text": "\n\nExamples: 50% trap disarm gives x1.016, 100% gives x1.032, 300% gives x1.091."
+        "text": "\n\nExamples: 300% trap disarm gives x1.09, 1,000% gives x1.26, 3,000% gives x1.59."
       }
     ],
     "tenos_master_of_chests": [
@@ -284,7 +284,7 @@
         "text": ", where c is your chests per minute averaged over the last five minutes."
       },
       {
-        "text": "\n\nExamples: 10 chests a minute gives x1.003, 30 gives x1.008, 60 gives x1.016."
+        "text": "\n\nExamples: 100 chests a minute gives x1.03, 1,000 gives x1.22, 3,000 gives x1.52."
       }
     ],
     "tenos_reserves_ii": [

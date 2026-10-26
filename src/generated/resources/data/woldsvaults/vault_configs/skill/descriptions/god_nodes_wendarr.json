@@ -44,7 +44,7 @@
         "color": "#ffc854"
       },
       {
-        "text": " of vault time."
+        "text": " of vault time. Only works inside a vault."
       }
     ],
     "wendarr_glutton": [
@@ -292,7 +292,7 @@
         "color": "#ffc854"
       },
       {
-        "text": " of vault time."
+        "text": " of vault time. Only works inside a vault."
       }
     ],
     "wendarr_start_bot": [

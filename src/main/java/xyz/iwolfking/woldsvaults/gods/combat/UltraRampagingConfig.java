@@ -27,7 +27,7 @@ public record UltraRampagingConfig(float fury_per_hit, float fury_per_kill,
         return new UltraRampagingConfig(100.0F, 200.0F, 2.0F, 10.0F, 6000.0F,
                 0.985F, 6000.0F, 2000.0F, 25.0F, 15000.0F,
                 6500.0F, 1.03F, 6000.0F,
-                3000.0F, 0.5F);
+                3000.0F, 0.2236068F);
     }
 
     @Override

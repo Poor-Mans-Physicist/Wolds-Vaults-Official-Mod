@@ -1667,7 +1667,7 @@ public class ModSkillDescriptionsProvider extends AbstractSkillDescriptionsProvi
             description.add(JsonDescription.text("90% less damage", gold));
             description.add(JsonDescription.text(" after armor and resistance, but every hit taken drains "));
             description.add(JsonDescription.text("1-3 seconds", gold));
-            description.add(JsonDescription.text(" of vault time."));
+            description.add(JsonDescription.text(" of vault time. Only works inside a vault."));
         });
         godNode(builder, "wendarr_efficient_steps", "+0.25% Movement Speed", gold, " per 1% Fruit Efficiency.");
         builder.addDescription("wendarr_extender", description -> {
@@ -1729,7 +1729,7 @@ public class ModSkillDescriptionsProvider extends AbstractSkillDescriptionsProvi
             description.add(JsonDescription.text("10x damage", gold));
             description.add(JsonDescription.text(" (not damage over time), but every instance of damage you deal, damage over time included, consumes "));
             description.add(JsonDescription.text("1-3 seconds", gold));
-            description.add(JsonDescription.text(" of vault time."));
+            description.add(JsonDescription.text(" of vault time. Only works inside a vault."));
         });
         godRoot(builder, "wendarr_start_top", "the top of Wendarr's glass", "making time - fruit and what it is worth", gold, "+2% Movement Speed and +2% Cooldown Reduction");
         godRoot(builder, "wendarr_start_bot", "the bottom of Wendarr's glass", "spending time - speed and the clock", gold, "+2% Movement Speed and +2% Cooldown Reduction");
@@ -1882,7 +1882,7 @@ public class ModSkillDescriptionsProvider extends AbstractSkillDescriptionsProvi
             description.add(JsonDescription.text(", but it multiplies your Item Quantity and Rarity by "));
             description.add(JsonDescription.text(GodNodePreviews.INDIANA_JONES_FORMULA, sky));
             description.add(JsonDescription.text(", with trap disarm in percent from your gear."));
-            description.add(JsonDescription.text("\n\nExamples: 50% trap disarm gives x1.016, 100% gives x1.032, 300% gives x1.091."));
+            description.add(JsonDescription.text("\n\nExamples: 300% trap disarm gives x1.09, 1,000% gives x1.26, 3,000% gives x1.59."));
         });
         builder.addDescription("tenos_expert_looter", description -> {
             description.add(JsonDescription.text("Chests can roll up to "));
@@ -1919,7 +1919,7 @@ public class ModSkillDescriptionsProvider extends AbstractSkillDescriptionsProvi
             description.add(JsonDescription.text("Multiplies Item Quantity and Rarity by "));
             description.add(JsonDescription.text(GodNodePreviews.LOOTING_ENGINE_FORMULA, sky));
             description.add(JsonDescription.text(", where c is your chests per minute averaged over the last five minutes."));
-            description.add(JsonDescription.text("\n\nExamples: 10 chests a minute gives x1.003, 30 gives x1.008, 60 gives x1.016."));
+            description.add(JsonDescription.text("\n\nExamples: 100 chests a minute gives x1.03, 1,000 gives x1.22, 3,000 gives x1.52."));
         });
         builder.addDescription("tenos_massive_chests", description -> {
             description.add(JsonDescription.text("Chests can roll up to "));
