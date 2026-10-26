@@ -7,8 +7,10 @@ import iskallia.vault.snapshot.AttributeSnapshotHelper;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemCooldowns;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.TickEvent;
@@ -44,6 +46,8 @@ public final class RiptideDash {
     private static final Set<UUID> RIPTIDE_COOLDOWNS = ConcurrentHashMap.newKeySet();
     private static final ThreadLocal<Boolean> STARTING_COOLDOWN = ThreadLocal.withInitial(() -> false);
     private static final ThreadLocal<LivingEntity> CONTACT = new ThreadLocal<>();
+    private static final ThreadLocal<Integer> CONTACT_TICKER = new ThreadLocal<>();
+    private static final ThreadLocal<ServerPlayer> EQUIPMENT_SCAN = new ThreadLocal<>();
     private static final List<Listener> LISTENERS = List.of(new RiptideShockCone(), new RiptideStorm());
 
     private RiptideDash() {
@@ -151,12 +155,27 @@ public final class RiptideDash {
         return dash.contacted.add(target.getId());
     }
 
-    public static void beginContact(LivingEntity target) {
+    /**
+     * Starts a riptide contact on {@code target}. A vault trident contact is a full-strength swing: the attack
+     * strength ticker is filled for the attack and the player's own swing timer is put back by {@link #endContact},
+     * so attack-strength gates (Battle Cry, Rampage, lucky hits, on-hit procs) treat every contact as a full swing.
+     */
+    public static void beginContact(Player player, LivingEntity target) {
         CONTACT.set(target);
+        if (!(player.getMainHandItem().getItem() instanceof VaultTridentItem)) {
+            return;
+        }
+        CONTACT_TICKER.set(player.attackStrengthTicker);
+        player.attackStrengthTicker = (int) (1.0 / player.getAttributeValue(Attributes.ATTACK_SPEED) * 20.0) + 1;
     }
 
-    public static void endContact() {
+    public static void endContact(Player player) {
         CONTACT.remove();
+        Integer ticker = CONTACT_TICKER.get();
+        CONTACT_TICKER.remove();
+        if (ticker != null) {
+            player.attackStrengthTicker = ticker;
+        }
     }
 
     /** Whether the hurt event in progress is a riptide contact on {@code target}. */
@@ -194,6 +213,25 @@ public final class RiptideDash {
 
     public static boolean isRiptideCooldown(ServerPlayer player, Item item) {
         return item instanceof VaultTridentItem && RIPTIDE_COOLDOWNS.contains(player.getUUID());
+    }
+
+    public static void beginEquipmentScan(LivingEntity entity) {
+        if (entity instanceof ServerPlayer player) {
+            EQUIPMENT_SCAN.set(player);
+        }
+    }
+
+    public static void endEquipmentScan() {
+        EQUIPMENT_SCAN.remove();
+    }
+
+    /**
+     * Whether {@code cooldowns} should report {@code item} as off cooldown: true only during the equipment scan of
+     * the player those cooldowns belong to, for a vault trident on its own riptide cooldown.
+     */
+    public static boolean ignoresRiptideCooldown(ItemCooldowns cooldowns, Item item) {
+        ServerPlayer player = EQUIPMENT_SCAN.get();
+        return player != null && player.getCooldowns() == cooldowns && isRiptideCooldown(player, item);
     }
 
     /** The first contact's final damage of the player's latest dash that landed one; 0 if none yet. */
