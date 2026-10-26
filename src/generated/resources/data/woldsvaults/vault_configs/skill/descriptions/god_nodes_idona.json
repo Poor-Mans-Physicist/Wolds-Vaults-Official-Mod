@@ -62,7 +62,7 @@
         "text": "\n\nWhile you hold Fury you also "
       },
       {
-        "text": "take up to twice as much damage",
+        "text": "take up to 1.5x damage at full Fury",
         "color": "#C23627"
       },
       {
@@ -292,7 +292,7 @@
         "text": "Turn into an archmage: "
       },
       {
-        "text": "2x mana capacity, +200 flat mana, greatly increased mana regen, 2x Ability Damage and +5% CDR cap",
+        "text": "2x mana capacity, +200 flat mana, greatly increased mana regen, 3x Ability Damage and +5% CDR cap",
         "color": "#ff7a3d"
       },
       {
@@ -377,21 +377,28 @@
     ],
     "idona_power_dump": [
       {
-        "text": "Instant abilities consume "
+        "text": "Abilities cast "
       },
       {
-        "text": "100% of your mana bar",
-        "color": "#0353d7"
-      },
-      {
-        "text": ", and gain "
-      },
-      {
-        "text": "0.25% extra damage",
+        "text": "while sneaking",
         "color": "#ff7a3d"
       },
       {
-        "text": " per extra mana consumed."
+        "text": " consume your whole mana bar. Your max mana sets the largest bonus, "
+      },
+      {
+        "text": "0.25% x sqrt(2000 x max mana)",
+        "color": "#ff7a3d"
+      },
+      {
+        "text": ", and each cast multiplies its damage by "
+      },
+      {
+        "text": "1 + that bonus x the share of your bar it spent above its cost",
+        "color": "#ff7a3d"
+      },
+      {
+        "text": ". Held channels drain 50% of your bar per second and count the drain above their cost. Every Implode gets the bonus for the mana it consumes, sneaking or not. Each cast keeps its own bonus for its own hits; casts made standing up are unaffected."
       }
     ],
     "idona_cleave_expert": [

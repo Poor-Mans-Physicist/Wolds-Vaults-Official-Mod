@@ -132,7 +132,7 @@
     ],
     "velara_the_stonewall": [
       {
-        "text": "0.33x Movement Speed",
+        "text": "0.4x Movement Speed",
         "color": "#6ef08c"
       },
       {
@@ -230,14 +230,14 @@
     ],
     "velara_immortal": [
       {
-        "text": "1.33x max Health and Armor, 1.5x Healing Efficiency, +20 base Health, +50 base Armor, +10 Regeneration levels",
+        "text": "1.25x max Health and Armor, 1.33x Healing Efficiency, +15 base Health, +30 base Armor, +8 Regeneration levels",
         "color": "#6ef08c"
       },
       {
         "text": ", and you "
       },
       {
-        "text": "revive yourself every 300 seconds",
+        "text": "revive yourself every 600 seconds",
         "color": "#6ef08c"
       },
       {
@@ -397,7 +397,7 @@
         "color": "#6ef08c"
       },
       {
-        "text": " at 1 to 1."
+        "text": " at 2 to 1, added to your other Armor %."
       }
     ],
     "velara_bounce_back": [

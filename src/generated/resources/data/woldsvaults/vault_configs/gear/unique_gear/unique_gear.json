@@ -118,7 +118,8 @@
         "SUFFIX": [
           "the_vault:javelin_mana_cost",
           "the_vault:javelin_cooldown_increase",
-          "the_vault:mod_mana_regen"
+          "the_vault:mod_mana_regen",
+          "woldsvaults:u_imploding_javelin_damage"
         ]
       },
       "modifierTags": [],
