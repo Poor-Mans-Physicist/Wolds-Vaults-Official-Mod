@@ -365,6 +365,18 @@ public class GodAlignmentData extends SavedData {
         return true;
     }
 
+    /** A detached copy of a player's standing with one god, for build snapshots. */
+    public GodState copyState(UUID playerId, VaultGod god) {
+        return GodState.fromNbt(this.getState(playerId, god).toNbt());
+    }
+
+    /** Replaces a player's whole standing with one god, for build snapshots; the caller refreshes the node caches. */
+    public void putState(ServerPlayer player, VaultGod god, GodState state) {
+        this.players.computeIfAbsent(player.getUUID(), id -> new EnumMap<>(VaultGod.class)).put(god, state);
+        this.setDirty();
+        this.sync(player);
+    }
+
     public int incrementAltarCompletions(UUID playerId, VaultGod god) {
         GodState state = this.mutableState(playerId, god);
         state.altarCompletions++;
