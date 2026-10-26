@@ -315,6 +315,19 @@ public class HyperVaultObjective extends Objective {
         return new HyperVaultObjective();
     }
 
+    /** The behavior managers, null until initServer has run; used by the hyper test commands. */
+    public HyperCycleManager getCycleManager() {
+        return this.cycleManager;
+    }
+
+    public HyperBossManager getBossManager() {
+        return this.bossManager;
+    }
+
+    public HyperEscalationManager getEscalationManager() {
+        return this.escalationManager;
+    }
+
     @Override
     public SupplierKey<Objective> getKey() {
         return KEY;
