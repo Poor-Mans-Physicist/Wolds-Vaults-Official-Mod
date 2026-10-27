@@ -320,7 +320,7 @@ public class LivingEntityEvents {
         if(entity.hasEffect(ModEffects.SNEAKY_GETAWAY)) {
             dodgeChance += SneakyGetawayAbility.SneakyGetawayEffect.getSneakyEtchingDodgeChance(entity);
         }
-        boolean dodge = entity.getRandom().nextDouble() <= Math.min(LuckHelper.getLuckAffectedChance(dodgeChance, entity), 0.95);
+        boolean dodge = entity.getRandom().nextDouble() <= Math.min(LuckHelper.getLuckAffectedChance(dodgeChance, entity), 0.75);
 
         if (dodge && entity instanceof ServerPlayer dodgingPlayer) {
             Milestones.advance(dodgingPlayer, MilestoneIds.WOOSH, 1L);
