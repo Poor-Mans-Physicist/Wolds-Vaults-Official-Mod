@@ -108,7 +108,7 @@ public final class RiptideFx {
     private static void cone(ClientLevel level, RiptideFxMessage message) {
         Vec3 origin = message.getFirst();
         Vec3 axis = message.getSecond();
-        add(new ShockConeEffect(origin, axis, message.getAhead(), message.getBehind(), message.getRadius(), RANDOM.nextFloat()));
+        add(new ShockConeEffect(origin, axis, message.getAhead(), message.getBehind(), message.getRadius(), RANDOM.nextFloat(), RANDOM.nextLong()));
         int count = particleCount(10);
         if (count == 0 || axis.lengthSqr() < 1.0E-6) {
             return;

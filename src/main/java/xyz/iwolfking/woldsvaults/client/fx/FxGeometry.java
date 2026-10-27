@@ -55,6 +55,28 @@ final class FxGeometry {
         }
     }
 
+    /** A camera-facing strip like {@link #ribbon(VertexConsumer, Matrix4f, List, float, float, float[], float[])}, with a width and colour per point. */
+    static void ribbon(VertexConsumer consumer, Matrix4f pose, List<Vec3> points, float[] widths, float[][] colors) {
+        int count = points.size();
+        if (count < 2) {
+            return;
+        }
+        Vec3[] sides = new Vec3[count];
+        for (int i = 0; i < count; i++) {
+            Vec3 tangent = points.get(Math.min(count - 1, i + 1)).subtract(points.get(Math.max(0, i - 1)));
+            Vec3 side = tangent.cross(points.get(i));
+            double length = side.length();
+            sides[i] = length < 1.0E-6 ? Vec3.ZERO : side.scale(widths[i] * 0.5 / length);
+        }
+        for (int i = 0; i < count - 1; i++) {
+            Vec3 a = points.get(i).subtract(sides[i]);
+            Vec3 b = points.get(i).add(sides[i]);
+            Vec3 c = points.get(i + 1).add(sides[i + 1]);
+            Vec3 d = points.get(i + 1).subtract(sides[i + 1]);
+            quad(consumer, pose, a, b, c, d, colors[i], colors[i], colors[i + 1], colors[i + 1]);
+        }
+    }
+
     /** One quad in both windings with a colour per corner. */
     static void quad(VertexConsumer consumer, Matrix4f pose, Vec3 a, Vec3 b, Vec3 c, Vec3 d, float[] ca, float[] cb, float[] cc, float[] cd) {
         vertex(consumer, pose, a, ca);
