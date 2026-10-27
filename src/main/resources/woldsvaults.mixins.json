@@ -652,7 +652,6 @@
     "MixinThrownTridentRenderer",
     "MixinPlayerModelHoverPose",
     "MixinItemInHandLayerRiptide",
-    "vaulthunters.custom.MixinEffectCloudEntityParticles",
     "bettercombat.MixinWeaponRegistry",
     "inventoryhud.MixinCuriosRenderer",
     "inventoryhud.MixinInventoryHudRenderer",
