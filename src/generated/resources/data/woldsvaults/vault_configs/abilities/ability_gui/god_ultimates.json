@@ -4,20 +4,20 @@
       "x": 70,
       "y": 265,
       "specializationStyles": {
-        "Savior": {
-          "icon": "woldsvaults:gui/abilities/savior"
-        },
-        "Bullet_Time": {
-          "icon": "woldsvaults:gui/abilities/bullet_time"
+        "Stirrings_Of_Power_Dormant": {
+          "icon": "woldsvaults:gui/abilities/stirrings_of_power"
         },
         "Cope_De_Grace": {
           "icon": "woldsvaults:gui/abilities/cope_de_grace"
         },
+        "Savior": {
+          "icon": "woldsvaults:gui/abilities/savior"
+        },
         "Eyes_Of_God": {
           "icon": "woldsvaults:gui/abilities/eyes_of_god"
         },
-        "Stirrings_Of_Power_Dormant": {
-          "icon": "woldsvaults:gui/abilities/stirrings_of_power"
+        "Bullet_Time": {
+          "icon": "woldsvaults:gui/abilities/bullet_time"
         }
       }
     }
