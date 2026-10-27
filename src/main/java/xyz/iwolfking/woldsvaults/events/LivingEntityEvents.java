@@ -209,7 +209,7 @@ public class LivingEntityEvents {
                                 ActiveFlags.IS_AP_ATTACKING.push();
                                 try {
                                     DamageSource sparkleSource = DamageSource.indirectMagic(player, player);
-                                    target.hurt(sparkleSource, sparkleDamage);
+                                    WoldActiveFlags.IS_SCEPTER_CAST_ATTACKING.runWithFlag(() -> target.hurt(sparkleSource, sparkleDamage));
                                 } finally {
                                     ActiveFlags.IS_AP_ATTACKING.pop();
                                 }
