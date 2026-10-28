@@ -33,7 +33,8 @@ public abstract class MixinItemStack extends net.minecraftforge.common.capabilit
             || item instanceof VaultTridentItem
             || item instanceof VaultPlushieItem
             || item instanceof VaultLootSackItem
-            || item instanceof VaultRangItem) {
+            || item instanceof VaultRangItem
+            || item instanceof VaultScepterItem) {
             return ModItems.FOCUS; // just pretend that wold items are focuses that already use the expertise
         }
         return item;
