@@ -10,14 +10,17 @@ import xyz.iwolfking.woldsvaults.modifiers.gear.riptide.RiptideDash;
 
 @Mixin(Player.class)
 public abstract class MixinPlayerRiptideContact {
-    /** Marks the attack a riptide spin makes on touch, so its hurt event can be told apart from other hits. */
+    /**
+     * Marks the attack a riptide spin makes on touch, so its hurt event can be told apart from other hits, and makes
+     * it a full-strength swing.
+     */
     @Inject(method = "doAutoAttackOnTouch", at = @At("HEAD"))
     private void beginRiptideContact(LivingEntity target, CallbackInfo ci) {
-        RiptideDash.beginContact(target);
+        RiptideDash.beginContact((Player) (Object) this, target);
     }
 
     @Inject(method = "doAutoAttackOnTouch", at = @At("RETURN"))
     private void endRiptideContact(LivingEntity target, CallbackInfo ci) {
-        RiptideDash.endContact();
+        RiptideDash.endContact((Player) (Object) this);
     }
 }
