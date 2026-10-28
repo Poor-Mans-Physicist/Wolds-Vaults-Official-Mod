@@ -21,6 +21,8 @@ import iskallia.vault.gear.reader.FloatValueModifierReader;
 import iskallia.vault.gear.reader.IntegerValueModifierReader;
 import xyz.iwolfking.woldsvaults.modifiers.gear.ParticleTrailAttribute;
 import xyz.iwolfking.woldsvaults.modifiers.gear.scepter.ScepterInvokeAttribute;
+import xyz.iwolfking.woldsvaults.modifiers.gear.unique.SteelInfernoAttribute;
+import xyz.iwolfking.woldsvaults.modifiers.gear.unique.StormTrackingAttribute;
 
 import javax.annotation.Nullable;
 
@@ -48,6 +50,7 @@ public class ModGearAttributes {
     public static final VaultGearAttribute<Integer> RICOCHET = attr("ricochet", VaultGearAttributeType.intType(), ModGearAttributeGenerators.intRange(), ModGearAttributeReaders.addedIntReader("Ricochet", 3093151), VaultGearAttributeComparator.intComparator());
     public static final VaultGearAttribute<Float> RETURNING_DAMAGE = attr("returning_damage", VaultGearAttributeType.floatType(), ModGearAttributeGenerators.floatRange(), ModGearAttributeReaders.percentageReader("Returning Damage", 8833629), VaultGearAttributeComparator.floatComparator());
     public static final VaultGearAttribute<Float> THORNS_SCALING_DAMAGE = attr("thorns_scaling_damage", VaultGearAttributeType.floatType(), ModGearAttributeGenerators.floatRange(), ModGearAttributeReaders.percentageReader("Thorns Scaling", 3134464), VaultGearAttributeComparator.floatComparator());
+    public static final VaultGearAttribute<Float> THORNS_FLAT_PERCENT = attr("thorns_damage_flat_percentile", VaultGearAttributeType.floatType(), ModGearAttributeGenerators.floatRange(), ModGearAttributeReaders.percentageReader("Increased Thorns", 3134464), VaultGearAttributeComparator.floatComparator());
     public static final VaultGearAttribute<Float> AP_SCALING_DAMAGE = attr("ap_scaling_damage", VaultGearAttributeType.floatType(), ModGearAttributeGenerators.floatRange(), ModGearAttributeReaders.percentageReader("Ability Power Scaling", 11422101), VaultGearAttributeComparator.floatComparator());
     public static final VaultGearAttribute<Float> EXECUTION_DAMAGE = attr("execution_damage", VaultGearAttributeType.floatType(), ModGearAttributeGenerators.floatRange(), ModGearAttributeReaders.percentageReader("Execute Threshold", 10302464), VaultGearAttributeComparator.floatComparator());
     public static final VaultGearAttribute<Float> CHAINING_DAMAGE = attr("chaining_damage", VaultGearAttributeType.floatType(), ModGearAttributeGenerators.floatRange(), ModGearAttributeReaders.percentageReader("Reduced Chaining Falloff", 6119096), VaultGearAttributeComparator.floatComparator());
@@ -85,6 +88,9 @@ public class ModGearAttributes {
     public static final VaultGearAttribute<Integer> LUCKY_HIT_AOE = attr("lucky_hit_aoe", VaultGearAttributeType.intType(), (ConfigurableAttributeGenerator<Integer, ?>)ModGearAttributeGenerators.intRange(), new IntegerValueModifierReader(14901010, value -> "+On hits will always <$uniqueHighlight>cleave<reset>, dealing part of your damage in a radius, boosted by <$uniqueHighlight>Lucky Hit<reset>"), VaultGearAttributeComparator.intComparator());
     public static final VaultGearAttribute<Integer> QUAKING_HIT = attr("quaking_hit", VaultGearAttributeType.intType(), (ConfigurableAttributeGenerator<Integer, ?>)ModGearAttributeGenerators.intRange(), new IntegerValueModifierReader(9139029, value -> "+Hitting a stunned enemy casts an <$uniqueHighlight>Earthquake<reset> of level " + value), VaultGearAttributeComparator.intComparator());
     public static final VaultGearAttribute<Integer> SPLITTING_JAVELINS = attr("splitting_javelins", VaultGearAttributeType.intType(), (ConfigurableAttributeGenerator<Integer, ?>)ModGearAttributeGenerators.intRange(), new IntegerValueModifierReader(3085471, value -> "+Scatter javelins split into <$uniqueHighlight>" + value + "<reset> javelins before scattering"), VaultGearAttributeComparator.intComparator());
+    public static final VaultGearAttribute<Boolean> JAVELIN_MULTI_HIT = attr("javelin_multi_hit", VaultGearAttributeType.booleanType(), ModGearAttributeGenerators.booleanFlag(), ModGearAttributeReaders.booleanReader("Split Scatter javelins home in on enemies", 3085471), VaultGearAttributeComparator.booleanComparator());
+    public static final VaultGearAttribute<SteelInfernoAttribute> STEEL_INFERNO = attr("steel_inferno", SteelInfernoAttribute.type(), SteelInfernoAttribute.generator(), SteelInfernoAttribute.reader(), SteelInfernoAttribute.comparator());
+    public static final VaultGearAttribute<StormTrackingAttribute> STORM_TRACKING = attr("storm_tracking", StormTrackingAttribute.type(), StormTrackingAttribute.generator(), StormTrackingAttribute.reader(), StormTrackingAttribute.comparator());
     public static final VaultGearAttribute<Integer> CRASHWAVE = attr("crashwave", VaultGearAttributeType.intType(), (ConfigurableAttributeGenerator<Integer, ?>)ModGearAttributeGenerators.intRange(), new IntegerValueModifierReader(8833629, value -> "+Crashing into a wall while riptiding releases a <$uniqueHighlight>shockwave<reset> of radius " + value), VaultGearAttributeComparator.intComparator());
     public static final VaultGearAttribute<Float> HEALTH_BOOST = attr("health_boost", VaultGearAttributeType.floatType(), (ConfigurableAttributeGenerator<Float, ?>)ModGearAttributeGenerators.floatRange(), ModGearAttributeReaders.percentageReader("Total Health", 8057198), VaultGearAttributeComparator.floatComparator());
     public static final VaultGearAttribute<Float> RADIATION_WAVE = attr("radiation_wave", VaultGearAttributeType.floatType(), (ConfigurableAttributeGenerator<Float, ?>)ModGearAttributeGenerators.floatRange(), new FloatValueModifierReader("Radiation Radius", 5149489, value -> "+Irradiates enemies within <$uniqueHighlight>" + value + "<reset> blocks, slowing them the longer they linger"), VaultGearAttributeComparator.floatComparator());
@@ -170,6 +176,7 @@ public class ModGearAttributes {
                       registry.register(REAVING_DAMAGE);
                       registry.register(ROTATING_TOOL);
                       registry.register(PIERCING);
+                      registry.register(THORNS_FLAT_PERCENT);
                       registry.register(RETURNING_DAMAGE);
                       registry.register(HEXING_CHANCE);
                       registry.register(THEME);
@@ -251,6 +258,9 @@ public class ModGearAttributes {
                       registry.register(LUCKY_HIT_AOE);
                       registry.register(QUAKING_HIT);
                       registry.register(SPLITTING_JAVELINS);
+                      registry.register(JAVELIN_MULTI_HIT);
+                      registry.register(STEEL_INFERNO);
+                      registry.register(STORM_TRACKING);
                       registry.register(CRASHWAVE);
                       registry.register(HEALTH_BOOST);
                       registry.register(RADIATION_WAVE);

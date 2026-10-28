@@ -12,6 +12,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import xyz.iwolfking.woldsvaults.WoldsVaults;
 import xyz.iwolfking.woldsvaults.api.util.WoldEventHelper;
+import xyz.iwolfking.woldsvaults.events.WoldActiveFlags;
 import xyz.iwolfking.woldsvaults.gods.combat.RampageAccess;
 import xyz.iwolfking.woldsvaults.gods.node.CombatContributor;
 import xyz.iwolfking.woldsvaults.gods.node.GodCombatPipeline;
@@ -35,6 +36,9 @@ public final class IdonaHitHandlers {
             return;
         }
         if (!WoldEventHelper.isNormalAttack() || event.getSource().getDirectEntity() != player) {
+            return;
+        }
+        if (WoldActiveFlags.IS_FANG_ATTACKING.isSet() || WoldActiveFlags.IS_ECHOING_ATTACKING.isSet()) {
             return;
         }
         if (IdonaNodes.isActive(player, IdonaNodes.GRAND_ARCHMAGE)) {

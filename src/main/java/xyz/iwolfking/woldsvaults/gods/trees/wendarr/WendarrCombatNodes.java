@@ -5,7 +5,7 @@ import net.minecraft.server.level.ServerPlayer;
 import xyz.iwolfking.woldsvaults.WoldsVaults;
 import xyz.iwolfking.woldsvaults.gods.combat.FinalDamageStage;
 
-/** Temporal Shielding: a post-mitigation {@link FinalDamageStage} reduction, paid in vault time. */
+/** Temporal Shielding: a post-mitigation {@link FinalDamageStage} reduction, paid in vault time; vaults only. */
 public final class WendarrCombatNodes {
     private static final ResourceLocation TEMPORAL_SHIELDING_STAGE = WoldsVaults.id("wendarr_temporal_shielding");
 
@@ -17,7 +17,7 @@ public final class WendarrCombatNodes {
             if (!(event.getEntityLiving() instanceof ServerPlayer player)) {
                 return amount;
             }
-            if (!WendarrNodes.isActive(player, WendarrNodes.TEMPORAL_SHIELDING)) {
+            if (!WendarrNodes.isActive(player, WendarrNodes.TEMPORAL_SHIELDING) || !WendarrVaultTime.inVault(player)) {
                 return amount;
             }
             WendarrVaultTime.queueDrain(player);

@@ -3,6 +3,7 @@ package xyz.iwolfking.woldsvaults.gods.trees.wendarr;
 import iskallia.vault.core.vault.Vault;
 import iskallia.vault.core.vault.time.TickClock;
 import iskallia.vault.core.vault.time.TickStopwatch;
+import iskallia.vault.world.data.ServerVaults;
 
 import net.minecraft.server.level.ServerPlayer;
 
@@ -36,8 +37,15 @@ public final class WendarrVaultTime {
         }
     }
 
-    /** Books one hit's worth of vault time, rolled from Edge of Time's range for either node. */
+    public static boolean inVault(ServerPlayer player) {
+        return ServerVaults.get(player.level).isPresent();
+    }
+
+    /** Books one hit's worth of vault time, rolled from Edge of Time's range for either node. Free outside a vault. */
     public static void queueDrain(ServerPlayer player) {
+        if (!inVault(player)) {
+            return;
+        }
         WendarrNodeHandlers.EdgeOfTimeParams params = WendarrNodeHandlers.params(WendarrNodes.EDGE_OF_TIME,
                 WendarrNodeHandlers.EdgeOfTimeParams.class);
         int ticks = params.drain_min_ticks()
@@ -45,16 +53,17 @@ public final class WendarrVaultTime {
         debt(player).addAndGet(ticks);
     }
 
-    /** Pays off everything the player owes. A null vault is a no-op and the debt is kept. */
+    /** Pays off everything the player owes. Outside a vault (null vault) the debt is dropped, never carried in. */
     public static void settleDrain(ServerPlayer player, Vault vault) {
-        if (vault == null) {
-            return;
-        }
         AtomicInteger debt = GodNodeState.<AtomicInteger>peek(player.getUUID(), DRAIN_DEBT).orElse(null);
         if (debt == null) {
             return;
         }
-        drainTicks(vault, debt.getAndSet(0));
+        int owed = debt.getAndSet(0);
+        if (vault == null) {
+            return;
+        }
+        drainTicks(vault, owed);
     }
 
     public static List<ServerPlayer> runners(Vault vault) {

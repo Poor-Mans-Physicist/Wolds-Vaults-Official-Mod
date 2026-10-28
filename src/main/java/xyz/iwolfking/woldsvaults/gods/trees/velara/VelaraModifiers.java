@@ -33,6 +33,8 @@ public final class VelaraModifiers {
             "velara_defense", Attributes.MAX_HEALTH, AttributeModifier.Operation.MULTIPLY_TOTAL);
     private static final UUID HEALTH_FLAT_ID = GodVanillaAttributes.modifierId(
             "velara_defense", Attributes.MAX_HEALTH, AttributeModifier.Operation.ADDITION);
+    private static final UUID STEADFAST_ARMOR_PERCENT_ID = GodVanillaAttributes.modifierId(
+            VelaraNodes.STEADFAST, Attributes.ARMOR, AttributeModifier.Operation.MULTIPLY_BASE);
 
     private VelaraModifiers() {
     }
@@ -45,6 +47,7 @@ public final class VelaraModifiers {
         double speedMultiplier = 1.0D;
         double armorFlat = 0.0D;
         double healthFlat = 0.0D;
+        double armorPercent = 0.0D;
 
         if (VelaraNodes.isActive(player, VelaraNodes.THE_STONEWALL)) {
             armorMultiplier *= VelaraValues.stonewallArmorMultiplier();
@@ -60,7 +63,7 @@ public final class VelaraModifiers {
             healthFlat += VelaraValues.immortalFlatHealth();
         }
         if (VelaraNodes.isActive(player, VelaraNodes.STEADFAST)) {
-            armorMultiplier *= 1.0D + steadfastArmorBonus(player);
+            armorPercent += steadfastArmorBonus(player);
         }
         if (charmCount > 0 && VelaraNodes.isActive(player, VelaraNodes.DEFENDER_OF_THE_FAITH)) {
             double defender = 1.0D + VelaraValues.defenderPerCharm() * charmCount;
@@ -72,6 +75,8 @@ public final class VelaraModifiers {
                 armorMultiplier - 1.0D, AttributeModifier.Operation.MULTIPLY_TOTAL);
         applyModifier(player, Attributes.ARMOR, ARMOR_FLAT_ID, "Velara armor",
                 armorFlat, AttributeModifier.Operation.ADDITION);
+        applyModifier(player, Attributes.ARMOR, STEADFAST_ARMOR_PERCENT_ID, "Velara Steadfast armor",
+                armorPercent, AttributeModifier.Operation.MULTIPLY_BASE);
         applyModifier(player, Attributes.MAX_HEALTH, HEALTH_MULTIPLIER_ID, "Velara health multiplier",
                 healthMultiplier - 1.0D, AttributeModifier.Operation.MULTIPLY_TOTAL);
         applyModifier(player, Attributes.MAX_HEALTH, HEALTH_FLAT_ID, "Velara health",
@@ -84,7 +89,7 @@ public final class VelaraModifiers {
         }
     }
 
-    /** Steadfast's armour bonus, from the unclamped knockback-resistance sum on the snapshot. */
+    /** Steadfast's Armor % bonus, from the unclamped knockback-resistance sum on the snapshot. */
     private static double steadfastArmorBonus(ServerPlayer player) {
         AttributeSnapshot snapshot = AttributeSnapshotHelper.getInstance().getSnapshot(player);
         float knockbackResistance = snapshot.getAttributeValue(ModGearAttributes.KNOCKBACK_RESISTANCE,
@@ -124,6 +129,7 @@ public final class VelaraModifiers {
     static void clear(ServerPlayer player) {
         removeModifier(player, Attributes.ARMOR, ARMOR_MULTIPLIER_ID);
         removeModifier(player, Attributes.ARMOR, ARMOR_FLAT_ID);
+        removeModifier(player, Attributes.ARMOR, STEADFAST_ARMOR_PERCENT_ID);
         removeModifier(player, Attributes.MAX_HEALTH, HEALTH_MULTIPLIER_ID);
         removeModifier(player, Attributes.MAX_HEALTH, HEALTH_FLAT_ID);
         removeModifier(player, Attributes.MOVEMENT_SPEED, SPEED_MULTIPLIER_ID);

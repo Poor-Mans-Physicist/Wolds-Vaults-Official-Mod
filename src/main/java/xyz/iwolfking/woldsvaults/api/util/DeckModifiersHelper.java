@@ -10,6 +10,8 @@ import net.minecraft.world.item.ItemStack;
 import xyz.iwolfking.vhapi.mixin.accessors.DeckModifiersConfigAccessor;
 import xyz.iwolfking.woldsvaults.WoldsVaults;
 import xyz.iwolfking.woldsvaults.config.ImplicitDeckModifiersConfig;
+import xyz.iwolfking.woldsvaults.mixins.vaulthunters.accessors.DeckModifierValueAccessor;
+import xyz.iwolfking.woldsvaults.modifiers.deck.CardNeighborTypeDeckModifier;
 import xyz.iwolfking.woldsvaults.modifiers.deck.ImplicitDeckModifier;
 
 import java.util.ArrayList;
@@ -22,6 +24,7 @@ public class DeckModifiersHelper {
     public static final String MYSTERY_DECK_ID = "mystery";
     private static final String MYSTERY_IMPLICIT_POOL = "card_deck_implicits";
     private static final int MYSTERY_IMPLICIT_COUNT = 2;
+    private static final float MYSTERY_IMPLICIT_STRENGTH = 0.75F;
 
     public static <T extends DeckModifier<?>> boolean hasImplicitDeckModifierOfType(CardDeck deck, Class<T> instance) {
         List<ImplicitDeckModifier> implicitDeckModifiers = deck.getModifiersOfType(ImplicitDeckModifier.class);
@@ -55,6 +58,23 @@ public class DeckModifiersHelper {
     }
 
     /**
+     * Scales a rolled mystery implicit to {@code MYSTERY_IMPLICIT_STRENGTH} of its strength: frequency
+     * scalers keep their base count ({@code 1 + s x (v - 1)}), every other modifier scales its value.
+     * Integer readers (Arcane levels) round the result; Extended's time factor has no value to scale.
+     */
+    private static void weakenMysteryImplicit(DeckModifier<?> modifier) {
+        float value = modifier.getModifierValue();
+        if (value < 0.0F) {
+            WoldsVaults.LOGGER.error("Mystery implicit {} was not populated before scaling; it keeps full strength.", modifier.getId());
+            return;
+        }
+        float scaled = modifier instanceof CardNeighborTypeDeckModifier
+                ? 1.0F + MYSTERY_IMPLICIT_STRENGTH * (value - 1.0F)
+                : MYSTERY_IMPLICIT_STRENGTH * value;
+        ((DeckModifierValueAccessor) modifier).woldsvaults$setModifierValue(scaled);
+    }
+
+    /**
      * Rolls the pair of implicits that define the mystery deck, drawn without replacement from the
      * {@code card_deck_implicits} pool, and adds them to the deck.
      */
@@ -85,6 +105,8 @@ public class DeckModifiersHelper {
                 continue;
             }
 
+            modifier.onPopulate(ChunkRandom.ofNanoTime());
+            weakenMysteryImplicit(modifier);
             deck.addModifier(new ImplicitDeckModifier(modifier), ChunkRandom.ofNanoTime());
             applied = true;
         }

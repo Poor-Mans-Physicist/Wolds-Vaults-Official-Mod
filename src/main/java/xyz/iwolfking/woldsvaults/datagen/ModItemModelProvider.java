@@ -302,6 +302,7 @@ public class ModItemModelProvider extends ItemModelProvider {
         deckCore(WoldsVaults.id("sparkling_deck_core"));
         deckCore(WoldsVaults.id("construction_deck_core"));
         deckCore(WoldsVaults.id("archive_deck_core"));
+        deckCore(WoldsVaults.id("greed_deck_core"));
 
         ModConfigs.RESEARCHES_GUI = new ResearchesGUIConfig().readConfig();
         ModConfigs.RESEARCHES_GUI.getStyles().forEach((name, s) -> {

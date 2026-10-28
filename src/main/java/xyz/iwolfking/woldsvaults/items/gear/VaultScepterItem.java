@@ -315,7 +315,8 @@ public class VaultScepterItem extends SwordItem implements VaultGearItem, Dyeabl
             AABB targetBox = target.getBoundingBox().inflate(beamRadius);
             if (targetBox.clip(start, end).isPresent()) {
                 ElementHelper.runWithElements(elementalTypes, () -> {
-                    target.hurt(DamageSource.indirectMagic(player, player), playerAP * apScaling);
+                    xyz.iwolfking.woldsvaults.events.WoldActiveFlags.IS_SCEPTER_CAST_ATTACKING.runWithFlag(() ->
+                            target.hurt(DamageSource.indirectMagic(player, player), playerAP * apScaling));
                 });
             }
         }

@@ -17,6 +17,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import xyz.iwolfking.woldsvaults.api.lib.ICardDeckCache;
 import xyz.iwolfking.woldsvaults.modifiers.deck.EmptySlotDeckModifier;
+import xyz.iwolfking.woldsvaults.modifiers.deck.GreedStackDeckModifier;
 import xyz.iwolfking.woldsvaults.modifiers.deck.ImplicitDeckModifier;
 import xyz.iwolfking.woldsvaults.modifiers.deck.lib.IMultiplicativeDeckModifier;
 import xyz.iwolfking.woldsvaults.modifiers.deck.lib.IRemovableSlotModifier;
@@ -159,7 +160,8 @@ public abstract class MixinCardDeck implements ICardDeckCache, ISerializable<Com
 
     /**
      * @author iwolfking
-     * @reason Make Deck Modifiers additive instead of multiplicative
+     * @reason Make Deck Modifiers additive instead of multiplicative. Multiplicative cores multiply the
+     * additive sum; cores that share a multiplier group add inside one factor.
      */
     @Overwrite
     public float getModifierValue(Card card, CardPos pos) {
@@ -172,15 +174,23 @@ public abstract class MixinCardDeck implements ICardDeckCache, ISerializable<Com
 
         float value = 1.0F;
         float mult = 1.0F;
+        Map<String, Float> groupBonuses = new HashMap<>();
 
         for (DeckModifier<?> modifier : this.modifiers) {
             DeckModifier<?> modToProcess = modifier instanceof ImplicitDeckModifier implicitDeckModifier ? implicitDeckModifier.getModifier() : modifier;
-            if(modToProcess instanceof EmptySlotDeckModifier emptySlotDeckModifier) {
+            if(modToProcess instanceof IMultiplicativeDeckModifier multiplicativeDeckModifier) {
+                float factor = multiplicativeDeckModifier.getMultiplierValue(card, pos, (CardDeck)(Object)this);
+                String group = multiplicativeDeckModifier.wv$multGroup();
+                if(group == null) {
+                    mult *= factor;
+                }
+                else {
+                    groupBonuses.merge(group, factor - 1.0F, Float::sum);
+                }
+            }
+            else if(modToProcess instanceof EmptySlotDeckModifier emptySlotDeckModifier) {
                 wv$recomputeSlotCache();
                 value += (emptySlotDeckModifier.getModifierValue(card, pos, (CardDeck)(Object)this) - 1.0F);
-            }
-            else if(modToProcess instanceof IMultiplicativeDeckModifier multiplicativeDeckModifier) {
-                mult *= multiplicativeDeckModifier.getMultiplierValue(card, pos, (CardDeck)(Object)this);
             }
             else {
                 float modValue = modToProcess.getModifierValue(card, pos, (CardDeck)(Object)this);
@@ -188,16 +198,22 @@ public abstract class MixinCardDeck implements ICardDeckCache, ISerializable<Com
             }
         }
 
+        for (float groupBonus : groupBonuses.values()) {
+            mult *= 1.0F + groupBonus;
+        }
+
         return value * mult;
     }
 
     /**
      * @author PoorMansPhysicist
-     * @reason Greed cards must stack additively; 3.21.6 sums their raw multipliers instead
+     * @reason Greed cards must stack additively; 3.21.6 sums their raw multipliers instead. With a Greed
+     * core, each greed card on a target that two or more greed cards hit adds the core's value.
      */
     @Overwrite
     public float getGreedMultiplier(CardPos targetPos, Card targetCard) {
         float bonus = 0.0F;
+        int sources = 0;
 
         for (Map.Entry<CardPos, Card> entry : this.cards.entrySet()) {
             Card card = entry.getValue();
@@ -214,8 +230,20 @@ public abstract class MixinCardDeck implements ICardDeckCache, ISerializable<Com
                 float greedValue = greedModifier.getGreedMultiplier(card.getTier(), greedPos, targetPos, targetCard, (CardDeck) (Object) this);
                 if (greedValue > 1.0F) {
                     bonus += greedValue - 1.0F;
+                    sources++;
                 }
             }
+        }
+
+        if (sources >= 2) {
+            float stackBonus = 0.0F;
+            for (DeckModifier<?> modifier : this.modifiers) {
+                DeckModifier<?> modToProcess = modifier instanceof ImplicitDeckModifier implicitDeckModifier ? implicitDeckModifier.getModifier() : modifier;
+                if (modToProcess instanceof GreedStackDeckModifier greedStack) {
+                    stackBonus += greedStack.getModifierValue();
+                }
+            }
+            bonus += stackBonus * sources;
         }
 
         return 1.0F + bonus;

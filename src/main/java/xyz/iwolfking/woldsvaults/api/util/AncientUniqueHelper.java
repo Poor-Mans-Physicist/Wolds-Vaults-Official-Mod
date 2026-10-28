@@ -57,7 +57,7 @@ public class AncientUniqueHelper {
         woldsUnique("zombie_horse_axe", "Ancient Zombie Horse Axe");
         woldsUnique("ocean_current", "Ancient Zeus's Fury");
         woldsUnique("fork_of_the_glutton", "Ancient Fork of the Glutton");
-        woldsUnique("trirang", "Ancient Tri-Rang");
+        woldsUnique("trirang", "Ancient Quad-Rang");
         woldsUnique("bamboo_fightstick", "Ancient Bamboo Fightstick");
         vaultUnique("jester", "Ancient Jester Hat");
         vaultUnique("stormcrown", "Ancient Stormcrown");
@@ -85,7 +85,7 @@ public class AncientUniqueHelper {
         woldsUnique("chroma_brew", "Ancient Chroma Brew");
         vaultUnique("baguette", "Ancient The Baguette");
         vaultUnique("chainlash", "Ancient Chainlash");
-        vaultUnique("inferno_reach", "Ancient Inferno's Reach");
+        vaultUnique("inferno_reach", "Ancient Steel Inferno");
         woldsUnique("pocket_penguin", "Ancient Pocket Penguin");
         woldsUnique("wicked_witch", "Ancient The Wicked Witch");
         woldsUnique("safer_spaces", "Ancient Safer Spaces");
