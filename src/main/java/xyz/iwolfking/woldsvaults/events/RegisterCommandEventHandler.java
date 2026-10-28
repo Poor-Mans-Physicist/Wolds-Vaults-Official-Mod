@@ -14,5 +14,6 @@ public class RegisterCommandEventHandler {
         ResearchMenuCommand.register(event.getDispatcher());
         VaultChampionCommand.register(event.getDispatcher());
         ExtractionCommand.register(event.getDispatcher());
+        HyperTestCommand.register(event.getDispatcher());
     }
 }

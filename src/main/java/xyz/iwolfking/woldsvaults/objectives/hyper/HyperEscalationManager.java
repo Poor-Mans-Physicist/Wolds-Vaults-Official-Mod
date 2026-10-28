@@ -84,30 +84,15 @@ public class HyperEscalationManager extends ObjectiveManager<HyperVaultObjective
         int cycle = objective.getOr(HyperVaultObjective.CYCLE, 0) + 1;
         objective.set(HyperVaultObjective.CYCLE, cycle);
 
-        VaultModifierUtils.addModifier(vault, WoldsVaults.id("hyper"), 1);
         int score = objective.getOr(HyperVaultObjective.SCORE, 0);
-        int greedyTiers = score >= HyperVaultObjective.cfg().getScoreTripleGreedy() ? 3
-                : score >= HyperVaultObjective.cfg().getScoreDoubleGreedy() ? 2 : 1;
-        VaultModifierUtils.addModifier(vault, WoldsVaults.id("greedy_crate_tier"), greedyTiers);
-
-        int crateTiers = (score >= HyperVaultObjective.cfg().getCrateTierScore15() ? 15
-                : score >= HyperVaultObjective.cfg().getCrateTierScore9() ? 9
-                : score >= HyperVaultObjective.cfg().getCrateTierScore7() ? 7 : 5) * cycle;
-        VaultModifierUtils.addModifier(vault, VaultMod.id("crate_tier"), crateTiers);
+        int greedyTiers = greedyTiersFor(score);
+        int crateTiers = crateTiersFor(score, cycle);
+        grantCycleModifiers(cycle, greedyTiers, crateTiers, true);
         MilestoneDispatcher.forEachRunner(vault, player -> Milestones.advance(player, MilestoneIds.HYPERION, crateTiers));
-        VaultModifierUtils.addModifier(vault, VaultMod.id("refined_experience"), cycle);
-        if (cycle % 2 == 0) {
-            VaultModifierUtils.addModifier(vault, VaultMod.id("inert"), 1);
-            HyperVaultObjective.broadcast(vault, "Inert seeps into the Vault (-10% cooldown reduction).", ChatFormatting.DARK_PURPLE);
-        }
-        if (cycle == 3) {
-            VaultModifierUtils.addModifier(vault, WoldsVaults.id("radar"), 1);
-            HyperVaultObjective.broadcast(vault, "The Vault's radar comes online — stealth abilities no longer work!", ChatFormatting.RED);
-        }
 
         awardScoreTiers();
 
-        dumpChaosModifiers();
+        dumpChaosModifiers(true);
         restartDoorAnimation();
         if (GreedTrialHyper.shouldOfferExit(vault)) {
             spawnExitPillar();
@@ -128,6 +113,54 @@ public class HyperEscalationManager extends ObjectiveManager<HyperVaultObjective
                 + ", +" + greedyTiers + " greedy crate tier" + (greedyTiers > 1 ? "s" : "")
                 + ", +" + cycle + " refined experience";
         HyperVaultObjective.broadcast(vault, "HYPER ×" + cycle + " — everything in the Vault grows stronger! (" + tierSummary + ")", ChatFormatting.GOLD);
+    }
+
+    /**
+     * Test-command stand-in for a boss kill: advances the cycle and grants the same cycle
+     * modifiers and chaos dump as {@link #onBossKilled()}, scored as the lowest tier, without
+     * milestones, score-tier crate rewards, trial completion, pillar or arena handling, or the
+     * per-modifier chat lines.
+     */
+    public void simulateBossKill() {
+        int cycle = objective.getOr(HyperVaultObjective.CYCLE, 0) + 1;
+        objective.set(HyperVaultObjective.CYCLE, cycle);
+        grantCycleModifiers(cycle, greedyTiersFor(0), crateTiersFor(0, cycle), false);
+        dumpChaosModifiers(false);
+    }
+
+    private static int greedyTiersFor(int score) {
+        return score >= HyperVaultObjective.cfg().getScoreTripleGreedy() ? 3
+                : score >= HyperVaultObjective.cfg().getScoreDoubleGreedy() ? 2 : 1;
+    }
+
+    private static int crateTiersFor(int score, int cycle) {
+        return (score >= HyperVaultObjective.cfg().getCrateTierScore15() ? 15
+                : score >= HyperVaultObjective.cfg().getCrateTierScore9() ? 9
+                : score >= HyperVaultObjective.cfg().getCrateTierScore7() ? 7 : 5) * cycle;
+    }
+
+    private void grantCycleModifiers(int cycle, int greedyTiers, int crateTiers, boolean announce) {
+        VaultModifierUtils.addModifier(vault, WoldsVaults.id("hyper"), 1);
+        VaultModifierUtils.addModifier(vault, WoldsVaults.id("greedy_crate_tier"), greedyTiers);
+        VaultModifierUtils.addModifier(vault, VaultMod.id("crate_tier"), crateTiers);
+        VaultModifierUtils.addModifier(vault, VaultMod.id("refined_experience"), cycle);
+        if (cycle % 2 == 0) {
+            VaultModifierUtils.addModifier(vault, VaultMod.id("inert"), 1);
+            if (announce) {
+                HyperVaultObjective.broadcast(vault, "Inert seeps into the Vault (-10% cooldown reduction).", ChatFormatting.DARK_PURPLE);
+            }
+        }
+        if (cycle == 3) {
+            VaultModifierUtils.addModifier(vault, WoldsVaults.id("radar"), 1);
+            if (announce) {
+                HyperVaultObjective.broadcast(vault, "The Vault's radar comes online — stealth abilities no longer work!", ChatFormatting.RED);
+            }
+        }
+    }
+
+    /** Test-command hook: takes down a reward phase's exit pillar early. */
+    public void clearExitPillar() {
+        removeExitPillar();
     }
 
     /**
@@ -197,14 +230,18 @@ public class HyperEscalationManager extends ObjectiveManager<HyperVaultObjective
     }
 
     /** Fills the granted chaos budget from hyper_mixed; one pull normally rolls the pool's full 25. */
-    private void dumpChaosModifiers() {
+    private void dumpChaosModifiers(boolean announce) {
         int granted = HyperVaultObjective.consumeChaosBudget(vault,
                 GreedTrialHyper.chaosPerKill(vault, HyperVaultObjective.cfg().getChaosPerKill()));
         if (granted <= 0) {
-            HyperVaultObjective.broadcast(vault, "The Vault can hold no more chaos (" + HyperVaultObjective.cfg().getChaosCap() + " cap reached).", ChatFormatting.DARK_PURPLE);
+            if (announce) {
+                HyperVaultObjective.broadcast(vault, "The Vault can hold no more chaos (" + HyperVaultObjective.cfg().getChaosCap() + " cap reached).", ChatFormatting.DARK_PURPLE);
+            }
             return;
         }
-        HyperVaultObjective.broadcast(vault, "Chaotic modifiers surge into the Vault!", ChatFormatting.DARK_PURPLE);
+        if (announce) {
+            HyperVaultObjective.broadcast(vault, "Chaotic modifiers surge into the Vault!", ChatFormatting.DARK_PURPLE);
+        }
         JavaRandom random = JavaRandom.ofNanoTime();
         int added = 0;
         int emptyPulls = 0;
@@ -224,7 +261,9 @@ public class HyperEscalationManager extends ObjectiveManager<HyperVaultObjective
                     continue;
                 }
                 vault.get(Vault.MODIFIERS).addModifier(modifier, 1, true, ChunkRandom.ofNanoTime());
-                announceModifier(modifier);
+                if (announce) {
+                    announceModifier(modifier);
+                }
                 added++;
             }
         }
@@ -248,7 +287,7 @@ public class HyperEscalationManager extends ObjectiveManager<HyperVaultObjective
     public void tick() {
         tickDoorAnimation();
         if (objective.getOr(HyperVaultObjective.CHAOS_COUNT, 0) == 0 && !vault.get(Vault.LISTENERS).getAll().isEmpty()) {
-            dumpChaosModifiers();
+            dumpChaosModifiers(true);
         }
         tickAmbientEvents();
         if (objective.getOr(HyperVaultObjective.PHASE, Phase.ROLLING) != Phase.REWARD) {

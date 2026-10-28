@@ -3,7 +3,9 @@ package xyz.iwolfking.woldsvaults.objectives.hyper;
 import iskallia.vault.VaultMod;
 import iskallia.vault.core.random.JavaRandom;
 import iskallia.vault.core.vault.Vault;
+import iskallia.vault.core.vault.modifier.spi.VaultModifier;
 import iskallia.vault.core.vault.objective.BingoObjective;
+import iskallia.vault.core.vault.objective.ObeliskObjective;
 import iskallia.vault.core.vault.objective.Objective;
 import iskallia.vault.core.vault.objective.ScavengerBingoObjective;
 import iskallia.vault.core.vault.objective.elixir.ElixirTask;
@@ -17,6 +19,7 @@ import iskallia.vault.task.TaskContext;
 import iskallia.vault.task.counter.TargetTaskCounter;
 import iskallia.vault.task.source.EntityTaskSource;
 import net.minecraft.ChatFormatting;
+import net.minecraft.resources.ResourceLocation;
 import xyz.iwolfking.woldsvaults.WoldsVaults;
 import xyz.iwolfking.woldsvaults.milestones.trials.GreedTrialHyper;
 import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
@@ -24,6 +27,7 @@ import xyz.iwolfking.woldsvaults.mixins.vaulthunters.accessors.BingoObjectiveAcc
 import xyz.iwolfking.woldsvaults.mixins.vaulthunters.accessors.ScavengerBingoObjectiveAccessor;
 import xyz.iwolfking.woldsvaults.objectives.BrutalBossesObjective;
 import xyz.iwolfking.woldsvaults.objectives.HyperVaultObjective;
+import xyz.iwolfking.woldsvaults.objectives.data.BrutalBossesRegistry;
 import xyz.iwolfking.woldsvaults.objectives.HyperVaultObjective.HyperMini;
 import xyz.iwolfking.woldsvaults.objectives.HyperVaultObjective.Phase;
 import xyz.iwolfking.woldsvaults.objectives.lib.ObjectiveManager;
@@ -158,16 +162,65 @@ public class HyperCycleManager extends ObjectiveManager<HyperVaultObjective> {
             case SCAVENGER -> addMini(ScavengerBingoObjective.of(boardSize(), boardSize(), 0.0F, VaultMod.id("default"), false));
             case ELIXIR -> ensureElixirGoal();
             case BRUTAL -> {
-                int runnersNow = vault.get(Vault.LISTENERS).getAll(Runner.class).size();
-                int minObelisks = Math.min(HyperVaultObjective.cfg().getObeliskMax(),
-                        HyperVaultObjective.cfg().getObeliskMin()
-                                + objective.getOr(HyperVaultObjective.CYCLE, 0) / 3
-                                + Math.max(0, runnersNow - 1) / 2);
-                int obelisks = minObelisks
-                        + random.nextInt(HyperVaultObjective.cfg().getObeliskMax() - minObelisks + 1);
+                int obelisks = rollObeliskCount(objective.getOr(HyperVaultObjective.CYCLE, 0), random);
                 addMini(BrutalBossesObjective.of(obelisks, () -> random.nextInt(3) + 1,
                         HyperVaultObjective.cfg().getBrutalObeliskProbability(), true,
                         GreedTrialHyper.hasPositiveBrutalRewards(vault)));
+            }
+        }
+    }
+
+    private int rollObeliskCount(int cycle, JavaRandom random) {
+        int runnersNow = vault.get(Vault.LISTENERS).getAll(Runner.class).size();
+        int minObelisks = Math.min(HyperVaultObjective.cfg().getObeliskMax(),
+                HyperVaultObjective.cfg().getObeliskMin()
+                        + cycle / 3
+                        + Math.max(0, runnersNow - 1) / 2);
+        return minObelisks + random.nextInt(HyperVaultObjective.cfg().getObeliskMax() - minObelisks + 1);
+    }
+
+    /** Test-command roll of how many brutal bosses a full batch at {@code cycle} would field. */
+    public int rollBrutalBossCount(int cycle, JavaRandom random) {
+        int obelisks = rollObeliskCount(cycle, random);
+        int bosses = 0;
+        for (int i = 0; i < obelisks; i++) {
+            bosses += random.nextInt(3) + 1;
+        }
+        return bosses;
+    }
+
+    /** Test-command count of the current batch's brutal bosses not yet killed, spawned or not. */
+    public int remainingBrutalBosses() {
+        return objective.findMini(BrutalBossesObjective.class).map(brutal -> {
+            int remaining = 0;
+            for (ObeliskObjective.Wave wave : brutal.get(ObeliskObjective.WAVES)) {
+                remaining += Math.max(0, wave.get(ObeliskObjective.Wave.TARGET) - wave.get(ObeliskObjective.Wave.COUNT));
+            }
+            return remaining;
+        }).orElse(0);
+    }
+
+    /**
+     * Test-command stand-in for killing {@code bosses} brutal pillar bosses: each rolls its
+     * infernal modifier names the way a spawned brutal boss does and pays one pool draw per
+     * name, from the hyper negative pool (stack caps and chaos budget apply) or, in a trial with
+     * positive brutal rewards, from the boss's own bb_ pool.
+     */
+    public void simulateBrutalKills(int bosses) {
+        boolean positive = GreedTrialHyper.hasPositiveBrutalRewards(vault);
+        JavaRandom random = JavaRandom.ofNanoTime();
+        for (int i = 0; i < bosses; i++) {
+            for (String modName : BrutalBossesRegistry.getRandomMobModifiers().split("\\s+")) {
+                ResourceLocation pool = positive
+                        ? VaultMod.id("bb_" + modName.toLowerCase())
+                        : HyperVaultObjective.CHAOS_POOL_ALL_BAD;
+                for (VaultModifier<?> modifier : ModConfigs.VAULT_MODIFIER_POOLS.getRandom(pool, 0, random)) {
+                    if (!positive && (HyperModifierPolicy.isBlocked(vault, modifier)
+                            || HyperVaultObjective.consumeChaosBudget(vault, 1) <= 0)) {
+                        continue;
+                    }
+                    vault.get(Vault.MODIFIERS).addModifier(modifier, 1, true, JavaRandom.ofNanoTime());
+                }
             }
         }
     }
