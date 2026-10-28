@@ -175,6 +175,8 @@
     "vaulthunters.accessors.AbsorptionBottleEffectAccessor",
     "vaulthunters.accessors.ArchitectCrystalLayoutAccessor",
     "vaulthunters.accessors.AttributeSnapshotHelperAccessor",
+    "vaulthunters.accessors.AttributeGearDataAccessor",
+    "vaulthunters.accessors.PlayerExpertisesDataAccessor",
     "vaulthunters.accessors.AttributeSnapshotValueAccessor",
     "vaulthunters.accessors.BingoObjectiveAccessor",
     "vaulthunters.accessors.BossRunePillarAccessor",
