@@ -2,7 +2,7 @@
   "descriptions": {
     "velara_armored": [
       {
-        "text": "+25% Armor",
+        "text": "+12.5% Armor",
         "color": "#6ef08c"
       },
       {
@@ -21,7 +21,7 @@
         "text": ". Grants "
       },
       {
-        "text": "+10% Health and +10% Armor",
+        "text": "+5% Health and +5% Armor",
         "color": "#6ef08c"
       },
       {
@@ -30,7 +30,7 @@
     ],
     "velara_healthy_ii": [
       {
-        "text": "+40% Healing Efficiency",
+        "text": "+20% Healing Efficiency",
         "color": "#6ef08c"
       },
       {
@@ -67,7 +67,7 @@
         "text": ". Grants "
       },
       {
-        "text": "+10% Health and +10% Armor",
+        "text": "+5% Health and +5% Armor",
         "color": "#6ef08c"
       },
       {
@@ -76,7 +76,7 @@
     ],
     "velara_armored_ii": [
       {
-        "text": "+50% Armor",
+        "text": "+25% Armor",
         "color": "#6ef08c"
       },
       {
@@ -151,7 +151,7 @@
     ],
     "velara_healthy": [
       {
-        "text": "+20% Healing Efficiency",
+        "text": "+10% Healing Efficiency",
         "color": "#6ef08c"
       },
       {
@@ -169,7 +169,7 @@
     ],
     "velara_guarded": [
       {
-        "text": "+2% Block",
+        "text": "+1% Block",
         "color": "#6ef08c"
       },
       {
@@ -224,7 +224,7 @@
         "text": ". Grants "
       },
       {
-        "text": "+10% Health and +10% Armor",
+        "text": "+5% Health and +5% Armor",
         "color": "#6ef08c"
       },
       {
@@ -309,7 +309,7 @@
     ],
     "velara_fast_reflexes_ii": [
       {
-        "text": "+5% Dodge",
+        "text": "+2.5% Dodge",
         "color": "#6ef08c"
       },
       {
@@ -344,7 +344,7 @@
         "text": ". Grants "
       },
       {
-        "text": "+10% Health and +10% Armor",
+        "text": "+5% Health and +5% Armor",
         "color": "#6ef08c"
       },
       {
@@ -353,7 +353,7 @@
     ],
     "velara_fast_reflexes": [
       {
-        "text": "+2% Dodge",
+        "text": "+1% Dodge",
         "color": "#6ef08c"
       },
       {
@@ -424,7 +424,7 @@
     ],
     "velara_guarded_ii": [
       {
-        "text": "+5% Block",
+        "text": "+2.5% Block",
         "color": "#6ef08c"
       },
       {
@@ -442,7 +442,7 @@
     ],
     "velara_tough": [
       {
-        "text": "+25% Health",
+        "text": "+12.5% Health",
         "color": "#6ef08c"
       },
       {
@@ -461,7 +461,7 @@
         "text": ". Grants "
       },
       {
-        "text": "+10% Health and +10% Armor",
+        "text": "+5% Health and +5% Armor",
         "color": "#6ef08c"
       },
       {
@@ -470,7 +470,7 @@
     ],
     "velara_tough_ii": [
       {
-        "text": "+50% Health",
+        "text": "+25% Health",
         "color": "#6ef08c"
       },
       {
@@ -498,7 +498,7 @@
         "text": ". Grants "
       },
       {
-        "text": "+10% Health and +10% Armor",
+        "text": "+5% Health and +5% Armor",
         "color": "#6ef08c"
       },
       {

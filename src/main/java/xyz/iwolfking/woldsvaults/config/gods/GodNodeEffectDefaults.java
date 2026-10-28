@@ -56,22 +56,22 @@ public final class GodNodeEffectDefaults {
 
     /** Idona's shipped effect table. */
     private static void idona(GodNodeEffectsConfig.EffectMap map) {
-        put(map, "idona_start_sw", GEAR_ATTRIBUTE_SCALED, new float[]{0.1F},
+        put(map, "idona_start_sw", GEAR_ATTRIBUTE_SCALED, new float[]{0.05F},
                 "attribute", "the_vault:ability_power_percent", "secondAttribute", "the_vault:damage_increase");
-        put(map, "idona_start_st", GEAR_ATTRIBUTE_SCALED, new float[]{0.1F},
+        put(map, "idona_start_st", GEAR_ATTRIBUTE_SCALED, new float[]{0.05F},
                 "attribute", "the_vault:ability_power_percent", "secondAttribute", "the_vault:damage_increase");
-        put(map, "idona_start_gambler", GEAR_ATTRIBUTE_SCALED, new float[]{0.1F},
+        put(map, "idona_start_gambler", GEAR_ATTRIBUTE_SCALED, new float[]{0.05F},
                 "attribute", "the_vault:ability_power_percent", "secondAttribute", "the_vault:damage_increase");
-        put(map, "idona_start_hoard", GEAR_ATTRIBUTE_SCALED, new float[]{0.1F},
+        put(map, "idona_start_hoard", GEAR_ATTRIBUTE_SCALED, new float[]{0.05F},
                 "attribute", "the_vault:ability_power_percent", "secondAttribute", "the_vault:damage_increase");
-        put(map, "idona_start_reaper", GEAR_ATTRIBUTE_SCALED, new float[]{0.1F},
+        put(map, "idona_start_reaper", GEAR_ATTRIBUTE_SCALED, new float[]{0.05F},
                 "attribute", "the_vault:ability_power_percent", "secondAttribute", "the_vault:damage_increase");
-        put(map, "idona_start_bounty", GEAR_ATTRIBUTE_SCALED, new float[]{0.1F},
+        put(map, "idona_start_bounty", GEAR_ATTRIBUTE_SCALED, new float[]{0.05F},
                 "attribute", "the_vault:ability_power_percent", "secondAttribute", "the_vault:damage_increase");
-        put(map, "idona_hard_hitter", GEAR_ATTRIBUTE_SCALED, new float[]{0.25F}, "attribute", "the_vault:damage_increase");
-        put(map, "idona_hard_hitter_ii", GEAR_ATTRIBUTE_SCALED, new float[]{0.5F}, "attribute", "the_vault:damage_increase");
-        put(map, "idona_elite_caster", GEAR_ATTRIBUTE_SCALED, new float[]{0.25F}, "attribute", "the_vault:ability_power_percent");
-        put(map, "idona_elite_caster_ii", GEAR_ATTRIBUTE_SCALED, new float[]{0.5F}, "attribute", "the_vault:ability_power_percent");
+        put(map, "idona_hard_hitter", GEAR_ATTRIBUTE_SCALED, new float[]{0.125F}, "attribute", "the_vault:damage_increase");
+        put(map, "idona_hard_hitter_ii", GEAR_ATTRIBUTE_SCALED, new float[]{0.25F}, "attribute", "the_vault:damage_increase");
+        put(map, "idona_elite_caster", GEAR_ATTRIBUTE_SCALED, new float[]{0.125F}, "attribute", "the_vault:ability_power_percent");
+        put(map, "idona_elite_caster_ii", GEAR_ATTRIBUTE_SCALED, new float[]{0.25F}, "attribute", "the_vault:ability_power_percent");
         put(map, "idona_pious_devotion", PIETY, new float[]{10.0F});
         put(map, "idona_full_of_soul", GEAR_ATTRIBUTE_SCALED, new float[]{0.5F}, "attribute", "the_vault:soul_chance_percentile");
         put(map, "idona_fortunate", GEAR_ATTRIBUTE_SCALED, new float[]{0.025F}, "attribute", "the_vault:lucky_hit_chance");
@@ -115,30 +115,30 @@ public final class GodNodeEffectDefaults {
 
     /** Velara's shipped effect table. */
     private static void velara(GodNodeEffectsConfig.EffectMap map) {
-        put(map, "velara_start_bulwark", GEAR_ATTRIBUTE_SCALED, new float[]{0.1F},
+        put(map, "velara_start_bulwark", GEAR_ATTRIBUTE_SCALED, new float[]{0.05F},
                 "attribute", "the_vault:health_percentile", "secondAttribute", "the_vault:armor_percentile");
-        put(map, "velara_start_mercy", GEAR_ATTRIBUTE_SCALED, new float[]{0.1F},
+        put(map, "velara_start_mercy", GEAR_ATTRIBUTE_SCALED, new float[]{0.05F},
                 "attribute", "the_vault:health_percentile", "secondAttribute", "the_vault:armor_percentile");
-        put(map, "velara_start_fern", GEAR_ATTRIBUTE_SCALED, new float[]{0.1F},
+        put(map, "velara_start_fern", GEAR_ATTRIBUTE_SCALED, new float[]{0.05F},
                 "attribute", "the_vault:health_percentile", "secondAttribute", "the_vault:armor_percentile");
-        put(map, "velara_start_briar", GEAR_ATTRIBUTE_SCALED, new float[]{0.1F},
+        put(map, "velara_start_briar", GEAR_ATTRIBUTE_SCALED, new float[]{0.05F},
                 "attribute", "the_vault:health_percentile", "secondAttribute", "the_vault:armor_percentile");
-        put(map, "velara_start_bloom", GEAR_ATTRIBUTE_SCALED, new float[]{0.1F},
+        put(map, "velara_start_bloom", GEAR_ATTRIBUTE_SCALED, new float[]{0.05F},
                 "attribute", "the_vault:health_percentile", "secondAttribute", "the_vault:armor_percentile");
-        put(map, "velara_start_sapling", GEAR_ATTRIBUTE_SCALED, new float[]{0.1F},
+        put(map, "velara_start_sapling", GEAR_ATTRIBUTE_SCALED, new float[]{0.05F},
                 "attribute", "the_vault:health_percentile", "secondAttribute", "the_vault:armor_percentile");
-        put(map, "velara_tough", GEAR_ATTRIBUTE_SCALED, new float[]{0.25F}, "attribute", "the_vault:health_percentile");
-        put(map, "velara_tough_ii", GEAR_ATTRIBUTE_SCALED, new float[]{0.5F}, "attribute", "the_vault:health_percentile");
-        put(map, "velara_armored", GEAR_ATTRIBUTE_SCALED, new float[]{0.25F}, "attribute", "the_vault:armor_percentile");
-        put(map, "velara_armored_ii", GEAR_ATTRIBUTE_SCALED, new float[]{0.5F}, "attribute", "the_vault:armor_percentile");
+        put(map, "velara_tough", GEAR_ATTRIBUTE_SCALED, new float[]{0.125F}, "attribute", "the_vault:health_percentile");
+        put(map, "velara_tough_ii", GEAR_ATTRIBUTE_SCALED, new float[]{0.25F}, "attribute", "the_vault:health_percentile");
+        put(map, "velara_armored", GEAR_ATTRIBUTE_SCALED, new float[]{0.125F}, "attribute", "the_vault:armor_percentile");
+        put(map, "velara_armored_ii", GEAR_ATTRIBUTE_SCALED, new float[]{0.25F}, "attribute", "the_vault:armor_percentile");
         put(map, "velara_immune", "velara_effect_avoidance", new float[]{0.05F});
         put(map, "velara_immune_ii", "velara_effect_avoidance", new float[]{0.1F});
-        put(map, "velara_healthy", GEAR_ATTRIBUTE_SCALED, new float[]{0.2F}, "attribute", "the_vault:healing_effectiveness");
-        put(map, "velara_healthy_ii", GEAR_ATTRIBUTE_SCALED, new float[]{0.4F}, "attribute", "the_vault:healing_effectiveness");
-        put(map, "velara_fast_reflexes", GEAR_ATTRIBUTE_SCALED, new float[]{0.02F}, "attribute", "the_vault:dodge_percent");
-        put(map, "velara_fast_reflexes_ii", GEAR_ATTRIBUTE_SCALED, new float[]{0.05F}, "attribute", "the_vault:dodge_percent");
-        put(map, "velara_guarded", GEAR_ATTRIBUTE_SCALED, new float[]{0.02F}, "attribute", "the_vault:block");
-        put(map, "velara_guarded_ii", GEAR_ATTRIBUTE_SCALED, new float[]{0.05F}, "attribute", "the_vault:block");
+        put(map, "velara_healthy", GEAR_ATTRIBUTE_SCALED, new float[]{0.1F}, "attribute", "the_vault:healing_effectiveness");
+        put(map, "velara_healthy_ii", GEAR_ATTRIBUTE_SCALED, new float[]{0.2F}, "attribute", "the_vault:healing_effectiveness");
+        put(map, "velara_fast_reflexes", GEAR_ATTRIBUTE_SCALED, new float[]{0.01F}, "attribute", "the_vault:dodge_percent");
+        put(map, "velara_fast_reflexes_ii", GEAR_ATTRIBUTE_SCALED, new float[]{0.025F}, "attribute", "the_vault:dodge_percent");
+        put(map, "velara_guarded", GEAR_ATTRIBUTE_SCALED, new float[]{0.01F}, "attribute", "the_vault:block");
+        put(map, "velara_guarded_ii", GEAR_ATTRIBUTE_SCALED, new float[]{0.025F}, "attribute", "the_vault:block");
         put(map, "velara_thorny", GEAR_ATTRIBUTE_SCALED, new float[]{25.0F}, "attribute", "the_vault:thorns_damage_flat");
         put(map, "velara_thorny_ii", GEAR_ATTRIBUTE_SCALED, new float[]{50.0F}, "attribute", "the_vault:thorns_damage_flat");
         put(map, "velara_pious_devotion", PIETY, new float[]{10.0F});

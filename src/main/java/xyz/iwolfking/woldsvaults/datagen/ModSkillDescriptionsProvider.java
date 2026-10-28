@@ -1490,10 +1490,10 @@ public class ModSkillDescriptionsProvider extends AbstractSkillDescriptionsProvi
     /** Descriptions for every Idona god tree node, keyed by effect id; start stars by their node id. */
     private void addIdonaGodNodeDescriptions(Builder builder) {
         String ember = "#ff7a3d";
-        godNode(builder, "idona_hard_hitter", "+25% Attack Damage", ember, ".");
-        godNode(builder, "idona_hard_hitter_ii", "+50% Attack Damage", ember, ".");
-        godNode(builder, "idona_elite_caster", "+25% Ability Power", ember, ".");
-        godNode(builder, "idona_elite_caster_ii", "+50% Ability Power", ember, ".");
+        godNode(builder, "idona_hard_hitter", "+12.5% Attack Damage", ember, ".");
+        godNode(builder, "idona_hard_hitter_ii", "+25% Attack Damage", ember, ".");
+        godNode(builder, "idona_elite_caster", "+12.5% Ability Power", ember, ".");
+        godNode(builder, "idona_elite_caster_ii", "+25% Ability Power", ember, ".");
         godNode(builder, "idona_pious_devotion", "+10 Piety", ember, ".");
         godNode(builder, "idona_full_of_soul", "+50% Soul Shard Chance", ember, ".");
         godNode(builder, "idona_fortunate", "+2.5% Lucky Hit Chance", ember, ".");
@@ -1618,12 +1618,12 @@ public class ModSkillDescriptionsProvider extends AbstractSkillDescriptionsProvi
             description.add(JsonDescription.text(", with or without Rampage active."));
             description.add(JsonDescription.text("\n\nExamples with a +100% Rampage: 5 hits a second holds about 1,650 Fury, making it +266% and 1.17x damage taken. 5 boss hits a second holds about 3,300, for +477% and 1.23x taken. 6,000 Fury gives +1163% and 1.32x taken; full Fury gives +1652% and 1.5x taken."));
         });
-        godRoot(builder, "idona_start_sw", "Idona's sword", "attack damage, up close", ember, "+10% Ability Power and +10% Attack Damage");
-        godRoot(builder, "idona_start_st", "Idona's staff", "ability power and range", ember, "+10% Ability Power and +10% Attack Damage");
-        godRoot(builder, "idona_start_gambler", "the Gambler", "lucky hits", ember, "+10% Ability Power and +10% Attack Damage");
-        godRoot(builder, "idona_start_hoard", "the Hoard", "stacking talents", ember, "+10% Ability Power and +10% Attack Damage");
-        godRoot(builder, "idona_start_reaper", "the Reaper", "soul shards", ember, "+10% Ability Power and +10% Attack Damage");
-        godRoot(builder, "idona_start_bounty", "the Bounty", "damage to champions, tanks, hordes and assassins", ember, "+10% Ability Power and +10% Attack Damage");
+        godRoot(builder, "idona_start_sw", "Idona's sword", "attack damage, up close", ember, "+5% Ability Power and +5% Attack Damage");
+        godRoot(builder, "idona_start_st", "Idona's staff", "ability power and range", ember, "+5% Ability Power and +5% Attack Damage");
+        godRoot(builder, "idona_start_gambler", "the Gambler", "lucky hits", ember, "+5% Ability Power and +5% Attack Damage");
+        godRoot(builder, "idona_start_hoard", "the Hoard", "stacking talents", ember, "+5% Ability Power and +5% Attack Damage");
+        godRoot(builder, "idona_start_reaper", "the Reaper", "soul shards", ember, "+5% Ability Power and +5% Attack Damage");
+        godRoot(builder, "idona_start_bounty", "the Bounty", "damage to champions, tanks, hordes and assassins", ember, "+5% Ability Power and +5% Attack Damage");
     }
 
     private void addWendarrGodNodeDescriptions(Builder builder) {
@@ -1741,18 +1741,18 @@ public class ModSkillDescriptionsProvider extends AbstractSkillDescriptionsProvi
 
     private void addVelaraGodNodeDescriptions(Builder builder) {
         String leaf = "#6ef08c";
-        godNode(builder, "velara_tough", "+25% Health", leaf, ".");
-        godNode(builder, "velara_tough_ii", "+50% Health", leaf, ".");
-        godNode(builder, "velara_armored", "+25% Armor", leaf, ".");
-        godNode(builder, "velara_armored_ii", "+50% Armor", leaf, ".");
+        godNode(builder, "velara_tough", "+12.5% Health", leaf, ".");
+        godNode(builder, "velara_tough_ii", "+25% Health", leaf, ".");
+        godNode(builder, "velara_armored", "+12.5% Armor", leaf, ".");
+        godNode(builder, "velara_armored_ii", "+25% Armor", leaf, ".");
         godNode(builder, "velara_immune", "+5% chance to avoid", leaf, " poison, wither, bleed, chilled, corruption, slowness, blindness, levitation and hunger.");
         godNode(builder, "velara_immune_ii", "+10% chance to avoid", leaf, " poison, wither, bleed, chilled, corruption, slowness, blindness, levitation and hunger.");
-        godNode(builder, "velara_healthy", "+20% Healing Efficiency", leaf, ".");
-        godNode(builder, "velara_healthy_ii", "+40% Healing Efficiency", leaf, ".");
-        godNode(builder, "velara_fast_reflexes", "+2% Dodge", leaf, ".");
-        godNode(builder, "velara_fast_reflexes_ii", "+5% Dodge", leaf, ".");
-        godNode(builder, "velara_guarded", "+2% Block", leaf, ".");
-        godNode(builder, "velara_guarded_ii", "+5% Block", leaf, ".");
+        godNode(builder, "velara_healthy", "+10% Healing Efficiency", leaf, ".");
+        godNode(builder, "velara_healthy_ii", "+20% Healing Efficiency", leaf, ".");
+        godNode(builder, "velara_fast_reflexes", "+1% Dodge", leaf, ".");
+        godNode(builder, "velara_fast_reflexes_ii", "+2.5% Dodge", leaf, ".");
+        godNode(builder, "velara_guarded", "+1% Block", leaf, ".");
+        godNode(builder, "velara_guarded_ii", "+2.5% Block", leaf, ".");
         godNode(builder, "velara_thorny", "+25 Thorns Damage", leaf, ".");
         godNode(builder, "velara_thorny_ii", "+50 Thorns Damage", leaf, ".");
         godNode(builder, "velara_pious_devotion", "+10 Piety", leaf, ".");
@@ -1833,12 +1833,12 @@ public class ModSkillDescriptionsProvider extends AbstractSkillDescriptionsProvi
             description.add(JsonDescription.text("33% resistance", leaf));
             description.add(JsonDescription.text(" against what you syphon on top of your own. Several shepherds split the flock evenly instead of overlapping."));
         });
-        godRoot(builder, "velara_start_bulwark", "the Bulwark", "armour, thorns and taking the hit", leaf, "+10% Health and +10% Armor");
-        godRoot(builder, "velara_start_mercy", "the Mercy", "healing, allies and staying up", leaf, "+10% Health and +10% Armor");
-        godRoot(builder, "velara_start_fern", "the Fern", "auras cast over the party", leaf, "+10% Health and +10% Armor");
-        godRoot(builder, "velara_start_briar", "the Briar", "refusing to go down", leaf, "+10% Health and +10% Armor");
-        godRoot(builder, "velara_start_bloom", "the Bloom", "the answer to a blocked hit", leaf, "+10% Health and +10% Armor");
-        godRoot(builder, "velara_start_sapling", "the Sapling", "utility that grows on you", leaf, "+10% Health and +10% Armor");
+        godRoot(builder, "velara_start_bulwark", "the Bulwark", "armour, thorns and taking the hit", leaf, "+5% Health and +5% Armor");
+        godRoot(builder, "velara_start_mercy", "the Mercy", "healing, allies and staying up", leaf, "+5% Health and +5% Armor");
+        godRoot(builder, "velara_start_fern", "the Fern", "auras cast over the party", leaf, "+5% Health and +5% Armor");
+        godRoot(builder, "velara_start_briar", "the Briar", "refusing to go down", leaf, "+5% Health and +5% Armor");
+        godRoot(builder, "velara_start_bloom", "the Bloom", "the answer to a blocked hit", leaf, "+5% Health and +5% Armor");
+        godRoot(builder, "velara_start_sapling", "the Sapling", "utility that grows on you", leaf, "+5% Health and +5% Armor");
     }
 
     private void addTenosGodNodeDescriptions(Builder builder) {
