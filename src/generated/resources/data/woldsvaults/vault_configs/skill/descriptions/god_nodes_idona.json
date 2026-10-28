@@ -21,7 +21,7 @@
     ],
     "idona_elite_caster_ii": [
       {
-        "text": "+50% Ability Power",
+        "text": "+25% Ability Power",
         "color": "#ff7a3d"
       },
       {
@@ -108,7 +108,7 @@
         "text": ". Grants "
       },
       {
-        "text": "+10% Ability Power and +10% Attack Damage",
+        "text": "+5% Ability Power and +5% Attack Damage",
         "color": "#ff7a3d"
       },
       {
@@ -183,7 +183,7 @@
         "text": ". Grants "
       },
       {
-        "text": "+10% Ability Power and +10% Attack Damage",
+        "text": "+5% Ability Power and +5% Attack Damage",
         "color": "#ff7a3d"
       },
       {
@@ -192,7 +192,7 @@
     ],
     "idona_hard_hitter": [
       {
-        "text": "+25% Attack Damage",
+        "text": "+12.5% Attack Damage",
         "color": "#ff7a3d"
       },
       {
@@ -211,7 +211,7 @@
         "text": ". Grants "
       },
       {
-        "text": "+10% Ability Power and +10% Attack Damage",
+        "text": "+5% Ability Power and +5% Attack Damage",
         "color": "#ff7a3d"
       },
       {
@@ -220,7 +220,7 @@
     ],
     "idona_hard_hitter_ii": [
       {
-        "text": "+50% Attack Damage",
+        "text": "+25% Attack Damage",
         "color": "#ff7a3d"
       },
       {
@@ -299,7 +299,7 @@
         "text": ". Grants "
       },
       {
-        "text": "+10% Ability Power and +10% Attack Damage",
+        "text": "+5% Ability Power and +5% Attack Damage",
         "color": "#ff7a3d"
       },
       {
@@ -330,7 +330,7 @@
         "text": ". Grants "
       },
       {
-        "text": "+10% Ability Power and +10% Attack Damage",
+        "text": "+5% Ability Power and +5% Attack Damage",
         "color": "#ff7a3d"
       },
       {
@@ -370,7 +370,7 @@
     ],
     "idona_elite_caster": [
       {
-        "text": "+25% Ability Power",
+        "text": "+12.5% Ability Power",
         "color": "#ff7a3d"
       },
       {
@@ -510,7 +510,7 @@
         "text": ". Grants "
       },
       {
-        "text": "+10% Ability Power and +10% Attack Damage",
+        "text": "+5% Ability Power and +5% Attack Damage",
         "color": "#ff7a3d"
       },
       {
