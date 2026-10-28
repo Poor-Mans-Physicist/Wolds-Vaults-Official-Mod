@@ -74,6 +74,7 @@ public final class RiptideDash {
         private final Vec3 direction;
         private final Set<Integer> contacted = new HashSet<>();
         private final Set<Integer> shocked = new HashSet<>();
+        private final Set<Integer> struck = new HashSet<>();
         private final List<LivingEntity> pendingShock = new ArrayList<>();
         private float referenceDamage;
         private int ticks;
@@ -93,6 +94,11 @@ public final class RiptideDash {
 
         public float getReferenceDamage() {
             return this.referenceDamage;
+        }
+
+        /** Marks a mob as struck by the storm this dash; false if it already was. */
+        public boolean markStruck(LivingEntity entity) {
+            return this.struck.add(entity.getId());
         }
 
         /** Marks a mob as shocked this dash; false if it already was. */
@@ -186,6 +192,24 @@ public final class RiptideDash {
         if (fall != null) {
             player.fallDistance = fall;
         }
+    }
+
+    /**
+     * Lands a riptide contact on {@code target} without the spin touching it: the same full-strength attack the spin
+     * makes on touch, marked as this dash's contact. The shock cone uses it so a dash that touches nothing still has
+     * a contact to draw from. False if the target was already contacted this dash.
+     */
+    public static boolean forceContact(ServerPlayer player, LivingEntity target) {
+        if (!markContact(player, target)) {
+            return false;
+        }
+        beginContact(player, target);
+        try {
+            player.attack(target);
+        } finally {
+            endContact(player);
+        }
+        return true;
     }
 
     /** Whether the hurt event in progress is a riptide contact on {@code target}. */

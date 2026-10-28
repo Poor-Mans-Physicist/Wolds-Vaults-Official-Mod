@@ -53,6 +53,7 @@ public class ModNetwork {
         CHANNEL.registerMessage(id++, ClientboundTrinketPouchStatePacket.class, ClientboundTrinketPouchStatePacket::encode, ClientboundTrinketPouchStatePacket::decode, ClientboundTrinketPouchStatePacket::handle);
         CHANNEL.registerMessage(id++, ServerboundRenameTrinketPouchPresetPacket.class, ServerboundRenameTrinketPouchPresetPacket::encode, ServerboundRenameTrinketPouchPresetPacket::decode, ServerboundRenameTrinketPouchPresetPacket::handle);
         CHANNEL.registerMessage(id++, SuppressorUpdateMessage.class, SuppressorUpdateMessage::encode, SuppressorUpdateMessage::decode, SuppressorUpdateMessage::handle);
+        CHANNEL.registerMessage(id++, RiptideFxMessage.class, RiptideFxMessage::encode, RiptideFxMessage::decode, RiptideFxMessage::handle, Optional.of(NetworkDirection.PLAY_TO_CLIENT));
     }
 
     public static <T> void sendToServer(T message) {

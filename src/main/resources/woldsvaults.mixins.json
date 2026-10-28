@@ -651,6 +651,8 @@
     "MixinSignEditScreen",
     "MixinSignRenderer",
     "MixinThrownTridentRenderer",
+    "MixinPlayerModelHoverPose",
+    "MixinItemInHandLayerRiptide",
     "bettercombat.MixinWeaponRegistry",
     "inventoryhud.MixinCuriosRenderer",
     "inventoryhud.MixinInventoryHudRenderer",

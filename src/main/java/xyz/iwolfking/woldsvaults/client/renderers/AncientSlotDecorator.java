@@ -9,13 +9,19 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import xyz.iwolfking.woldsvaults.WoldsVaults;
+import xyz.iwolfking.woldsvaults.api.gear.sets.GearSetHelper;
 import xyz.iwolfking.woldsvaults.init.ModGearAttributes;
 
-/** Paints an ember background under and an ember frame over any ancient unique in a container slot. */
+/**
+ * Paints a background under and a frame over any ancient unique in a container slot: dark green for set pieces,
+ * ember for every other ancient.
+ */
 @OnlyIn(Dist.CLIENT)
 public final class AncientSlotDecorator {
     private static final ResourceLocation BACKGROUND = WoldsVaults.id("textures/gui/ancient_slot_background.png");
     private static final ResourceLocation FRAME = WoldsVaults.id("textures/gui/ancient_slot_frame.png");
+    private static final ResourceLocation SET_BACKGROUND = WoldsVaults.id("textures/gui/set_slot_background.png");
+    private static final ResourceLocation SET_FRAME = WoldsVaults.id("textures/gui/set_slot_frame.png");
     private static final int SLOT_SIZE = 16;
 
     private AncientSlotDecorator() {
@@ -23,13 +29,13 @@ public final class AncientSlotDecorator {
 
     public static void renderBackground(PoseStack poseStack, ItemStack stack, int x, int y) {
         if (isAncient(stack)) {
-            draw(poseStack, BACKGROUND, x, y);
+            draw(poseStack, GearSetHelper.isSetPiece(stack) ? SET_BACKGROUND : BACKGROUND, x, y);
         }
     }
 
     public static void renderFrame(PoseStack poseStack, ItemStack stack, int x, int y) {
         if (isAncient(stack)) {
-            draw(poseStack, FRAME, x, y);
+            draw(poseStack, GearSetHelper.isSetPiece(stack) ? SET_FRAME : FRAME, x, y);
         }
     }
 
