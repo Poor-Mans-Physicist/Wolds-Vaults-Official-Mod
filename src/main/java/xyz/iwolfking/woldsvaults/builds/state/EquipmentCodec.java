@@ -209,6 +209,10 @@ public final class EquipmentCodec {
     }
 
     private static void checkGates(String path, ItemStack stack, int targetLevel, int targetGreedTier, BuildReport report) {
+        if (isPinnedMythic(stack)) {
+            report.bypassed(path + ": mythic charm pinned at " + MythicCharmRolls.storedUnits(stack) + " piety units; it "
+                    + "keeps the build's values and never rescales to the wearer's piety");
+        }
         if (!AttributeGearData.hasData(stack) || !(AttributeGearData.read(stack.copy()) instanceof VaultGearData data)) {
             return;
         }
@@ -221,6 +225,11 @@ public final class EquipmentCodec {
             report.bypassed(path + ": needs greed tier " + greedTier + " (player greed tier " + targetGreedTier
                     + "); the game blocks attacks with it");
         }
+    }
+
+    private static boolean isPinnedMythic(ItemStack stack) {
+        return MythicVaultCharmItem.isMythic(stack) && stack.hasTag()
+                && stack.getTag().getBoolean(MythicCharmRolls.PINNED_TAG);
     }
 
     /** The items of one build and where they go. */
@@ -357,7 +366,11 @@ public final class EquipmentCodec {
         private static void fixUp(ItemStack stack, ServerPlayer player, String path, BuildReport report) {
             if (stack.getItem() instanceof VaultCharmItem) {
                 VaultGod god = VaultCharmItem.getGod(stack).orElse(null);
-                if (god != null) {
+                if (god != null && isPinnedMythic(stack)) {
+                    report.note(path + ": pinned mythic charm keeps its " + MythicCharmRolls.storedUnits(stack)
+                            + " piety units (this player's " + god.getName() + " piety gives "
+                            + GodPiety.scaleUnits(player, god) + ")");
+                } else if (god != null) {
                     int units = GodPiety.scaleUnits(player, god);
                     if (MythicVaultCharmItem.isMythic(stack)) {
                         stack.getOrCreateTag().putInt(MythicCharmRolls.UNITS_TAG, units);
