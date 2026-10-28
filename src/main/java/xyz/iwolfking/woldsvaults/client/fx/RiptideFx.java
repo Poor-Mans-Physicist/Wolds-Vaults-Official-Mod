@@ -47,12 +47,15 @@ public final class RiptideFx {
     private static final int MAX_EFFECTS = 256;
     private static final int ARC_LIFETIME = 10;
     private static final int ARC_GROW_TICKS = 3;
+    private static final int MAX_LIVE_BOLTS = 4;
+    private static final int BURSTS_PER_TICK = 6;
 
     private static final List<Effect> EFFECTS = new ArrayList<>();
     private static final List<Effect> PENDING = new ArrayList<>();
     private static boolean ticking;
     private static final Random RANDOM = new Random();
     private static ClientLevel trackedLevel;
+    private static int burstBudget = BURSTS_PER_TICK;
 
     private RiptideFx() {
     }
@@ -105,7 +108,7 @@ public final class RiptideFx {
     private static void cone(ClientLevel level, RiptideFxMessage message) {
         Vec3 origin = message.getFirst();
         Vec3 axis = message.getSecond();
-        add(new ShockConeEffect(origin, axis, message.getAhead(), message.getBehind(), message.getRadius(), RANDOM.nextFloat()));
+        add(new ShockConeEffect(origin, axis, message.getAhead(), message.getBehind(), message.getRadius(), RANDOM.nextFloat(), RANDOM.nextLong()));
         int count = particleCount(10);
         if (count == 0 || axis.lengthSqr() < 1.0E-6) {
             return;
@@ -129,7 +132,16 @@ public final class RiptideFx {
         }
     }
 
+    /**
+     * Draws a strike arc unless {@value #MAX_LIVE_BOLTS} strike arcs are already on screen, in which case the strike
+     * shows only its impact burst. Purely visual: the server has already dealt the strike's damage.
+     */
     private static void arc(ClientLevel level, RiptideFxMessage message) {
+        if (liveBolts() >= MAX_LIVE_BOLTS) {
+            Entity target = level.getEntity(message.getTargetId());
+            impactBurst(level, message.getSecond(), target == null ? 0.6F : target.getBbWidth(), target == null ? 1.8F : target.getBbHeight(), message.isChilled());
+            return;
+        }
         Entity source = level.getEntity(message.getSourceId());
         Entity target = level.getEntity(message.getTargetId());
         Vec3 from = message.getFirst();
@@ -143,6 +155,21 @@ public final class RiptideFx {
             Vec3 d = randomUnit().scale(0.9);
             level.addParticle(ParticleTypes.ENCHANT, from.x, from.y, from.z, d.x, d.y, d.z);
         }
+    }
+
+    private static int liveBolts() {
+        int live = 0;
+        for (Effect effect : EFFECTS) {
+            if (effect instanceof LightningArcEffect arc && arc.isStrike()) {
+                live++;
+            }
+        }
+        for (Effect effect : PENDING) {
+            if (effect instanceof LightningArcEffect arc && arc.isStrike()) {
+                live++;
+            }
+        }
+        return live;
     }
 
     private static void aura(ClientLevel level, RiptideFxMessage message) {
@@ -168,12 +195,13 @@ public final class RiptideFx {
         }
     }
 
-    /** Flash, converging glyphs, sparks and motes where an arc or shock lands on a mob. */
+    /** Flash, converging glyphs, sparks and motes where an arc or shock lands on a mob, at most {@value #BURSTS_PER_TICK} a tick. */
     static void impactBurst(ClientLevel level, Vec3 center, float width, float height, boolean chilled) {
         int count = particleCount(14);
-        if (count == 0) {
+        if (count == 0 || burstBudget <= 0) {
             return;
         }
+        burstBudget--;
         float spread = Math.max(0.6F, Math.max(width, height) * 0.5F);
         level.addParticle(ParticleTypes.FLASH, center.x, center.y, center.z, 0.0, 0.0, 0.0);
         for (int i = 0; i < count; i++) {
@@ -222,6 +250,7 @@ public final class RiptideFx {
             PENDING.clear();
             HoverStance.clear();
         }
+        burstBudget = BURSTS_PER_TICK;
         if (level == null || minecraft.isPaused()) {
             return;
         }

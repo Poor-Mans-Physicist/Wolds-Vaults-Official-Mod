@@ -113,6 +113,10 @@ final class LightningArcEffect implements RiptideFx.Effect {
         return points;
     }
 
+    boolean isStrike() {
+        return this.impact;
+    }
+
     private static Vec3 endpoint(Entity entity, Vec3 offset, Vec3 fallback, float partialTick) {
         return entity == null ? fallback : entity.getPosition(partialTick).add(offset);
     }
