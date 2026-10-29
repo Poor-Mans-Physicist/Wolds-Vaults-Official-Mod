@@ -3,7 +3,6 @@ package xyz.iwolfking.woldsvaults.modifiers.gear.lightning;
 import iskallia.vault.entity.entity.EternalEntity;
 import iskallia.vault.entity.entity.PetEntity;
 import iskallia.vault.gear.attribute.type.VaultGearAttributeTypeMerger;
-import iskallia.vault.gear.data.VaultGearData;
 import iskallia.vault.snapshot.AttributeSnapshot;
 import iskallia.vault.snapshot.AttributeSnapshotHelper;
 import net.minecraft.core.particles.ParticleTypes;
@@ -17,12 +16,13 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.living.LivingFallEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.server.ServerStoppingEvent;
@@ -33,6 +33,7 @@ import net.minecraftforge.network.PacketDistributor;
 import xyz.iwolfking.woldsvaults.WoldsVaults;
 import xyz.iwolfking.woldsvaults.api.gear.sets.GearSetHelper;
 import xyz.iwolfking.woldsvaults.config.GearSetConfig;
+import xyz.iwolfking.woldsvaults.events.WoldActiveFlags;
 import xyz.iwolfking.woldsvaults.init.ModGearAttributes;
 import xyz.iwolfking.woldsvaults.init.ModNetwork;
 import xyz.iwolfking.woldsvaults.modifiers.gear.riptide.RiptideDerivedHits;
@@ -61,8 +62,9 @@ import java.util.UUID;
  * of spinning lightning bolts out in front of them, right click marks an enemy as a lightning rod that dashes lock on to,
  * and middle click spends what's left of the form on one giant strike. The client sends the taps and clicks and
  * carries its player along each dash; the server checks the form and the cooldowns, plans the path, picks the
- * targets and deals the hits. The extra hits go through {@link RiptideDerivedHits}, so they land in full as area
- * damage without counting as normal attacks (no lucky hits); the bolts are visual only.
+ * targets and deals the hits. Every hit starts from the player's attack damage when the trident was thrown and goes
+ * through {@link RiptideDerivedHits#queueScaled} under {@link WoldActiveFlags#IS_LIGHTNING_FIEND_ATTACKING}: damage
+ * increase, damage talents (Hexbreaker included) and lucky hits apply, on-hit procs do not. The bolts are visual only.
  */
 @Mod.EventBusSubscriber(modid = WoldsVaults.MOD_ID)
 public final class LightningFiend {
@@ -73,7 +75,7 @@ public final class LightningFiend {
 
     private static final class Form {
         long endTick;
-        float tridentDamage;
+        float attackDamage;
         float damage;
         long readyTick;
         Travel travel;
@@ -82,7 +84,6 @@ public final class LightningFiend {
         int markId = -1;
     }
 
-    // a dash under way: the player's feet a quarter block apart along the path, crossed in a fixed number of ticks
     private static final class Travel {
         final ServerLevel level;
         final List<Vec3> path;
@@ -121,10 +122,20 @@ public final class LightningFiend {
         return snapshot(owner).getAttributeValue(ModGearAttributes.THROWN_TRIDENT_PIERCE, VaultGearAttributeTypeMerger.intSum());
     }
 
-    /** A bolt on the target and a derived hit for the damage. */
+    /** The player's attack damage, the unscaled base every Lightning Fiend hit starts from. */
+    public static float attackDamage(LivingEntity owner) {
+        return (float) owner.getAttributeValue(Attributes.ATTACK_DAMAGE);
+    }
+
+    /** A bolt on the target and a Lightning Fiend hit for the damage. */
     public static void strike(ServerPlayer attacker, LivingEntity target, float damage) {
         visualBolt(attacker.getLevel(), target.position());
-        RiptideDerivedHits.queue(attacker, target, damage);
+        hit(attacker, target, damage);
+    }
+
+    /** Queues a Lightning Fiend hit: unscaled damage that the damage pipeline scales, with on-hit procs off. */
+    static void hit(ServerPlayer attacker, LivingEntity target, float damage) {
+        RiptideDerivedHits.queueScaled(attacker, target, damage, WoldActiveFlags.IS_LIGHTNING_FIEND_ATTACKING);
     }
 
     /** Jumps from the struck enemy to the nearest one not struck yet, again and again, up to the chain count. */
@@ -150,10 +161,11 @@ public final class LightningFiend {
         }
     }
 
-    // ---------- the lightning form ----------
-
-    /** A thrown vault trident: with the lightning dash grant, the thrower becomes lightning (again, if already). */
-    public static void onThrow(ServerPlayer player, ItemStack trident) {
+    /**
+     * A thrown vault trident, called while it is still in the thrower's hand: with the lightning dash grant, the
+     * thrower becomes lightning, its hits based on the attack damage they had with the trident in hand.
+     */
+    public static void onThrow(ServerPlayer player) {
         GearSetConfig config = GearSetHelper.config();
         float multiplier = snapshot(player).getAttributeValue(ModGearAttributes.LIGHTNING_DASH, VaultGearAttributeTypeMerger.floatSum());
         if (config == null || multiplier <= 0.0F) {
@@ -162,9 +174,8 @@ public final class LightningFiend {
         GearSetConfig.Lightning tuning = config.getLightning();
         Form form = FORMS.computeIfAbsent(player.getUUID(), id -> new Form());
         form.endTick = player.server.getTickCount() + tuning.formDurationTicks;
-        form.tridentDamage = VaultGearData.read(trident).get(iskallia.vault.init.ModGearAttributes.ATTACK_DAMAGE, VaultGearAttributeTypeMerger.doubleSum()).floatValue();
-        // a dash hits for a share (the grant) of what a channeling strike from this trident would
-        form.damage = form.tridentDamage * channelingMultiplier(player) * multiplier;
+        form.attackDamage = attackDamage(player);
+        form.damage = form.attackDamage * channelingMultiplier(player) * multiplier;
         ModNetwork.sendToClient(new LightningFormMessage(tuning.formDurationTicks, tuning.dashCooldownTicks, tuning.arcLashCooldownTicks, tuning.rodCooldownTicks), player);
         visualBolt(player.getLevel(), player.position());
     }
@@ -204,7 +215,6 @@ public final class LightningFiend {
         float distance = tuning.dashDistance;
         LivingEntity marked = marked(player, form, tuning);
         if (marked != null) {
-            // aim the player's middle at the target's middle; a small rise or drop is taken as level ground
             Vec3 aim = marked.getBoundingBox().getCenter().subtract(0.0, player.getBbHeight() * 0.5, 0.0).subtract(start);
             if (Math.abs(aim.y) < 1.0) {
                 aim = new Vec3(aim.x, 0.0, aim.z);
@@ -239,8 +249,6 @@ public final class LightningFiend {
         return path.get(i).lerp(path.get(i + 1), at - i);
     }
 
-    // one tick of a dash on the server: strike what the bolt has reached; at the end the player reappears. A player
-    // who dies or changes dimension partway just stops dashing
     private static void travelTick(ServerPlayer player, Form form) {
         Travel travel = form.travel;
         if (!player.isAlive() || player.getLevel() != travel.level) {
@@ -264,7 +272,6 @@ public final class LightningFiend {
         level.playSound(null, end.x, end.y, end.z, SoundEvents.TRIDENT_THUNDER, SoundSource.PLAYERS, 0.8F, 1.5F);
     }
 
-    // strikes every enemy, once per dash, within the dash's width of the path (at body height) up to the given point
     private static void strikeAlong(ServerPlayer player, Form form, Travel travel, int reach) {
         if (reach <= travel.swept) {
             return;
@@ -280,7 +287,7 @@ public final class LightningFiend {
             for (int i = 0; i < points.size() - 1; i++) {
                 if (distanceToSegment(center, points.get(i).add(body), points.get(i + 1).add(body)) <= travel.width + mob.getBbWidth() * 0.5) {
                     travel.struck.add(mob.getId());
-                    RiptideDerivedHits.queue(player, mob, mob.getId() == form.markId ? form.damage * travel.markMultiplier : form.damage);
+                    hit(player, mob, mob.getId() == form.markId ? form.damage * travel.markMultiplier : form.damage);
                     player.getLevel().sendParticles(ParticleTypes.ELECTRIC_SPARK, center.x, center.y, center.z, 15, mob.getBbWidth() * 0.5, mob.getBbHeight() * 0.5, mob.getBbWidth() * 0.5, 0.5);
                     break;
                 }
@@ -288,8 +295,6 @@ public final class LightningFiend {
         }
         travel.swept = reach;
     }
-
-    // ---------- abilities while lightning ----------
 
     /**
      * Arc Lash (left click): throws a fan of spinning lightning bolts out from the player's hand across a cone in
@@ -306,8 +311,8 @@ public final class LightningFiend {
         }
         GearSetConfig.Lightning tuning = config.getLightning();
         form.lashReadyTick = now + tuning.arcLashCooldownTicks;
-        float channeling = form.tridentDamage * channelingMultiplier(player);
-        ArcLashBolts.fire(player, hand(player, look), look, tuning, form.tridentDamage * tuning.arcLashDamage, channeling * tuning.arcLashStrikeDamage);
+        float channeling = form.attackDamage * channelingMultiplier(player);
+        ArcLashBolts.fire(player, hand(player, look), look, tuning, form.attackDamage * tuning.arcLashDamage, channeling * tuning.arcLashStrikeDamage);
         ServerLevel level = player.getLevel();
         level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.LIGHTNING_BOLT_IMPACT, SoundSource.PLAYERS, 0.4F, 1.6F + level.getRandom().nextFloat() * 0.4F);
     }
@@ -355,19 +360,19 @@ public final class LightningFiend {
             return;
         }
         GearSetConfig.Lightning tuning = config.getLightning();
-        float damage = form.tridentDamage * tuning.thunderDamagePerSecond * (form.endTick - now) / 20.0F;
+        float damage = form.attackDamage * tuning.thunderDamagePerSecond * (form.endTick - now) / 20.0F;
         float radius = tuning.thunderRadius;
         ServerLevel level = player.getLevel();
         Vec3 at = player.position();
         for (Mob mob : enemies(player, new AABB(at, at).inflate(radius, radius * 0.5, radius))) {
             double dx = mob.getX() - at.x, dz = mob.getZ() - at.z;
             if (dx * dx + dz * dz <= radius * radius) {
-                RiptideDerivedHits.queue(player, mob, damage);
+                hit(player, mob, damage);
                 Vec3 center = mob.getBoundingBox().getCenter();
                 level.sendParticles(ParticleTypes.ELECTRIC_SPARK, center.x, center.y, center.z, 12, mob.getBbWidth() * 0.5, mob.getBbHeight() * 0.5, mob.getBbWidth() * 0.5, 0.5);
             }
         }
-        endForm(player, form);
+        endForm(player, form, true);
         ModNetwork.CHANNEL.send(PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> player), new LightningStrikeFxMessage(at, radius, level.getRandom().nextLong()));
         level.sendParticles(ParticleTypes.FLASH, at.x, at.y + 1.0, at.z, 3, 0.5, 0.5, 0.5, 0.0);
         level.sendParticles(ParticleTypes.ELECTRIC_SPARK, at.x, at.y + 0.5, at.z, 150, radius * 0.4, 0.5, radius * 0.4, 1.0);
@@ -375,17 +380,24 @@ public final class LightningFiend {
         level.playSound(null, at.x, at.y, at.z, SoundEvents.LIGHTNING_BOLT_IMPACT, SoundSource.PLAYERS, 2.0F, 0.5F);
     }
 
-    // the form ends early: the mark's glow goes, and the client hears its form is over
-    private static void endForm(ServerPlayer player, Form form) {
+    /** Ends the form: the mark's glow goes, and when {@code notify} the client hears its form is over. */
+    private static void endForm(ServerPlayer player, Form form, boolean notify) {
         if (form.markId >= 0 && player.getLevel().getEntity(form.markId) instanceof LivingEntity marked) {
             marked.removeEffect(MobEffects.GLOWING);
         }
         FORMS.remove(player.getUUID());
-        ModNetwork.sendToClient(new LightningFormMessage(0, 0, 0, 0), player);
+        if (notify) {
+            ModNetwork.sendToClient(new LightningFormMessage(0, 0, 0, 0), player);
+        }
     }
 
-    // the player's Lightning Rod target while it's alive, in this world and within rodRange; a dead or missing target
-    // ends the mark, one out of range is kept but not locked on to
+    private static void endForm(ServerPlayer player, boolean notify) {
+        Form form = FORMS.get(player.getUUID());
+        if (form != null) {
+            endForm(player, form, notify);
+        }
+    }
+
     @Nullable
     private static LivingEntity marked(ServerPlayer player, Form form, GearSetConfig.Lightning tuning) {
         if (form.markId < 0) {
@@ -399,8 +411,6 @@ public final class LightningFiend {
         return null;
     }
 
-    // the enemy the player aims at: the one under the client's crosshair if it's in range and in sight, or else the
-    // one nearest the line the player looks along, within the given angle of it
     @Nullable
     private static Mob aimed(ServerPlayer player, int targetId, Vec3 look, float range, double angle) {
         Vec3 eye = player.getEyePosition();
@@ -425,15 +435,12 @@ public final class LightningFiend {
         return best;
     }
 
-    // about where the player's hand is, for arcs to leave from
     private static Vec3 hand(ServerPlayer player, Vec3 look) {
         double yaw = Math.toRadians(player.getYRot());
         Vec3 right = new Vec3(-Math.cos(yaw), 0.0, -Math.sin(yaw));
         return player.getEyePosition().add(0.0, -0.4, 0.0).add(right.scale(0.35)).add(look.scale(0.3));
     }
 
-    // the direction a dash takes: forward along the player's yaw, left and right square to it, back opposite, and
-    // straight up or down
     private static Vec3 heading(float yaw, Dash direction) {
         double rad = Math.toRadians(yaw);
         Vec3 forward = new Vec3(-Math.sin(rad), 0.0, Math.cos(rad));
@@ -448,9 +455,6 @@ public final class LightningFiend {
         };
     }
 
-    // walks the player's box along the heading in quarter-block steps until a wall, ceiling or floor; a dash with
-    // any sideways part slides along a floor or ceiling it meets at a slant and steps up single blocks. Returns every
-    // step, the start included
     private static List<Vec3> path(ServerPlayer player, Vec3 start, Vec3 heading, float distance) {
         Vec3 step = heading.scale(0.25);
         Vec3 flat = new Vec3(step.x, 0.0, step.z);
@@ -485,8 +489,6 @@ public final class LightningFiend {
         return point.distanceTo(a.add(ab.scale(t)));
     }
 
-    // dashes under way, and crackling around the player while the form lasts; the form ends quietly when its time
-    // is up, though a dash that's under way still finishes
     @SubscribeEvent
     public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
         if (event.phase != TickEvent.Phase.END || !(event.player instanceof ServerPlayer player) || FORMS.isEmpty()) {
@@ -501,7 +503,7 @@ public final class LightningFiend {
             return;
         }
         if (player.server.getTickCount() >= form.endTick) {
-            FORMS.remove(player.getUUID());
+            endForm(player, form, true);
             return;
         }
         if (player.tickCount % 2 == 0) {
@@ -509,7 +511,6 @@ public final class LightningFiend {
         }
     }
 
-    // lightning doesn't fall: no fall damage while the form lasts
     @SubscribeEvent
     public static void onFall(LivingFallEvent event) {
         if (event.getEntityLiving() instanceof ServerPlayer player && inForm(player)) {
@@ -518,8 +519,31 @@ public final class LightningFiend {
     }
 
     @SubscribeEvent
+    public static void onDeath(LivingDeathEvent event) {
+        if (event.getEntityLiving() instanceof ServerPlayer player) {
+            endForm(player, true);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onRespawn(PlayerEvent.PlayerRespawnEvent event) {
+        if (event.getPlayer() instanceof ServerPlayer player) {
+            endForm(player, true);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onChangeDimension(PlayerEvent.PlayerChangedDimensionEvent event) {
+        if (event.getPlayer() instanceof ServerPlayer player) {
+            endForm(player, true);
+        }
+    }
+
+    @SubscribeEvent
     public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {
-        FORMS.remove(event.getPlayer().getUUID());
+        if (event.getPlayer() instanceof ServerPlayer player) {
+            endForm(player, false);
+        }
     }
 
     @SubscribeEvent
@@ -527,7 +551,6 @@ public final class LightningFiend {
         FORMS.clear();
     }
 
-    // living mobs in a box that the set may strike: not the player's eternals or pets
     private static List<Mob> enemies(ServerPlayer attacker, AABB box) {
         return attacker.getLevel().getEntitiesOfClass(Mob.class, box, LightningFiend::isEnemy);
     }
@@ -536,7 +559,6 @@ public final class LightningFiend {
         return mob.isAlive() && !(mob instanceof EternalEntity) && !(mob instanceof PetEntity);
     }
 
-    // the nearest enemy within range of a point that isn't one of the skipped ones
     @Nullable
     private static Mob nearestEnemy(ServerPlayer attacker, Vec3 at, float range, Set<Integer> skip) {
         return enemies(attacker, new AABB(at, at).inflate(range)).stream()

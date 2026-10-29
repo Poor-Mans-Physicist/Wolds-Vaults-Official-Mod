@@ -17,7 +17,6 @@ import net.minecraftforge.network.PacketDistributor;
 import xyz.iwolfking.woldsvaults.WoldsVaults;
 import xyz.iwolfking.woldsvaults.config.GearSetConfig;
 import xyz.iwolfking.woldsvaults.init.ModNetwork;
-import xyz.iwolfking.woldsvaults.modifiers.gear.riptide.RiptideDerivedHits;
 import xyz.iwolfking.woldsvaults.network.message.LightningLashFxMessage;
 
 import java.util.ArrayList;
@@ -35,7 +34,6 @@ import java.util.Set;
  */
 @Mod.EventBusSubscriber(modid = WoldsVaults.MOD_ID)
 public final class ArcLashBolts {
-    // how close to a bolt's line an enemy's box must come to be struck: about the reach of its spinning ends
     private static final double HIT_RADIUS = 1.0;
     private static final List<Bolt> BOLTS = new ArrayList<>();
 
@@ -95,7 +93,6 @@ public final class ArcLashBolts {
         }
     }
 
-    // one tick of a bolt's flight: strike every enemy it passed through on the way; true once it has landed
     private static boolean fly(Bolt bolt) {
         if (bolt.owner.isRemoved() || bolt.owner.getLevel() != bolt.level) {
             return true;
@@ -108,7 +105,7 @@ public final class ArcLashBolts {
             AABB box = mob.getBoundingBox().inflate(HIT_RADIUS);
             if (!bolt.struck.contains(mob.getId()) && (box.contains(a) || box.clip(a, b).isPresent())) {
                 bolt.struck.add(mob.getId());
-                RiptideDerivedHits.queue(bolt.owner, mob, bolt.damage);
+                LightningFiend.hit(bolt.owner, mob, bolt.damage);
                 if (bolt.strikeDamage > 0.0F) {
                     LightningFiend.strike(bolt.owner, mob, bolt.strikeDamage);
                 }

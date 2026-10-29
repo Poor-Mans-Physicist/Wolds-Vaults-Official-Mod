@@ -34,20 +34,23 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import xyz.iwolfking.woldsvaults.items.gear.VaultTridentItem;
 import xyz.iwolfking.woldsvaults.mixins.accessors.AbstractArrowAccessor;
+import xyz.iwolfking.woldsvaults.WoldsVaults;
 import xyz.iwolfking.woldsvaults.modifiers.gear.lightning.LightningFiend;
+import xyz.iwolfking.woldsvaults.modifiers.gear.lightning.ThrownTridentAttackDamage;
 
 import java.util.Random;
 
 @Mixin(ThrownTrident.class)
-public abstract class MixinThrownTrident extends AbstractArrow {
+public abstract class MixinThrownTrident extends AbstractArrow implements ThrownTridentAttackDamage {
     @Shadow public int clientSideReturnTridentTickCount;
     @Shadow private ItemStack tridentItem;
     @Shadow private boolean dealtDamage;
 
     private static Random random = new Random();
 
-    // Lightning Fiend: enemies this throw has pierced so far
     @Unique private int woldsVaults$pierced;
+    @Unique private float woldsVaults$throwAttackDamage;
+    @Unique private static boolean woldsVaults$warnedThrowAttackDamage;
 
     protected MixinThrownTrident(EntityType<? extends AbstractArrow> pEntityType, Level pLevel) {
         super(pEntityType, pLevel);
@@ -97,6 +100,7 @@ public abstract class MixinThrownTrident extends AbstractArrow {
     private void onHitEntityWithVaultTrident(EntityHitResult pResult, CallbackInfo ci) {
         if(this.tridentItem.getItem() instanceof VaultTridentItem) {
             if(!(pResult.getEntity() instanceof LivingEntity)) {
+                woldsVaults$ignore(pResult.getEntity());
                 ci.cancel();
                 return;
             }
@@ -107,8 +111,6 @@ public abstract class MixinThrownTrident extends AbstractArrow {
 
             Entity entity1 = this.getOwner();
 
-            // a piercing throw (Lightning Fiend) keeps flying through up to its pierce count of enemies; set grants
-            // live in the server's snapshot, so the server decides and the client follows its position updates
             int pierce = !this.level.isClientSide && entity1 instanceof LivingEntity owner ? LightningFiend.pierce(owner) : 0;
             boolean piercing = pierce > 0 && this.woldsVaults$pierced < pierce;
             if (!piercing) {
@@ -116,15 +118,15 @@ public abstract class MixinThrownTrident extends AbstractArrow {
             }
             float f1 = 1.0F;
             float strikeDamage = f.floatValue() * (entity1 instanceof LivingEntity owner ? LightningFiend.channelingMultiplier(owner) : 1.0F);
+            float setStrikeDamage = entity1 instanceof LivingEntity owner ? woldsVaults$setStrikeDamage(owner) : 0.0F;
             if (this.level instanceof ServerLevel && VaultTridentItem.isVaultTridentChanneling(this.tridentItem)) {
                 if (piercing && entity1 instanceof ServerPlayer player && entity instanceof LivingEntity living) {
-                    // every enemy a piercing throw passes through is struck, no channeling roll needed
-                    LightningFiend.strike(player, living, strikeDamage);
-                    LightningFiend.chain(player, living, strikeDamage);
+                    LightningFiend.strike(player, living, setStrikeDamage);
+                    LightningFiend.chain(player, living, setStrikeDamage);
                 } else if(VaultTridentItem.shouldTriggerChanneling(data)) {
                     woldsVaults$triggerChannelingStrike(entity, entity1, strikeDamage);
                     if (entity1 instanceof ServerPlayer player && entity instanceof LivingEntity living) {
-                        LightningFiend.chain(player, living, strikeDamage);
+                        LightningFiend.chain(player, living, setStrikeDamage);
                     }
 
                     if (entity1 instanceof LivingEntity livingEntity) {
@@ -141,7 +143,6 @@ public abstract class MixinThrownTrident extends AbstractArrow {
 
             DamageSource damagesource = DamageSource.trident(this, entity1 == null ? this : entity1);
             if (piercing) {
-                // the arrow's own piercing list keeps it from hitting this enemy again and lets it hit the next one this tick
                 this.woldsVaults$pierced++;
                 this.setPierceLevel((byte) Math.max(this.getPierceLevel(), pierce));
                 AbstractArrowAccessor arrow = (AbstractArrowAccessor) (Object) this;
@@ -151,6 +152,7 @@ public abstract class MixinThrownTrident extends AbstractArrow {
                 arrow.getPiercingIgnoreEntityIds().add(entity.getId());
             } else {
                 this.dealtDamage = true;
+                this.setPierceLevel((byte) 0);
             }
             SoundEvent soundevent = SoundEvents.TRIDENT_HIT;
             if (entity.hurt(damagesource, f.floatValue())) {
@@ -168,6 +170,46 @@ public abstract class MixinThrownTrident extends AbstractArrow {
             this.playSound(soundevent, f1, 1.0F);
             ci.cancel();
         }
+    }
+
+    /**
+     * Records an entity the trident passed without hitting, so the arrow hit loop moves past it instead of finding it
+     * again every iteration once the trident pierces.
+     */
+    @Unique
+    private void woldsVaults$ignore(Entity entity) {
+        AbstractArrowAccessor arrow = (AbstractArrowAccessor) (Object) this;
+        if (arrow.getPiercingIgnoreEntityIds() == null) {
+            arrow.setPiercingIgnoreEntityIds(new IntOpenHashSet(5));
+        }
+        arrow.getPiercingIgnoreEntityIds().add(entity.getId());
+    }
+
+    /**
+     * The Lightning Fiend strike damage of this throw: the thrower's attack damage at the throw times their channeling
+     * multiplier. A trident thrown without a recorded attack damage falls back to the owner's current attack damage.
+     */
+    @Unique
+    private float woldsVaults$setStrikeDamage(LivingEntity owner) {
+        float attackDamage = this.woldsVaults$throwAttackDamage;
+        if (attackDamage <= 0.0F) {
+            attackDamage = LightningFiend.attackDamage(owner);
+            if (!woldsVaults$warnedThrowAttackDamage) {
+                woldsVaults$warnedThrowAttackDamage = true;
+                WoldsVaults.LOGGER.warn("A vault trident hit without a recorded throw attack damage; using the owner's current attack damage {}.", attackDamage);
+            }
+        }
+        return attackDamage * LightningFiend.channelingMultiplier(owner);
+    }
+
+    @Override
+    public void woldsVaults$setThrowAttackDamage(float attackDamage) {
+        this.woldsVaults$throwAttackDamage = attackDamage;
+    }
+
+    @Override
+    public float woldsVaults$getThrowAttackDamage() {
+        return this.woldsVaults$throwAttackDamage;
     }
 
     @Unique

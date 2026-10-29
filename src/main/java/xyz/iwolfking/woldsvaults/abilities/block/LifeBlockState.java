@@ -1,9 +1,11 @@
 package xyz.iwolfking.woldsvaults.abilities.block;
 
+import iskallia.vault.event.ActiveFlags;
 import net.minecraft.ChatFormatting;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.EntityDamageSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -19,9 +21,6 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-// Life Block's raised blocks and the buffs a lift grants. Heals reach the block through LivingHealEvent at
-// its lowest priority, so every other handler has already scaled them. Transfusion is a timed global damage factor;
-// Life Bond is a final-damage sub-stage at FinalDamageStage.ORDER_SPLIT, ahead of every reduction.
 public final class LifeBlockState {
     public static final String LIFE_BOND_DAMAGE = "woldsvaults.life_bond";
 
@@ -32,7 +31,6 @@ public final class LifeBlockState {
     private static final Map<UUID, BlockProgress<LifeBlockAbility>> BLOCKS = new ConcurrentHashMap<>();
     private static final Map<UUID, Buff> BUFFS = new ConcurrentHashMap<>();
 
-    // Set while Life Bond's own hit is in flight, so a bonded attacker cannot pass it straight back.
     private static final ThreadLocal<Boolean> BONDING = ThreadLocal.withInitial(() -> Boolean.FALSE);
 
     private LifeBlockState() {
@@ -41,6 +39,11 @@ public final class LifeBlockState {
     public static void register() {
         FinalDamageStage.register(LIFE_BOND_STAGE, FinalDamageStage.ORDER_SPLIT, LifeBlockState::lifeBond);
         GlobalDamageMultiplierRegistry.excludeDamageSource(LIFE_BOND_DAMAGE);
+    }
+
+    /** Whether the damage is Life Bond's reflected hit, which never rolls a lucky hit. */
+    public static boolean isLifeBond(DamageSource source) {
+        return source instanceof LifeBondDamageSource;
     }
 
     public static boolean isBlocking(Player player) {
@@ -100,9 +103,11 @@ public final class LifeBlockState {
         }
         float passed = amount * buff.lifeBond;
         BONDING.set(Boolean.TRUE);
+        ActiveFlags.IS_THORNS_REFLECTING.push();
         try {
             attacker.hurt(new LifeBondDamageSource(player), passed);
         } finally {
+            ActiveFlags.IS_THORNS_REFLECTING.pop();
             BONDING.set(Boolean.FALSE);
         }
         return amount - passed;
@@ -141,7 +146,6 @@ public final class LifeBlockState {
         }
     }
 
-    // Takes back what is left of the shield this lift granted, and the Transfusion factor.
     private static void end(Player player, Buff buff) {
         GlobalDamageMultiplierRegistry.remove(player, TRANSFUSION_FACTOR);
         float left = Math.min(player.getAbsorptionAmount(), buff.shieldGranted);
@@ -169,7 +173,6 @@ public final class LifeBlockState {
         private final int transfusionStackTicks;
         private final float lifeBond;
         private final float shieldGranted;
-        // the server tick each live Transfusion stack runs out on, oldest first
         private final ArrayDeque<Integer> stacks = new ArrayDeque<>();
         private int remainingTicks;
 
@@ -181,7 +184,6 @@ public final class LifeBlockState {
             this.shieldGranted = shieldGranted;
             this.remainingTicks = durationTicks;
         }
-
 
         private void addStack(ServerPlayer player) {
             if (this.stacks.size() >= this.transfusionMaxStacks) {

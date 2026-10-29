@@ -9,6 +9,7 @@ import net.minecraft.resources.ResourceLocation;
 import xyz.iwolfking.woldsvaults.WoldsVaults;
 
 import javax.annotation.Nullable;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -27,6 +28,7 @@ public class GearSetConfig extends PackAuthoredConfig {
     @Expose private Lightning lightning;
     @Expose private Map<String, GearSet> sets;
 
+    private transient boolean lightningChecked;
     private transient Map<ResourceLocation, ResourceLocation> setByPiece;
     private transient Map<ResourceLocation, GearSet> setsById;
 
@@ -78,26 +80,41 @@ public class GearSetConfig extends PackAuthoredConfig {
     private static final int DEFAULT_LAUNCH_GRACE_TICKS = 3;
 
     public static class Lightning {
-        @Expose public float chainRange;
-        @Expose public int formDurationTicks;
-        @Expose public float dashDistance;
-        @Expose public float dashWidth;
-        @Expose public int dashCooldownTicks;
-        @Expose public int dashTravelTicks;
-        @Expose public float arcLashRange;
-        @Expose public float arcLashDamage;
-        @Expose public float arcLashStrikeDamage;
-        @Expose public float arcLashConeAngle;
-        @Expose public int arcLashBolts;
-        @Expose public float arcLashSpeed;
-        @Expose public int arcLashCooldownTicks;
-        @Expose public float rodRange;
-        @Expose public float rodLockAngle;
-        @Expose public float rodOvershoot;
-        @Expose public float rodDamageMultiplier;
-        @Expose public int rodCooldownTicks;
-        @Expose public float thunderDamagePerSecond;
-        @Expose public float thunderRadius;
+        @Expose public Float chainRange;
+        @Expose public Integer formDurationTicks;
+        @Expose public Float dashDistance;
+        @Expose public Float dashWidth;
+        @Expose public Integer dashCooldownTicks;
+        @Expose public Integer dashTravelTicks;
+        @Expose public Float arcLashRange;
+        @Expose public Float arcLashDamage;
+        @Expose public Float arcLashStrikeDamage;
+        @Expose public Float arcLashConeAngle;
+        @Expose public Integer arcLashBolts;
+        @Expose public Float arcLashSpeed;
+        @Expose public Integer arcLashCooldownTicks;
+        @Expose public Float rodRange;
+        @Expose public Float rodLockAngle;
+        @Expose public Float rodOvershoot;
+        @Expose public Float rodDamageMultiplier;
+        @Expose public Integer rodCooldownTicks;
+        @Expose public Float thunderDamagePerSecond;
+        @Expose public Float thunderRadius;
+
+        /** Fills every key the pack file left out from the built-in tuning, logging each one. */
+        private void fillMissing(Lightning defaults) {
+            for (Field field : Lightning.class.getFields()) {
+                try {
+                    if (field.get(this) == null) {
+                        Object value = field.get(defaults);
+                        WoldsVaults.LOGGER.warn("gear_sets.json lightning section has no {}; using the built-in {}.", field.getName(), value);
+                        field.set(this, value);
+                    }
+                } catch (IllegalAccessException e) {
+                    WoldsVaults.LOGGER.error("Could not fill the lightning tuning key {}.", field.getName(), e);
+                }
+            }
+        }
     }
 
     public static class GearSet {
@@ -138,7 +155,7 @@ public class GearSetConfig extends PackAuthoredConfig {
         this.documentation.put("sets", "Set id -> name, colours, pieces (unique ids from unique_gear) and tiers. A piece counts while it sits in the player's attribute snapshot (worn in its intended slot, not broken, not above the player's level). Each unique counts once.");
         this.documentation.put("tiers", "pieces = pieces needed; text = the tooltip line; grants = gear attributes added to the wearer's snapshot while the tier is active (values in the attribute's own units, 1.0 = 100%)");
         this.documentation.put("riptide", "Shared riptide tuning: hover friction is the extra per-tick horizontal speed multiplier during the hover, vertical damping the per-tick vertical one; the shock cone spans shockConeAhead blocks ahead of the player to shockConeBehind blocks behind, widening to shockConeRadius; contactInflate grows the box that finds dash contacts by that many blocks per side; a dash that hits a wall ends only once its horizontal speed is below stallSpeed blocks per tick, and never in its first launchGraceTicks ticks");
-        this.documentation.put("lightning", "Shared lightning tuning: chainRange = how far a channeling strike jumps to the next enemy; throwing a trident with the lightning dash grant turns the thrower into lightning for formDurationTicks, during which each tap of a movement key sends them dashDistance blocks that way as a bolt of lightning, taking dashTravelTicks, striking enemies within dashWidth of the path, then waiting dashCooldownTicks after reappearing before the next dash. Left click is Arc Lash: arcLashBolts spinning lightning bolts thrown out evenly across arcLashConeAngle degrees either side of the look, flying arcLashSpeed blocks a tick for up to arcLashRange, striking each enemy they pass through (once per throw) for arcLashDamage of the trident's damage and calling a channeling strike (vanilla lightning) down on it for arcLashStrikeDamage of a channeling strike's damage, once per arcLashCooldownTicks. Right click is Lightning Rod: marks the enemy aimed at within rodRange (once per rodCooldownTicks); a dash within rodLockAngle degrees of the target locks on, running through it and on for rodOvershoot of a dash, and strikes it for rodDamageMultiplier of the dash damage. Middle click is Thunderstrike: ends the form with a giant bolt on the player striking every enemy within thunderRadius (across) for the trident's damage times thunderDamagePerSecond per second of form left");
+        this.documentation.put("lightning", "Shared lightning tuning: chainRange = how far a channeling strike jumps to the next enemy; throwing a trident with the lightning dash grant turns the thrower into lightning for formDurationTicks, during which each tap of a movement key sends them dashDistance blocks that way as a bolt of lightning, taking dashTravelTicks, striking enemies within dashWidth of the path, then waiting dashCooldownTicks after reappearing before the next dash. Left click is Arc Lash: arcLashBolts spinning lightning bolts thrown out evenly across arcLashConeAngle degrees either side of the look, flying arcLashSpeed blocks a tick for up to arcLashRange, striking each enemy they pass through (once per throw) for arcLashDamage of the thrower's attack damage at the throw and calling a channeling strike (vanilla lightning) down on it for arcLashStrikeDamage of a channeling strike's damage, once per arcLashCooldownTicks. Right click is Lightning Rod: marks the enemy aimed at within rodRange (once per rodCooldownTicks); a dash within rodLockAngle degrees of the target locks on, running through it and on for rodOvershoot of a dash, and strikes it for rodDamageMultiplier of the dash damage. Middle click is Thunderstrike: ends the form with a giant bolt on the player striking every enemy within thunderRadius (across) for the thrower's attack damage times thunderDamagePerSecond per second of form left");
 
         this.riptide = new Riptide();
         this.riptide.hoverHorizontalFriction = 0.8F;
@@ -299,11 +316,19 @@ public class GearSetConfig extends PackAuthoredConfig {
     public Lightning getLightning() {
         if (this.lightning == null) {
             WoldsVaults.LOGGER.error("gear_sets.json has no lightning section; using the built-in tuning.");
-            GearSetConfig defaults = new GearSetConfig();
-            defaults.reset();
-            this.lightning = defaults.lightning;
+            this.lightning = defaultLightning();
+            this.lightningChecked = true;
+        } else if (!this.lightningChecked) {
+            this.lightning.fillMissing(defaultLightning());
+            this.lightningChecked = true;
         }
         return this.lightning;
+    }
+
+    private static Lightning defaultLightning() {
+        GearSetConfig defaults = new GearSetConfig();
+        defaults.reset();
+        return defaults.lightning;
     }
 
     /** The grants of one tier resolved to registered attributes; unknown attributes are logged and skipped. */

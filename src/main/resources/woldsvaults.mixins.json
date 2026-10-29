@@ -646,6 +646,7 @@
     "vaulthunters.skills.MixinAbilityLabelFactory",
     "vaulthunters.skills.MixinAreaOfEffectHelper",
     "vaulthunters.skills.MixinHealEffectAbility",
+    "vaulthunters.skills.MixinLuckyHitTalentDerivedHits",
     "vaulthunters.skills.MixinModAbilityLabelBindings",
     "vaulthunters.skills.MixinResistanceHelper",
     "vaulthunters.skills.MixinSkill",
