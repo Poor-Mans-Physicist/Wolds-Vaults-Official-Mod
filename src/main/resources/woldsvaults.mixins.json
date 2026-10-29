@@ -679,6 +679,7 @@
     "MixinThrownTridentRenderer",
     "MixinPlayerModelHoverPose",
     "MixinItemInHandLayerRiptide",
+    "MixinItemInHandRendererScepter",
     "bettercombat.MixinWeaponRegistry",
     "inventoryhud.MixinCuriosRenderer",
     "inventoryhud.MixinInventoryHudRenderer",

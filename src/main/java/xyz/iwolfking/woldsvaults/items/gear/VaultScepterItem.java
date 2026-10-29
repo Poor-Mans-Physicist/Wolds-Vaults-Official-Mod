@@ -173,6 +173,20 @@ public class VaultScepterItem extends SwordItem implements VaultGearItem, Dyeabl
         return 72000;
     }
 
+    /**
+     * Ticks a held scepter needs before its release fires: the invoke's charge when it has one, else the beam's.
+     */
+    public static float getChargeTicks(ItemStack stack) {
+        VaultGearData gearData = VaultGearData.read(stack);
+        if (gearData.hasAttribute(xyz.iwolfking.woldsvaults.init.ModGearAttributes.SCEPTER_INVOKE)) {
+            ScepterInvokeAttribute invokeAttr = gearData.get(xyz.iwolfking.woldsvaults.init.ModGearAttributes.SCEPTER_INVOKE, VaultGearAttributeTypeMerger.firstNonNull());
+            if (invokeAttr != null) {
+                return invokeAttr.getChargeTicks();
+            }
+        }
+        return BEAM_CHARGE_TICKS;
+    }
+
     @Override
     public InteractionResultHolder<ItemStack> use(Level world, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
