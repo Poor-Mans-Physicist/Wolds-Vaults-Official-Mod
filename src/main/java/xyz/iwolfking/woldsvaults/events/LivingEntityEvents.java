@@ -28,7 +28,6 @@ import iskallia.vault.event.ActiveFlagsCheck;
 import iskallia.vault.gear.VaultGearRarity;
 import iskallia.vault.gear.attribute.type.VaultGearAttributeTypeMerger;
 import iskallia.vault.gear.data.GearDataCache;
-import iskallia.vault.gear.data.VaultGearData;
 import iskallia.vault.gear.etching.EtchingHelper;
 import iskallia.vault.gear.item.VaultGearItem;
 import iskallia.vault.gear.trinket.TrinketHelper;
@@ -759,10 +758,9 @@ public class LivingEntityEvents {
     }
 
     /**
-     * Sets the base damage of hits a player lands while spinning with a riptide vault trident. A riptide contact
-     * hits like a full-strength melee swing for twice the player's attack damage attribute; other hits during the
-     * spin (channeling chain hits) keep twice the trident's own attack damage. Runs first so every later stage of
-     * the hurt chain builds on this base.
+     * Sets the base damage of hits a player lands while spinning with a riptide vault trident: twice the player's
+     * attack damage attribute, for riptide contacts and the channeling hits the spin calls alike. Runs first so every
+     * later stage of the hurt chain builds on this base.
      */
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void onLivingHurt(LivingHurtEvent event) {
@@ -777,13 +775,9 @@ public class LivingEntityEvents {
         ItemStack stack = player.getMainHandItem();
 
         if (isVaultRiptideSpin(player, stack)) {
-            VaultGearData data = VaultGearData.read(stack);
-            double d = 2 * data.get(iskallia.vault.init.ModGearAttributes.ATTACK_DAMAGE, VaultGearAttributeTypeMerger.doubleSum());
+            double d = 2 * player.getAttributeValue(Attributes.ATTACK_DAMAGE);
 
             if(!ActiveFlags.IS_CHAINING_ATTACKING.isSet()) {
-                if (RiptideDash.isContact(event.getEntityLiving())) {
-                    d = 2 * player.getAttributeValue(Attributes.ATTACK_DAMAGE);
-                }
                 ActiveFlags.IS_CHAINING_ATTACKING.runIfNotSet(() -> VaultTridentItem.triggerChannelingRiptide(stack, player.getLevel(), player));
             }
             event.setAmount((float) d);

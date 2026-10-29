@@ -117,16 +117,16 @@ public abstract class MixinThrownTrident extends AbstractArrow implements Thrown
                 this.setDeltaMovement(this.getDeltaMovement().multiply(-0.01D, -0.1D, -0.01D));
             }
             float f1 = 1.0F;
-            float strikeDamage = f.floatValue() * (entity1 instanceof LivingEntity owner ? LightningFiend.channelingMultiplier(owner) : 1.0F);
-            float setStrikeDamage = entity1 instanceof LivingEntity owner ? woldsVaults$setStrikeDamage(owner) : 0.0F;
+            float throwDamage = entity1 instanceof LivingEntity owner ? woldsVaults$throwAttackDamage(owner) : woldsVaults$ownerlessDamage(f.floatValue());
+            float strikeDamage = throwDamage * (entity1 instanceof LivingEntity owner ? LightningFiend.channelingMultiplier(owner) : 1.0F);
             if (this.level instanceof ServerLevel && VaultTridentItem.isVaultTridentChanneling(this.tridentItem)) {
                 if (piercing && entity1 instanceof ServerPlayer player && entity instanceof LivingEntity living) {
-                    LightningFiend.strike(player, living, setStrikeDamage);
-                    LightningFiend.chain(player, living, setStrikeDamage);
+                    LightningFiend.strike(player, living, strikeDamage);
+                    LightningFiend.chain(player, living, strikeDamage);
                 } else if(VaultTridentItem.shouldTriggerChanneling(data)) {
                     woldsVaults$triggerChannelingStrike(entity, entity1, strikeDamage);
                     if (entity1 instanceof ServerPlayer player && entity instanceof LivingEntity living) {
-                        LightningFiend.chain(player, living, setStrikeDamage);
+                        LightningFiend.chain(player, living, strikeDamage);
                     }
 
                     if (entity1 instanceof LivingEntity livingEntity) {
@@ -155,7 +155,7 @@ public abstract class MixinThrownTrident extends AbstractArrow implements Thrown
                 this.setPierceLevel((byte) 0);
             }
             SoundEvent soundevent = SoundEvents.TRIDENT_HIT;
-            if (entity.hurt(damagesource, f.floatValue())) {
+            if (entity.hurt(damagesource, throwDamage)) {
 
                 if (entity instanceof LivingEntity livingentity) {
                     if (entity1 instanceof LivingEntity livingentity1) {
@@ -186,11 +186,11 @@ public abstract class MixinThrownTrident extends AbstractArrow implements Thrown
     }
 
     /**
-     * The Lightning Fiend strike damage of this throw: the thrower's attack damage at the throw times their channeling
-     * multiplier. A trident thrown without a recorded attack damage falls back to the owner's current attack damage.
+     * The base damage of this throw's impact and channeling strikes: the thrower's attack damage at the throw. A trident
+     * thrown without a recorded attack damage falls back to the owner's current attack damage.
      */
     @Unique
-    private float woldsVaults$setStrikeDamage(LivingEntity owner) {
+    private float woldsVaults$throwAttackDamage(LivingEntity owner) {
         float attackDamage = this.woldsVaults$throwAttackDamage;
         if (attackDamage <= 0.0F) {
             attackDamage = LightningFiend.attackDamage(owner);
@@ -199,7 +199,14 @@ public abstract class MixinThrownTrident extends AbstractArrow implements Thrown
                 WoldsVaults.LOGGER.warn("A vault trident hit without a recorded throw attack damage; using the owner's current attack damage {}.", attackDamage);
             }
         }
-        return attackDamage * LightningFiend.channelingMultiplier(owner);
+        return attackDamage;
+    }
+
+    /** A vault trident with no living owner hits for its own attack damage roll. */
+    @Unique
+    private static float woldsVaults$ownerlessDamage(float tridentDamage) {
+        WoldsVaults.LOGGER.warn("A vault trident hit with no living owner; using its own attack damage roll {}.", tridentDamage);
+        return tridentDamage;
     }
 
     @Override
