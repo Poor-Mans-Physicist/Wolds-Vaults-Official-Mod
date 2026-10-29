@@ -168,7 +168,7 @@ public class LivingEntityEvents {
     @SubscribeEvent
     public static void onScepterHitSparkles(LivingHurtEvent event) {
         if (!(event.getSource().getEntity() instanceof ServerPlayer player)) return;
-        if (ActiveFlags.IS_AP_ATTACKING.isSet()) return;
+        if (ActiveFlags.IS_AP_ATTACKING.isSet() || WoldActiveFlags.IS_LIGHTNING_FIEND_ATTACKING.isSet()) return;
 
         ItemStack heldItem = player.getMainHandItem();
         GearDataCache gearDataCache = GearDataCache.of(heldItem);
