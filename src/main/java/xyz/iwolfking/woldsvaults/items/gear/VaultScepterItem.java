@@ -61,6 +61,7 @@ import java.util.Optional;
 import java.util.Random;
 
 public class VaultScepterItem extends SwordItem implements VaultGearItem, DyeableLeatherItem {
+    public static final int BEAM_CHARGE_TICKS = 40;
 
     public VaultScepterItem(ResourceLocation id, Properties builder) {
         super(VaultGearToolTier.INSTANCE, 0, -2.4F, builder);
@@ -215,7 +216,7 @@ public class VaultScepterItem extends SwordItem implements VaultGearItem, Dyeabl
         }
 
         if (gearData.hasAttribute(xyz.iwolfking.woldsvaults.init.ModGearAttributes.SCEPTER_BEAM)) {
-            if (chargeTicks < 40) return;
+            if (chargeTicks < BEAM_CHARGE_TICKS) return;
             executeBeamAttack(serverLevel, player, elementalTypes, gearData.getRarity().equals(VaultGearRarity.valueOf("MYTHIC")) ? 1.3F : 0.65F);
             if (player.getLevel().dimension().location().getNamespace().equals("the_vault")) {
                 if(player instanceof ServerPlayer) {
@@ -246,6 +247,7 @@ public class VaultScepterItem extends SwordItem implements VaultGearItem, Dyeabl
                 hasValidCharge = true;
             }
         } else if (gearData.hasAttribute(xyz.iwolfking.woldsvaults.init.ModGearAttributes.SCEPTER_BEAM)) {
+            targetTicks = BEAM_CHARGE_TICKS;
             hasValidCharge = true;
         }
 
