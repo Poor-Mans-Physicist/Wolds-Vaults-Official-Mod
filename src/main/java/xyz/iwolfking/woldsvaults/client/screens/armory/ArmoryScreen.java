@@ -80,6 +80,9 @@ public class ArmoryScreen extends AbstractSkillTabElementContainerScreen<ArmoryM
         this.shownState = menu.state();
         this.setGuiSize(Spatials.size(GUI_WIDTH, GUI_HEIGHT));
         this.elementStore.removeElements(SkillTabContainerElement.class);
+        this.elementStore.removeElements(element -> element instanceof LabelElement<?>);
+        this.addElement(new LabelElement<>(Spatials.positionXY(this.getTabContentSpatial()).translateXYZ(8, 6, 2),
+                this.getTabTitle().withStyle(ChatFormatting.BLACK), LabelTextStyle.defaultStyle()));
         this.addElement(ArmoryTabs.topStrip(Spatials.positionXYZ(15, -28, 1), this.openInfo)
                 .layout((screen, gui, parent, world) -> world.translateXY(this.getTabContentSpatial())));
         this.addElement(new NineSliceElement<>(Spatials.positionXY(this.getTabContentSpatial()).height(this.getTabContentSpatial()),
