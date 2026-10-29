@@ -36,6 +36,7 @@
     "MixinServerLevelEffectCloudMerge",
     "RangedAttributeAccessor",
     "ThrownTridentAccessor",
+    "accessors.AbstractArrowAccessor",
     "accessors.ChaosTaskAccessor",
     "vaulthunters.accessors.DeckModifierValueAccessor",
     "accessors.EvokerFangsAccessor",
@@ -670,6 +671,7 @@
   ],
   "client": [
     "AccessorParticleEngine",
+    "accessors.ModelAccessor",
     "MixinAbstractContainerScreen",
     "MixinAnvilScreen",
     "MixinDynamicBakedModelOverrides",

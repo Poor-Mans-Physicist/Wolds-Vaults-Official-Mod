@@ -31,7 +31,10 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import xyz.iwolfking.woldsvaults.items.gear.VaultTridentItem;
+import xyz.iwolfking.woldsvaults.mixins.accessors.AbstractArrowAccessor;
+import xyz.iwolfking.woldsvaults.modifiers.gear.lightning.LightningFiend;
 
 import java.util.Random;
 
@@ -42,6 +45,9 @@ public abstract class MixinThrownTrident extends AbstractArrow {
     @Shadow private boolean dealtDamage;
 
     private static Random random = new Random();
+
+    // Lightning Fiend: enemies this throw has pierced so far
+    @Unique private int woldsVaults$pierced;
 
     protected MixinThrownTrident(EntityType<? extends AbstractArrow> pEntityType, Level pLevel) {
         super(pEntityType, pLevel);
@@ -101,18 +107,32 @@ public abstract class MixinThrownTrident extends AbstractArrow {
 
             Entity entity1 = this.getOwner();
 
-            this.setDeltaMovement(this.getDeltaMovement().multiply(-0.01D, -0.1D, -0.01D));
+            // a piercing throw (Lightning Fiend) keeps flying through up to its pierce count of enemies; set grants
+            // live in the server's snapshot, so the server decides and the client follows its position updates
+            int pierce = !this.level.isClientSide && entity1 instanceof LivingEntity owner ? LightningFiend.pierce(owner) : 0;
+            boolean piercing = pierce > 0 && this.woldsVaults$pierced < pierce;
+            if (!piercing) {
+                this.setDeltaMovement(this.getDeltaMovement().multiply(-0.01D, -0.1D, -0.01D));
+            }
             float f1 = 1.0F;
+            float strikeDamage = f.floatValue() * (entity1 instanceof LivingEntity owner ? LightningFiend.channelingMultiplier(owner) : 1.0F);
             if (this.level instanceof ServerLevel && VaultTridentItem.isVaultTridentChanneling(this.tridentItem)) {
-                if(VaultTridentItem.shouldTriggerChanneling(data)) {
-                    woldsVaults$triggerChannelingStrike(entity, entity1, f.floatValue());
+                if (piercing && entity1 instanceof ServerPlayer player && entity instanceof LivingEntity living) {
+                    // every enemy a piercing throw passes through is struck, no channeling roll needed
+                    LightningFiend.strike(player, living, strikeDamage);
+                    LightningFiend.chain(player, living, strikeDamage);
+                } else if(VaultTridentItem.shouldTriggerChanneling(data)) {
+                    woldsVaults$triggerChannelingStrike(entity, entity1, strikeDamage);
+                    if (entity1 instanceof ServerPlayer player && entity instanceof LivingEntity living) {
+                        LightningFiend.chain(player, living, strikeDamage);
+                    }
 
                     if (entity1 instanceof LivingEntity livingEntity) {
                         AttributeSnapshot snapshot = AttributeSnapshotHelper.getInstance().getSnapshot(livingEntity);
                         float judgementValue = snapshot.getAttributeValue(xyz.iwolfking.woldsvaults.init.ModGearAttributes.SECOND_JUDGEMENT, VaultGearAttributeTypeMerger.floatSum());
 
                         if (random.nextFloat() < judgementValue) {
-                            woldsVaults$triggerChannelingStrike(entity, entity, f.floatValue());
+                            woldsVaults$triggerChannelingStrike(entity, entity, strikeDamage);
                         }
                     }
                 }
@@ -120,7 +140,18 @@ public abstract class MixinThrownTrident extends AbstractArrow {
 
 
             DamageSource damagesource = DamageSource.trident(this, entity1 == null ? this : entity1);
-            this.dealtDamage = true;
+            if (piercing) {
+                // the arrow's own piercing list keeps it from hitting this enemy again and lets it hit the next one this tick
+                this.woldsVaults$pierced++;
+                this.setPierceLevel((byte) Math.max(this.getPierceLevel(), pierce));
+                AbstractArrowAccessor arrow = (AbstractArrowAccessor) (Object) this;
+                if (arrow.getPiercingIgnoreEntityIds() == null) {
+                    arrow.setPiercingIgnoreEntityIds(new IntOpenHashSet(5));
+                }
+                arrow.getPiercingIgnoreEntityIds().add(entity.getId());
+            } else {
+                this.dealtDamage = true;
+            }
             SoundEvent soundevent = SoundEvents.TRIDENT_HIT;
             if (entity.hurt(damagesource, f.floatValue())) {
 

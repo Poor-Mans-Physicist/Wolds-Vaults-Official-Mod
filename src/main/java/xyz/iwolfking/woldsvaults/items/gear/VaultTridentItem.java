@@ -62,6 +62,7 @@ import xyz.iwolfking.woldsvaults.integration.bettertridents.BetterThrownTrident;
 import xyz.iwolfking.woldsvaults.api.data.enchantments.AllowedEnchantmentsData;
 import xyz.iwolfking.woldsvaults.init.ModItems;
 import xyz.iwolfking.woldsvaults.models.Tridents;
+import xyz.iwolfking.woldsvaults.modifiers.gear.lightning.LightningFiend;
 import xyz.iwolfking.woldsvaults.modifiers.gear.riptide.RiptideDash;
 
 import javax.annotation.Nonnull;
@@ -194,6 +195,10 @@ public class VaultTridentItem extends TridentItem implements VaultGearItem, Dyea
 
     @Override
     public void releaseUsing(ItemStack stack, Level level, LivingEntity entity, int duration) {
+        // lightning (Lightning Fiend 6-piece) can't throw a trident until the form ends
+        if (entity instanceof Player player && LightningFiend.isLightning(player)) {
+            return;
+        }
         VaultGearData data = VaultGearData.read(stack);
         if(entity instanceof Player player) {
             if(data.getItemLevel() > SidedHelper.getVaultLevel(player)) {
@@ -228,6 +233,9 @@ public class VaultTridentItem extends TridentItem implements VaultGearItem, Dyea
 
                             level.addFreshEntity(throwntrident);
                             level.playSound(null, throwntrident, SoundEvents.TRIDENT_THROW, SoundSource.PLAYERS, 1.0F, 1.0F);
+                            if (player instanceof ServerPlayer serverPlayer) {
+                                LightningFiend.onThrow(serverPlayer, stack);
+                            }
                             if (!player.getAbilities().instabuild) {
                                 player.getInventory().removeItem(stack);
                             }
@@ -278,6 +286,9 @@ public class VaultTridentItem extends TridentItem implements VaultGearItem, Dyea
 
     @Override
     public InteractionResultHolder<ItemStack> use(Level world, Player player, InteractionHand hand) {
+        if (LightningFiend.isLightning(player)) {
+            return InteractionResultHolder.fail(player.getItemInHand(hand));
+        }
         return VaultGearHelper.rightClick(world, player, hand, super.use(world, player, hand));
     }
 

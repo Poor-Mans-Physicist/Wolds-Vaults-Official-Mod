@@ -19,9 +19,11 @@ import java.util.Deque;
 /**
  * Hits that riptide mechanics derive from a riptide contact's final damage (the shock cone, storm lightning). They
  * are queued and dealt at the end of the server tick, outside the contact's own hurt event, as a thorns-flagged
- * player hit so nothing treats them as a normal attack: no on-hit effects, no lucky hit, no second pass of the
- * damage multipliers. The authored amount is restored at the end of the hurt chain; armor and resistance still
- * apply. Invulnerability frames are cleared around the hit and restored, so the hit lands in full and does not
+ * player hit, and the authored amount is restored at the end of the hurt chain, so there's no second pass of the
+ * damage multipliers; armor and resistance still apply. The thorns flag alone doesn't stop Vault Hunters' lucky hit
+ * roll, which only skips hits made under its chaining or area-attack flags, so every derived hit is also dealt under
+ * the area-attack flag, as Vault Hunters' own ability splash damage is: no lucky hit, no on-hit procs such as stun or
+ * cleave, and an area damage number. Invulnerability frames are cleared around the hit and restored, so the hit lands in full and does not
  * clip the next one.
  */
 @Mod.EventBusSubscriber(modid = WoldsVaults.MOD_ID)
@@ -77,6 +79,7 @@ public final class RiptideDerivedHits {
         int savedHurtTime = target.hurtTime;
         float savedLastHurt = ((LivingEntityAccessor) target).getLastHurt();
         ActiveFlags.IS_THORNS_REFLECTING.push();
+        ActiveFlags.IS_AOE_ATTACKING.push();
         try {
             target.invulnerableTime = 0;
             target.hurt(new Source(attacker, amount), amount);
@@ -84,6 +87,7 @@ public final class RiptideDerivedHits {
             target.invulnerableTime = savedInvulnerable;
             target.hurtTime = savedHurtTime;
             ((LivingEntityAccessor) target).setLastHurt(savedLastHurt);
+            ActiveFlags.IS_AOE_ATTACKING.pop();
             ActiveFlags.IS_THORNS_REFLECTING.pop();
         }
     }

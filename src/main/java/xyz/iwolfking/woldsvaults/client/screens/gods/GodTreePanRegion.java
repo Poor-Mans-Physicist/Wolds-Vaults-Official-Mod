@@ -1,5 +1,6 @@
 package xyz.iwolfking.woldsvaults.client.screens.gods;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
@@ -14,9 +15,12 @@ import iskallia.vault.util.MiscUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiComponent;
 import net.minecraft.client.gui.components.events.GuiEventListener;
+import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.TextColor;
+import net.minecraft.util.Mth;
+import net.minecraft.Util;
 import net.minecraft.world.phys.Vec2;
 import xyz.iwolfking.woldsvaults.gods.ClientGodAlignmentData;
 import iskallia.vault.config.entry.SkillStyle;
@@ -44,6 +48,28 @@ public class GodTreePanRegion extends GuiComponent implements GuiEventListener {
     private static final int BACKGROUND_STARS = 420;
     private static final long STAR_SEED = 0x1D0A57A2L;
 
+    private static final float FOCUS_SCALE = 0.7F; // zoom a clicked star settles at, unless already closer
+    private static final long FOCUS_MILLIS = 450L; // how long the glide takes
+
+    // screen room kept clear when fitting the whole tree in view: the side tabs on the left, the XP bar along the top
+    private static final int FIT_INSET_LEFT = 28;
+    private static final int FIT_INSET_TOP = 32;
+    private static final int FIT_INSET = 10;
+    private static final float FIT_PADDING = 24.0F; // tree units around the outermost stars, for their light
+
+    // the two white rings around each tree's starting stars
+    private static final float RING_GAP = 3.0F;          // tree units from the star's rim to the inner ring, and ring to ring
+    private static final float RING_BREATH = 1.0F;       // how far the outer ring swells while its star is unclaimed
+    private static final float RING_BREATH_RATE = 0.5F;  // breaths a second
+    private static final int RING_SEGMENTS = 64;
+
+    // how far off an arrow's direction the next star may lie: along a constellation line, or anywhere
+    private static final float LINKED_CONE = (float) Math.toRadians(70.0D);
+    private static final float OPEN_CONE = (float) Math.toRadians(50.0D);
+
+    private record Glide(float fromScale, float toScale, Vec2 fromOffset, Vec2 point, long start) {}
+    private Glide glide;
+
     protected final GodTreeScreen parentScreen;
     protected final GodTreeDialog dialog;
     protected final Map<String, GodNodeWidget> nodeWidgets = new HashMap<>();
@@ -58,6 +84,7 @@ public class GodTreePanRegion extends GuiComponent implements GuiEventListener {
     protected Vec2 grabbedPos = new Vec2(0.0F, 0.0F);
     @Nullable
     private TransferSlotPopup popup;
+    private boolean fitPending; // asked to fit the tree before the chart had a size; done on the next frame
 
     public GodTreePanRegion(GodTreeScreen parentScreen, GodTreeDialog dialog, VaultGod god) {
         this.parentScreen = parentScreen;
@@ -157,8 +184,14 @@ public class GodTreePanRegion extends GuiComponent implements GuiEventListener {
     }
 
     protected void loadViewportTransforms() {
-        this.viewportTranslation = persistedTranslations.computeIfAbsent(this.god, god -> this.getCenter());
-        this.viewportScale = persistedScales.computeIfAbsent(this.god, god -> this.clampViewportScale(0.45F));
+        Vec2 translation = persistedTranslations.get(this.god);
+        Float scale = persistedScales.get(this.god);
+        if (translation == null || scale == null) {
+            this.resetView();
+            return;
+        }
+        this.viewportTranslation = translation;
+        this.viewportScale = scale;
     }
 
     protected void saveViewportTransforms() {
@@ -166,25 +199,54 @@ public class GodTreePanRegion extends GuiComponent implements GuiEventListener {
         persistedScales.put(this.god, this.viewportScale);
     }
 
-    protected Vec2 getCenter() {
-        if (this.nodeWidgets.isEmpty()) {
-            return new Vec2(0.0F, 0.0F);
+    // Centres the whole tree, labels included, in the chart's free room and zooms just far enough out to show it.
+    public void resetView() {
+        this.glide = null;
+        Rectangle bounds = this.getBounds();
+        if (bounds.width <= 0 || bounds.height <= 0) {
+            this.fitPending = true;
+            return;
         }
-        int minX = Integer.MAX_VALUE;
-        int maxX = Integer.MIN_VALUE;
-        int minY = Integer.MAX_VALUE;
-        int maxY = Integer.MIN_VALUE;
+        this.fitPending = false;
+        float minX = Float.MAX_VALUE;
+        float minY = Float.MAX_VALUE;
+        float maxX = -Float.MAX_VALUE;
+        float maxY = -Float.MAX_VALUE;
         for (GodNodeWidget widget : this.nodeWidgets.values()) {
             minX = Math.min(minX, widget.x);
-            maxX = Math.max(maxX, widget.x);
             minY = Math.min(minY, widget.y);
-            maxY = Math.max(maxY, widget.y);
+            maxX = Math.max(maxX, widget.x + widget.getWidth());
+            maxY = Math.max(maxY, widget.y + widget.getHeight());
         }
-        return new Vec2((minX + maxX) / -2.0F, (minY + maxY) / -2.0F);
+        if (this.tree != null) {
+            for (GodTreeModel.Label label : this.tree.getLabels()) {
+                float half = Minecraft.getInstance().font.width(label.text().toUpperCase(java.util.Locale.ROOT)) / 2.0F;
+                minX = Math.min(minX, label.x() - half);
+                minY = Math.min(minY, label.y());
+                maxX = Math.max(maxX, label.x() + half);
+                maxY = Math.max(maxY, label.y() + Minecraft.getInstance().font.lineHeight);
+            }
+        }
+        if (minX > maxX) {
+            this.viewportTranslation = new Vec2(0.0F, 0.0F);
+            this.viewportScale = this.clampViewportScale(0.45F);
+            this.saveViewportTransforms();
+            return;
+        }
+        float roomWidth = bounds.width - FIT_INSET_LEFT - FIT_INSET;
+        float roomHeight = bounds.height - FIT_INSET_TOP - FIT_INSET;
+        float scale = this.clampViewportScale(Math.min(roomWidth / (maxX - minX + FIT_PADDING * 2.0F),
+                roomHeight / (maxY - minY + FIT_PADDING * 2.0F)));
+        // the drawing is centred on the chart's middle; nudge the tree into the middle of the free room instead
+        float shiftX = (FIT_INSET_LEFT - FIT_INSET) / 2.0F;
+        float shiftY = (FIT_INSET_TOP - FIT_INSET) / 2.0F;
+        this.viewportScale = scale;
+        this.viewportTranslation = new Vec2(shiftX / scale - (minX + maxX) / 2.0F, shiftY / scale - (minY + maxY) / 2.0F);
+        this.saveViewportTransforms();
     }
 
     protected float clampViewportScale(float scale) {
-        return Math.max(0.25F, Math.min(2.0F, scale));
+        return Math.max(0.1F, Math.min(2.0F, scale));
     }
 
     /** Left-click selects or drags a star; right-click on a learned minor opens the transfer-slot picker. */
@@ -213,12 +275,10 @@ public class GodTreePanRegion extends GuiComponent implements GuiEventListener {
             }
         }
         if (hit != null) {
-            if (this.selectedWidget != null) {
-                this.selectedWidget.deselect();
+            this.select(hit);
+            if (button == 0) {
+                this.focusOn(hit);
             }
-            this.selectedWidget = hit;
-            hit.select();
-            this.dialog.setSelectedNode(hit.getNode().id());
             if (button == 1 && hit.getNode().type() == GodNodeType.MINOR && hit.isUnlocked()) {
                 this.popup = new TransferSlotPopup(this.god, hit.getNode());
             }
@@ -227,8 +287,107 @@ public class GodTreePanRegion extends GuiComponent implements GuiEventListener {
         if (button == 0) {
             this.grabbedPos = new Vec2((float) mouseX, (float) mouseY);
             this.dragging = true;
+            this.glide = null;
         }
         return true;
+    }
+
+    private void select(GodNodeWidget widget) {
+        if (this.selectedWidget != null) {
+            this.selectedWidget.deselect();
+        }
+        this.selectedWidget = widget;
+        widget.select();
+        this.dialog.setSelectedNode(widget.getNode().id());
+    }
+
+    // Arrow keys step the selection to the star that lies that way, gliding the view to it: along a constellation line
+    // from the selected star where one runs that way, otherwise to the nearest star in that direction. With nothing
+    // selected yet, the first press picks the star nearest the middle of the view.
+    @Override
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        float dirX;
+        float dirY;
+        switch (keyCode) {
+            case InputConstants.KEY_LEFT -> { dirX = -1.0F; dirY = 0.0F; }
+            case InputConstants.KEY_RIGHT -> { dirX = 1.0F; dirY = 0.0F; }
+            case InputConstants.KEY_UP -> { dirX = 0.0F; dirY = -1.0F; }
+            case InputConstants.KEY_DOWN -> { dirX = 0.0F; dirY = 1.0F; }
+            default -> {
+                return false;
+            }
+        }
+        if (this.nodeWidgets.isEmpty()) {
+            return false;
+        }
+        GodNodeWidget next;
+        if (this.selectedWidget == null) {
+            next = this.nearestToViewCentre();
+        } else {
+            List<GodNodeWidget> linked = new ArrayList<>();
+            for (String id : this.tree.getAdjacent(this.selectedWidget.getNode().id())) {
+                GodNodeWidget widget = this.nodeWidgets.get(id);
+                if (widget != null) {
+                    linked.add(widget);
+                }
+            }
+            next = this.closestToward(this.selectedWidget, dirX, dirY, linked, LINKED_CONE);
+            if (next == null) {
+                next = this.closestToward(this.selectedWidget, dirX, dirY, this.nodeWidgets.values(), OPEN_CONE);
+            }
+        }
+        if (next != null) {
+            this.popup = null;
+            this.select(next);
+            this.focusOn(next);
+        }
+        return true;
+    }
+
+    @Nullable
+    private GodNodeWidget nearestToViewCentre() {
+        GodNodeWidget nearest = null;
+        float best = Float.MAX_VALUE;
+        for (GodNodeWidget widget : this.nodeWidgets.values()) {
+            float dx = widget.x + widget.getWidth() / 2.0F + this.viewportTranslation.x;
+            float dy = widget.y + widget.getHeight() / 2.0F + this.viewportTranslation.y;
+            float distance = dx * dx + dy * dy;
+            if (distance < best) {
+                best = distance;
+                nearest = widget;
+            }
+        }
+        return nearest;
+    }
+
+    // The candidate within cone radians of the direction, seen from the star from, favouring straight, then near.
+    @Nullable
+    private GodNodeWidget closestToward(GodNodeWidget from, float dirX, float dirY, Iterable<GodNodeWidget> candidates, float cone) {
+        float fromX = from.x + from.getWidth() / 2.0F;
+        float fromY = from.y + from.getHeight() / 2.0F;
+        GodNodeWidget closest = null;
+        float best = Float.MAX_VALUE;
+        for (GodNodeWidget widget : candidates) {
+            if (widget == from) {
+                continue;
+            }
+            float dx = widget.x + widget.getWidth() / 2.0F - fromX;
+            float dy = widget.y + widget.getHeight() / 2.0F - fromY;
+            float along = dx * dirX + dy * dirY;
+            if (along <= 0.0F) {
+                continue;
+            }
+            float angle = (float) Math.atan2(Math.abs(dx * dirY - dy * dirX), along);
+            if (angle > cone) {
+                continue;
+            }
+            float cost = (float) Math.sqrt(dx * dx + dy * dy) * (1.0F + 2.0F * angle);
+            if (cost < best) {
+                best = cost;
+                closest = widget;
+            }
+        }
+        return closest;
     }
 
     @Override
@@ -252,6 +411,7 @@ public class GodTreePanRegion extends GuiComponent implements GuiEventListener {
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
         if (this.getBounds().contains(mouseX, mouseY)) {
+            this.glide = null;
             float newScale = this.viewportScale + (float) delta * 0.1F;
             this.viewportScale = this.clampViewportScale(newScale);
             this.saveViewportTransforms();
@@ -276,6 +436,14 @@ public class GodTreePanRegion extends GuiComponent implements GuiEventListener {
 
     protected void renderForeground(PoseStack renderStack, Rectangle containerBounds, int mouseX, int mouseY,
                                     float pTicks, List<Runnable> postRender) {
+        if (this.fitPending) {
+            this.resetView();
+        }
+        this.updateGlide();
+        RenderSystem.enableBlend();
+        float tick = (float) ClientScheduler.INSTANCE.getTick() + pTicks;      // moved up from below
+        GodTreeBackdrop.forGod(this.god).render(renderStack, containerBounds, this.viewportTranslation, this.viewportScale, tick);
+
         RenderSystem.enableBlend();
         Point2D.Float midpoint = MiscUtils.getMidpoint(this.getBounds());
         renderStack.pushPose();
@@ -284,18 +452,25 @@ public class GodTreePanRegion extends GuiComponent implements GuiEventListener {
         renderStack.translate(this.viewportTranslation.x, this.viewportTranslation.y, 0.0D);
         int containerMouseX = (int) (((float) mouseX - midpoint.x) / this.viewportScale - this.viewportTranslation.x);
         int containerMouseY = (int) (((float) mouseY - midpoint.y) / this.viewportScale - this.viewportTranslation.y);
-        float tick = (float) ClientScheduler.INSTANCE.getTick() + pTicks;
         this.renderBackgroundStars(renderStack, tick);
         if (this.tree == null) {
             this.renderUnchartedSky(renderStack);
             renderStack.popPose();
             return;
         }
+        this.renderDecorations(renderStack, false);   // behind the lines
         this.renderConstellationLines(renderStack);
         this.renderConstellationLabels(renderStack);
+        this.renderNodeEffects(renderStack, false);   // behind the stars
         for (GodNodeWidget widget : this.nodeWidgets.values()) {
             widget.renderWidget(renderStack, containerBounds, mouseX, mouseY, containerMouseX, containerMouseY, pTicks, postRender);
         }
+        this.renderNodeEffects(renderStack, true);    // over the stars
+        this.renderStartRings(renderStack);
+        for (GodNodeWidget widget : this.nodeWidgets.values()) {
+            widget.renderIcon(renderStack);
+        }
+        this.renderDecorations(renderStack, true);    // over the stars
         if (this.popup != null) {
             GodNodeWidget anchor = this.nodeWidgets.get(this.popup.anchorNodeId());
             if (anchor != null) {
@@ -303,6 +478,78 @@ public class GodTreePanRegion extends GuiComponent implements GuiEventListener {
             }
         }
         renderStack.popPose();
+    }
+
+    // One layer of the god's placed decorations (front: over the stars, else behind the lines); see GodTreeDecorations.
+    private void renderDecorations(PoseStack renderStack, boolean front) {
+        float[] view = this.visibleArea();
+        GodTreeDecorations.render(renderStack, this.god, front, view[0], view[1], view[2], view[3]);
+    }
+
+    // One layer of star effects (front: over the stars, else behind them), only for stars in view.
+    private void renderNodeEffects(PoseStack renderStack, boolean front) {
+        float[] view = this.visibleArea();
+        GodNodeEffects.render(renderStack, this.god, this.nodeWidgets.values(), front,
+                view[0], view[1], view[2], view[3], this.viewportScale);
+    }
+
+    // Two white rings around each starting star, so a tree's way in stands out. While a start is unclaimed both rings
+    // shine and the outer one slowly breathes; once claimed they hold still, quieter.
+    private void renderStartRings(PoseStack renderStack) {
+        float screenPerUnit = this.viewportScale * (float) Minecraft.getInstance().getWindow().getGuiScale();
+        float width = Math.max(1.0F, 1.0F / screenPerUnit); // never thinner than a screen pixel
+        float seconds = (Util.getMillis() % 3_600_000L) / 1000.0F;
+        float breath = 0.5F - 0.5F * Mth.cos((float) (Math.PI * 2.0D) * RING_BREATH_RATE * seconds);
+        RenderSystem.setShader(GameRenderer::getPositionColorShader);
+        RenderSystem.enableBlend();
+        RenderSystem.defaultBlendFunc();
+        RenderSystem.disableTexture();
+        Matrix4f pose = renderStack.last().pose();
+        ScreenDrawHelper.draw(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR, buf -> {
+            for (GodNodeWidget widget : this.nodeWidgets.values()) {
+                if (!widget.getNode().isRoot()) {
+                    continue;
+                }
+                float cx = widget.x + widget.getWidth() / 2.0F;
+                float cy = widget.y + widget.getHeight() / 2.0F;
+                float inner = widget.getWidth() / 2.0F + RING_GAP;
+                if (widget.isUnlocked()) {
+                    this.ring(buf, pose, cx, cy, inner, width, 0.55F);
+                    this.ring(buf, pose, cx, cy, inner + RING_GAP, width, 0.35F);
+                } else {
+                    this.ring(buf, pose, cx, cy, inner, width, 0.9F);
+                    this.ring(buf, pose, cx, cy, inner + RING_GAP + RING_BREATH * breath, width, 0.5F + 0.4F * breath);
+                }
+            }
+        });
+        RenderSystem.enableTexture();
+    }
+
+    private void ring(BufferBuilder buf, Matrix4f pose, float cx, float cy, float radius, float width, float alpha) {
+        int a = Math.round(alpha * 255.0F);
+        float in = radius - width / 2.0F;
+        float out = radius + width / 2.0F;
+        for (int i = 0; i < RING_SEGMENTS; i++) {
+            float a0 = (float) (Math.PI * 2.0D) * i / RING_SEGMENTS;
+            float a1 = (float) (Math.PI * 2.0D) * (i + 1) / RING_SEGMENTS;
+            float cos0 = Mth.cos(a0);
+            float sin0 = Mth.sin(a0);
+            float cos1 = Mth.cos(a1);
+            float sin1 = Mth.sin(a1);
+            buf.vertex(pose, cx + cos0 * in, cy + sin0 * in, 0.0F).color(255, 255, 255, a).endVertex();
+            buf.vertex(pose, cx + cos1 * in, cy + sin1 * in, 0.0F).color(255, 255, 255, a).endVertex();
+            buf.vertex(pose, cx + cos1 * out, cy + sin1 * out, 0.0F).color(255, 255, 255, a).endVertex();
+            buf.vertex(pose, cx + cos0 * out, cy + sin0 * out, 0.0F).color(255, 255, 255, a).endVertex();
+        }
+    }
+
+    // The part of tree space the chart shows right now: min x, min y, max x, max y.
+    private float[] visibleArea() {
+        Rectangle bounds = this.getBounds();
+        float halfWidth = bounds.width / 2.0F / this.viewportScale;
+        float halfHeight = bounds.height / 2.0F / this.viewportScale;
+        return new float[]{-halfWidth - this.viewportTranslation.x, -halfHeight - this.viewportTranslation.y,
+                halfWidth - this.viewportTranslation.x, halfHeight - this.viewportTranslation.y};
     }
 
     private void renderBackgroundStars(PoseStack renderStack, float tick) {
@@ -331,66 +578,11 @@ public class GodTreePanRegion extends GuiComponent implements GuiEventListener {
         buf.vertex(pose, x - half, y - half, 0.0F).color(r, g, b, a).endVertex();
     }
 
-    /** Draws every lattice edge in the god's accent, brightest between two owned stars. */
+    // The lattice edges, as glimmering bundles of thin strands; see GodConstellationLines.
     private void renderConstellationLines(PoseStack renderStack) {
-        RenderSystem.setShader(net.minecraft.client.renderer.GameRenderer::getPositionColorShader);
-        RenderSystem.enableBlend();
-        RenderSystem.disableTexture();
-        Matrix4f pose = renderStack.last().pose();
-        int accent = GodTreeTheme.accent(this.god);
-        int dim = GodTreeTheme.accentDim(this.god);
-        int deep = GodTreeTheme.accentDeep(this.god);
-        ScreenDrawHelper.draw(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR, buf -> {
-            for (GodTreeModel.Edge edge : this.edges) {
-                GodNodeWidget from = this.nodeWidgets.get(edge.from());
-                GodNodeWidget to = this.nodeWidgets.get(edge.to());
-                if (from == null || to == null) {
-                    continue;
-                }
-                boolean lit = from.isUnlocked() && to.isUnlocked();
-                boolean warm = !lit && (from.isUnlocked() || to.isUnlocked());
-                int glowColor = lit ? dim : deep;
-                int coreColor = lit ? accent : (warm ? dim : deep);
-                int glowAlpha = lit ? 150 : 105;
-                int coreAlpha = lit ? 230 : (warm ? 200 : 160);
-                this.lineQuad(buf, pose, from, to, 2.6F, glowColor, glowAlpha);
-                this.lineQuad(buf, pose, from, to, lit ? 1.1F : 0.9F, coreColor, coreAlpha);
-            }
-        });
-        RenderSystem.enableTexture();
-    }
-
-    private void lineQuad(BufferBuilder buf, Matrix4f pose, GodNodeWidget from, GodNodeWidget to, float width, int color, int alpha) {
-        float x1 = from.x + from.getWidth() / 2.0F;
-        float y1 = from.y + from.getHeight() / 2.0F;
-        float x2 = to.x + to.getWidth() / 2.0F;
-        float y2 = to.y + to.getHeight() / 2.0F;
-        float dx = x2 - x1;
-        float dy = y2 - y1;
-        float length = (float) Math.sqrt(dx * dx + dy * dy);
-        if (length < 0.001F) {
-            return;
-        }
-        float trimFrom = from.getWidth() / 2.0F - 2.0F;
-        float trimTo = to.getWidth() / 2.0F - 2.0F;
-        if (trimFrom + trimTo >= length) {
-            return;
-        }
-        float ux = dx / length;
-        float uy = dy / length;
-        x1 += ux * trimFrom;
-        y1 += uy * trimFrom;
-        x2 -= ux * trimTo;
-        y2 -= uy * trimTo;
-        float px = -uy * width / 2.0F;
-        float py = ux * width / 2.0F;
-        int r = (color >> 16) & 0xFF;
-        int g = (color >> 8) & 0xFF;
-        int b = color & 0xFF;
-        buf.vertex(pose, x1 + px, y1 + py, 0.0F).color(r, g, b, alpha).endVertex();
-        buf.vertex(pose, x2 + px, y2 + py, 0.0F).color(r, g, b, alpha).endVertex();
-        buf.vertex(pose, x2 - px, y2 - py, 0.0F).color(r, g, b, alpha).endVertex();
-        buf.vertex(pose, x1 - px, y1 - py, 0.0F).color(r, g, b, alpha).endVertex();
+        float[] view = this.visibleArea();
+        GodConstellationLines.render(renderStack, this.god, this.edges, this.nodeWidgets,
+                view[0], view[1], view[2], view[3], this.viewportScale);
     }
 
     /**
@@ -418,5 +610,32 @@ public class GodTreePanRegion extends GuiComponent implements GuiEventListener {
         Vec2 center = this.viewportTranslation;
         minecraft.font.draw(renderStack, text.copy(), -center.x - width / 2.0F, -center.y - 4.0F, 0xFFFFFF);
         RenderSystem.enableDepthTest();
+    }
+
+    private void focusOn(GodNodeWidget widget) {
+        Vec2 point = new Vec2(widget.x + widget.getWidth() / 2.0F, widget.y + widget.getHeight() / 2.0F);
+        // where the star is drawn right now, relative to the region's centre
+        Vec2 offset = new Vec2(this.viewportScale * (point.x + this.viewportTranslation.x),
+                this.viewportScale * (point.y + this.viewportTranslation.y));
+        float toScale = this.clampViewportScale(Math.max(this.viewportScale, FOCUS_SCALE));
+        this.glide = new Glide(this.viewportScale, toScale, offset, point, Util.getMillis());
+    }
+
+    private void updateGlide() {
+        if (this.glide == null) {
+            return;
+        }
+        Glide g = this.glide;
+        float t = Mth.clamp((Util.getMillis() - g.start()) / (float) FOCUS_MILLIS, 0.0F, 1.0F);
+        float e = 1.0F - (1.0F - t) * (1.0F - t) * (1.0F - t); // ease out: quick start, soft landing
+        // zoom evenly on a log scale, and slide the star along a straight line into the centre
+        this.viewportScale = g.fromScale() * (float) Math.pow(g.toScale() / g.fromScale(), e);
+        float offsetX = g.fromOffset().x * (1.0F - e), offsetY = g.fromOffset().y * (1.0F - e);
+        this.viewportTranslation = new Vec2(offsetX / this.viewportScale - g.point().x,
+                offsetY / this.viewportScale - g.point().y);
+        if (t >= 1.0F) {
+            this.glide = null;
+            this.saveViewportTransforms();
+        }
     }
 }

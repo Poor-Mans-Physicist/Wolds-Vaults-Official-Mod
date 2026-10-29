@@ -54,6 +54,14 @@ public class ModNetwork {
         CHANNEL.registerMessage(id++, ServerboundRenameTrinketPouchPresetPacket.class, ServerboundRenameTrinketPouchPresetPacket::encode, ServerboundRenameTrinketPouchPresetPacket::decode, ServerboundRenameTrinketPouchPresetPacket::handle);
         CHANNEL.registerMessage(id++, SuppressorUpdateMessage.class, SuppressorUpdateMessage::encode, SuppressorUpdateMessage::decode, SuppressorUpdateMessage::handle);
         CHANNEL.registerMessage(id++, RiptideFxMessage.class, RiptideFxMessage::encode, RiptideFxMessage::decode, RiptideFxMessage::handle, Optional.of(NetworkDirection.PLAY_TO_CLIENT));
+        CHANNEL.registerMessage(id++, LightningFormMessage.class, LightningFormMessage::encode, LightningFormMessage::decode, LightningFormMessage::handle, Optional.of(NetworkDirection.PLAY_TO_CLIENT));
+        CHANNEL.registerMessage(id++, LightningDashMessage.class, LightningDashMessage::encode, LightningDashMessage::decode, LightningDashMessage::handle, Optional.of(NetworkDirection.PLAY_TO_SERVER));
+        CHANNEL.registerMessage(id++, LightningDashFxMessage.class, LightningDashFxMessage::encode, LightningDashFxMessage::decode, LightningDashFxMessage::handle, Optional.of(NetworkDirection.PLAY_TO_CLIENT));
+        CHANNEL.registerMessage(id++, LightningAbilityMessage.class, LightningAbilityMessage::encode, LightningAbilityMessage::decode, LightningAbilityMessage::handle, Optional.of(NetworkDirection.PLAY_TO_SERVER));
+        CHANNEL.registerMessage(id++, LightningArcFxMessage.class, LightningArcFxMessage::encode, LightningArcFxMessage::decode, LightningArcFxMessage::handle, Optional.of(NetworkDirection.PLAY_TO_CLIENT));
+        CHANNEL.registerMessage(id++, LightningMarkMessage.class, LightningMarkMessage::encode, LightningMarkMessage::decode, LightningMarkMessage::handle, Optional.of(NetworkDirection.PLAY_TO_CLIENT));
+        CHANNEL.registerMessage(id++, LightningStrikeFxMessage.class, LightningStrikeFxMessage::encode, LightningStrikeFxMessage::decode, LightningStrikeFxMessage::handle, Optional.of(NetworkDirection.PLAY_TO_CLIENT));
+        CHANNEL.registerMessage(id++, LightningLashFxMessage.class, LightningLashFxMessage::encode, LightningLashFxMessage::decode, LightningLashFxMessage::handle, Optional.of(NetworkDirection.PLAY_TO_CLIENT));
     }
 
     public static <T> void sendToServer(T message) {
