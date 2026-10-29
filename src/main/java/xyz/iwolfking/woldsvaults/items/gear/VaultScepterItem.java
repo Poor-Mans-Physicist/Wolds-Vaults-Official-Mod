@@ -4,6 +4,7 @@ import com.google.common.collect.Multimap;
 import com.mojang.math.Vector3f;
 import iskallia.vault.dynamodel.DynamicModel;
 import iskallia.vault.entity.entity.PetEntity;
+import iskallia.vault.event.ActiveFlags;
 import iskallia.vault.gear.VaultGearClassification;
 import iskallia.vault.gear.VaultGearHelper;
 import iskallia.vault.gear.VaultGearRarity;
@@ -61,6 +62,7 @@ import java.util.Optional;
 import java.util.Random;
 
 public class VaultScepterItem extends SwordItem implements VaultGearItem, DyeableLeatherItem {
+    public static final int BEAM_CHARGE_TICKS = 40;
 
     public VaultScepterItem(ResourceLocation id, Properties builder) {
         super(VaultGearToolTier.INSTANCE, 0, -2.4F, builder);
@@ -171,6 +173,20 @@ public class VaultScepterItem extends SwordItem implements VaultGearItem, Dyeabl
         return 72000;
     }
 
+    /**
+     * Ticks a held scepter needs before its release fires: the invoke's charge when it has one, else the beam's.
+     */
+    public static float getChargeTicks(ItemStack stack) {
+        VaultGearData gearData = VaultGearData.read(stack);
+        if (gearData.hasAttribute(xyz.iwolfking.woldsvaults.init.ModGearAttributes.SCEPTER_INVOKE)) {
+            ScepterInvokeAttribute invokeAttr = gearData.get(xyz.iwolfking.woldsvaults.init.ModGearAttributes.SCEPTER_INVOKE, VaultGearAttributeTypeMerger.firstNonNull());
+            if (invokeAttr != null) {
+                return invokeAttr.getChargeTicks();
+            }
+        }
+        return BEAM_CHARGE_TICKS;
+    }
+
     @Override
     public InteractionResultHolder<ItemStack> use(Level world, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
@@ -215,7 +231,7 @@ public class VaultScepterItem extends SwordItem implements VaultGearItem, Dyeabl
         }
 
         if (gearData.hasAttribute(xyz.iwolfking.woldsvaults.init.ModGearAttributes.SCEPTER_BEAM)) {
-            if (chargeTicks < 40) return;
+            if (chargeTicks < BEAM_CHARGE_TICKS) return;
             executeBeamAttack(serverLevel, player, elementalTypes, gearData.getRarity().equals(VaultGearRarity.valueOf("MYTHIC")) ? 1.3F : 0.65F);
             if (player.getLevel().dimension().location().getNamespace().equals("the_vault")) {
                 if(player instanceof ServerPlayer) {
@@ -246,6 +262,7 @@ public class VaultScepterItem extends SwordItem implements VaultGearItem, Dyeabl
                 hasValidCharge = true;
             }
         } else if (gearData.hasAttribute(xyz.iwolfking.woldsvaults.init.ModGearAttributes.SCEPTER_BEAM)) {
+            targetTicks = BEAM_CHARGE_TICKS;
             hasValidCharge = true;
         }
 
@@ -315,8 +332,13 @@ public class VaultScepterItem extends SwordItem implements VaultGearItem, Dyeabl
             AABB targetBox = target.getBoundingBox().inflate(beamRadius);
             if (targetBox.clip(start, end).isPresent()) {
                 ElementHelper.runWithElements(elementalTypes, () -> {
-                    xyz.iwolfking.woldsvaults.events.WoldActiveFlags.IS_SCEPTER_CAST_ATTACKING.runWithFlag(() ->
-                            target.hurt(DamageSource.indirectMagic(player, player), playerAP * apScaling));
+                    ActiveFlags.IS_AP_ATTACKING.push();
+                    try {
+                        xyz.iwolfking.woldsvaults.events.WoldActiveFlags.IS_SCEPTER_CAST_ATTACKING.runWithFlag(() ->
+                                target.hurt(DamageSource.indirectMagic(player, player), playerAP * apScaling));
+                    } finally {
+                        ActiveFlags.IS_AP_ATTACKING.pop();
+                    }
                 });
             }
         }
