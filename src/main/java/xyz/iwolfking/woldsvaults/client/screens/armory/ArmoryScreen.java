@@ -146,7 +146,7 @@ public class ArmoryScreen extends AbstractSkillTabElementContainerScreen<ArmoryM
         rows.add(row("Excess", () -> this.excessCount() + " / " + ArmoryBlockEntity.EXCESS_SLOTS,
                 "Shared by all 8 builds; Load puts the gear it replaces here"));
         this.addElement(new StatLabelListElement<>(Spatials.positionXY(LIST_X, 8).width(GUI_WIDTH - LIST_X - 7), rows)
-                .layout((screen, gui, parent, world) -> world.translateXY(gui).translateY(this.getTabContentSpatial().bottom() - 4)));
+                .layout((screen, gui, parent, world) -> world.translateX(gui).translateY(this.getTabContentSpatial().bottom() - 4)));
         this.addElement(new LabelElement<>(Spatials.positionXY(LIST_X, 41), new TextComponent("Upgrades").withStyle(ChatFormatting.BLACK),
                 LabelTextStyle.defaultStyle())
                 .layout((screen, gui, parent, world) -> world.translateX(gui).translateY(this.getTabContentSpatial().bottom() - 4)));
@@ -155,7 +155,7 @@ public class ArmoryScreen extends AbstractSkillTabElementContainerScreen<ArmoryM
     private void addExcessTab() {
         int rows = ArmoryBlockEntity.EXCESS_SLOTS / ArmoryMenu.EXCESS_COLUMNS;
         int hidden = rows - ArmoryMenu.EXCESS_VISIBLE_ROWS;
-        this.addElement(new VerticalScrollbarElement<>(Spatials.positionXY(8 + ArmoryMenu.EXCESS_COLUMNS * 18 + 3, 7),
+        this.addElement(new VerticalScrollbarElement<>(Spatials.positionXY(8 + ArmoryMenu.EXCESS_COLUMNS * 18 + 3, 8),
                 ArmoryMenu.EXCESS_VISIBLE_ROWS * 18, value -> this.menu.setExcessScroll(Math.round(value * hidden)))
                 .layout((screen, gui, parent, world) -> world.translateX(gui).translateY(this.getTabContentSpatial().bottom() - 4)));
     }
