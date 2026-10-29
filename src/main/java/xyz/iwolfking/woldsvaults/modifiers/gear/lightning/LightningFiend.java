@@ -298,7 +298,7 @@ public final class LightningFiend {
 
     /**
      * Arc Lash (left click): throws a fan of spinning lightning bolts out from the player's hand across a cone in
-     * front of them, each striking the enemies it passes through for arcLashDamage of the trident's damage and calling
+     * front of them, each striking the enemies it passes through for arcLashDamage of the throw's attack damage and calling
      * a channeling strike down on them for arcLashStrikeDamage of a channeling strike's damage (see
      * {@link ArcLashBolts}). At most once per arcLashCooldownTicks.
      */
@@ -349,7 +349,7 @@ public final class LightningFiend {
 
     /**
      * Thunderstrike (middle click): spends the rest of the form on one giant bolt down onto the player, striking every
-     * enemy within thunderRadius (across) for the trident's damage times thunderDamagePerSecond for each second of
+     * enemy within thunderRadius (across) for the throw's attack damage times thunderDamagePerSecond for each second of
      * form left, so it hits hardest the sooner it's used. Ends the form.
      */
     public static void thunderstrike(ServerPlayer player) {
