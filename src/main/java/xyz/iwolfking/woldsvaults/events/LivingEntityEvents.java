@@ -140,6 +140,9 @@ public class LivingEntityEvents {
 
     @SubscribeEvent
     public static void onElementalAttack(LivingHurtEvent event) {
+        if (WoldActiveFlags.IS_LIGHTNING_FIEND_ATTACKING.isSet()) {
+            return;
+        }
         Entity attacker = event.getSource().getEntity();
         if (attacker instanceof ServerPlayer player) {
             ElementHelper.applyElementalEffects(event.getEntityLiving(), player, event.getAmount());
@@ -165,7 +168,7 @@ public class LivingEntityEvents {
     @SubscribeEvent
     public static void onScepterHitSparkles(LivingHurtEvent event) {
         if (!(event.getSource().getEntity() instanceof ServerPlayer player)) return;
-        if (ActiveFlags.IS_AP_ATTACKING.isSet()) return;
+        if (ActiveFlags.IS_AP_ATTACKING.isSet() || WoldActiveFlags.IS_LIGHTNING_FIEND_ATTACKING.isSet()) return;
 
         ItemStack heldItem = player.getMainHandItem();
         GearDataCache gearDataCache = GearDataCache.of(heldItem);
@@ -587,7 +590,7 @@ public class LivingEntityEvents {
             return;
         }
 
-        if(WoldActiveFlags.IS_PROC_FANG_ATTACKING.isSet()) {
+        if(WoldActiveFlags.IS_PROC_FANG_ATTACKING.isSet() || WoldActiveFlags.IS_LIGHTNING_FIEND_ATTACKING.isSet()) {
             return;
         }
 
