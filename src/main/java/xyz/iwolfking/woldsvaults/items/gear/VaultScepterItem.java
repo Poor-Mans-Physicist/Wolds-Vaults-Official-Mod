@@ -4,6 +4,7 @@ import com.google.common.collect.Multimap;
 import com.mojang.math.Vector3f;
 import iskallia.vault.dynamodel.DynamicModel;
 import iskallia.vault.entity.entity.PetEntity;
+import iskallia.vault.event.ActiveFlags;
 import iskallia.vault.gear.VaultGearClassification;
 import iskallia.vault.gear.VaultGearHelper;
 import iskallia.vault.gear.VaultGearRarity;
@@ -317,8 +318,13 @@ public class VaultScepterItem extends SwordItem implements VaultGearItem, Dyeabl
             AABB targetBox = target.getBoundingBox().inflate(beamRadius);
             if (targetBox.clip(start, end).isPresent()) {
                 ElementHelper.runWithElements(elementalTypes, () -> {
-                    xyz.iwolfking.woldsvaults.events.WoldActiveFlags.IS_SCEPTER_CAST_ATTACKING.runWithFlag(() ->
-                            target.hurt(DamageSource.indirectMagic(player, player), playerAP * apScaling));
+                    ActiveFlags.IS_AP_ATTACKING.push();
+                    try {
+                        xyz.iwolfking.woldsvaults.events.WoldActiveFlags.IS_SCEPTER_CAST_ATTACKING.runWithFlag(() ->
+                                target.hurt(DamageSource.indirectMagic(player, player), playerAP * apScaling));
+                    } finally {
+                        ActiveFlags.IS_AP_ATTACKING.pop();
+                    }
                 });
             }
         }
