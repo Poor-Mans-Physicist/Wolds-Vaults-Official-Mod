@@ -6,6 +6,7 @@ import com.google.gson.JsonParser;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexFormat;
@@ -39,55 +40,64 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-// Light around the god tree's stars: spiral arms, motes swirling in, rays beaming out and a core glow, tuned per node
-// type in god_tree/node_effects.json (the export of the God Node Vortex tuning page). This is the page's own
-// renderer: light is summed per pixel of the 64px star cell, then soft-clipped, banded and coloured through the god's row
-// of star_ramps.png, so overlapping light saturates instead of stacking. Each node type is painted once a frame
-// into a texture (light behind the star on the left half, light over it on the right) and drawn at every star of that
-// type, pixel for pixel with the star sprite.
+/**
+ * Light around the god tree's stars: spiral arms, motes swirling in, rays beaming out and a core glow, tuned per node
+ * type in god_tree/node_effects.json (the export of the God Node Vortex tuning page). Light is summed per pixel of the
+ * 64px star cell, then soft-clipped, banded and coloured through the god's row of star_ramps.png, so overlapping light
+ * saturates instead of stacking. Each node type and phase is painted once a frame (light behind the star and light
+ * over it) and drawn at every star of that type, pixel for pixel with the star sprite.
+ * <p>
+ * The primitives (dots, strokes, glow) are placed by {@link #paint}. They are summed either on the GPU into a float
+ * target and tone-mapped by a shader ({@link GodNodeEffectsGpu}, the default), or on the CPU into float buffers and
+ * uploaded as a texture (the original path, kept behind {@link #togglePath()} for comparison).
+ */
 public final class GodNodeEffects {
     private static final ResourceLocation SETTINGS = new ResourceLocation(WoldsVaults.MOD_ID, "god_tree/node_effects.json");
     private static final ResourceLocation RAMPS = new ResourceLocation(WoldsVaults.MOD_ID, "textures/gui/gods/star_ramps.png");
-    private static final float CELL = GodTreeTheme.STAR_CELL;
+    static final float CELL = GodTreeTheme.STAR_CELL;
     private static final double TAU = Math.PI * 2.0D;
-    private static final int MAX_SIZE = 192; // the tuning page's canvas; light past its edge is cut off there too
+    private static final int MAX_SIZE = 192;
     private static final int ARM_SAMPLES = 600;
     private static final int MAX_MOTES = 200;
     private static final int MAX_RAYS = 32;
-    // seconds each phase runs ahead; every star takes one, and a quarter turn, so neighbours don't move in step
     private static final double[] PHASES = {0.0D, 1.7D, 3.9D};
-    private static final float MIN_NODE_PIXELS = 6.0F; // stars smaller than this on screen draw no effects
+    static final int PHASE_COUNT = PHASES.length;
+    private static final float MIN_NODE_PIXELS = 6.0F;
 
-    // the tuning page's random tables (mulberry32, same seeds), so a star there matches the star here
     private static final double[][] MOTES = randomTable(1337, MAX_MOTES, 5);
     private static final double[][] RAYS = randomTable(4242, MAX_RAYS, 3);
     private static final Map<GodNodeType, Layer[]> LAYERS = new EnumMap<>(GodNodeType.class);
 
     private static Map<GodNodeType, Look> looks;
     private static int[][] ramps;
+    private static boolean gpu = true;
 
-    private record Light(double gain, double toneFloor, int toneSteps) {}
+    record Light(double gain, double toneFloor, int toneSteps) {}
 
-    private record Arms(boolean enabled, int count, double inner, double outer, double twist, double spin,
-                        double widthCore, double widthTip, double brightness, int segments, double fill, double flow) {}
+    record Arms(boolean enabled, int count, double inner, double outer, double twist, double spin,
+                double widthCore, double widthTip, double brightness, int segments, double fill, double flow) {}
 
-    private record Motes(boolean enabled, int count, double start, double end, double trip, double swirl,
-                         boolean rideArms, int trail, double size, double brightness, boolean overStar) {}
+    record Motes(boolean enabled, int count, double start, double end, double trip, double swirl,
+                 boolean rideArms, int trail, double size, double brightness, boolean overStar) {}
 
-    private record Rays(boolean enabled, int count, double start, double length, double lengthSpread, double widthBase,
-                        double widthTip, double spin, double lean, double pulseRate, double stretchPulse,
-                        double brightnessPulse, double waves, double randomness, double brightness, boolean fadeToTip,
-                        boolean overStar) {}
+    record Rays(boolean enabled, int count, double start, double length, double lengthSpread, double widthBase,
+                double widthTip, double spin, double lean, double pulseRate, double stretchPulse,
+                double brightnessPulse, double waves, double randomness, double brightness, boolean fadeToTip,
+                boolean overStar) {}
 
-    private record Glow(boolean enabled, double radius, double brightness, double pulse, double pulseRate) {}
+    record Glow(boolean enabled, double radius, double brightness, double pulse, double pulseRate) {}
 
-    private record Look(Light light, Arms arms, Motes motes, Rays rays, Glow glow) {
-        // Whether any light sits over the star, which needs the second pass.
+    record Look(Light light, Arms arms, Motes motes, Rays rays, Glow glow) {
+        /**
+         * Whether any light sits over the star, which needs the second pass.
+         */
         boolean hasFront() {
             return this.motes.enabled() && this.motes.overStar() || this.rays.enabled() && this.rays.overStar();
         }
 
-        // Side of the square of cell pixels that holds all this light, with the star at its centre.
+        /**
+         * Side of the square of cell pixels that holds all this light, with the star at its centre.
+         */
         int size() {
             double reach = 0.0D;
             if (this.arms.enabled()) {
@@ -108,6 +118,28 @@ public final class GodNodeEffects {
         }
     }
 
+    /**
+     * Receives the light primitives {@link #paint} places, in canvas pixels with y down. front selects the light
+     * over the star instead of the light behind it.
+     */
+    interface Splat {
+        /**
+         * Adds v to every pixel whose centre lies within w/2 of (x, y); at w &lt;= 1.25 only to the pixel holding (x, y).
+         */
+        void dot(boolean front, double x, double y, double v, double w);
+
+        /**
+         * Stamps a dot every half pixel from (x0, y0) to (x1, y1), value and width interpolated along the way, each
+         * stamp carrying half its value split across its width.
+         */
+        void stroke(boolean front, double x0, double y0, double x1, double y1, double v0, double v1, double w0, double w1);
+
+        /**
+         * Adds k * (1 - d / radius)^2 behind the star to every pixel whose centre lies at d &lt; radius from the centre.
+         */
+        void glow(double centre, double radius, double k);
+    }
+
     private GodNodeEffects() {
     }
 
@@ -121,16 +153,37 @@ public final class GodNodeEffects {
             event.registerReloadListener((ResourceManagerReloadListener) manager -> {
                 looks = null;
                 ramps = null;
+                if (RenderSystem.isOnRenderThread()) {
+                    GodNodeEffectsGpu.release();
+                } else {
+                    RenderSystem.recordRenderCall(GodNodeEffectsGpu::release);
+                }
             });
         }
     }
 
-    // Draws one layer of effects for every star in the given tree-space rectangle. With front false it draws
-    // what sits behind the stars (glow, arms, and motes or rays not set over the star) and paints this frame's light;
-    // with front true, the motes and rays set over the star. Light behind a star adds to what is under it; light
-    // over a star covers it as strongly as it shines. Each star's state darkens its light's colour
-    // (GodNodeWidget.effectBrightness()) without making it see-through. viewportScale is the pan
-    // region's zoom.
+    /**
+     * Switches between the GPU and the CPU renderer and logs which one is now active. Temporary, for comparing the
+     * two in game.
+     */
+    public static void togglePath() {
+        gpu = !gpu;
+        if (!gpu) {
+            WoldsVaults.LOGGER.info("God node effects: CPU path active");
+        } else if (GodNodeEffectsGpu.isUnavailable()) {
+            WoldsVaults.LOGGER.info("God node effects: GPU path selected but unavailable (see the earlier warning); CPU path still in use");
+        } else {
+            WoldsVaults.LOGGER.info("God node effects: GPU path active");
+        }
+    }
+
+    /**
+     * Draws one layer of effects for every star in the given tree-space rectangle. With front false it draws what sits
+     * behind the stars (glow, arms, and motes or rays not set over the star) and paints this frame's light; with front
+     * true, the motes and rays set over the star. Light behind a star adds to what is under it; light over a star
+     * covers it as strongly as it shines. Each star's state darkens its light's colour
+     * ({@link GodNodeWidget#effectBrightness()}) without making it see-through. viewportScale is the pan region's zoom.
+     */
     public static void render(PoseStack poseStack, VaultGod god, Collection<GodNodeWidget> widgets, boolean front,
                               float minX, float minY, float maxX, float maxY, float viewportScale) {
         Map<GodNodeType, Look> settings = looks();
@@ -139,7 +192,6 @@ public final class GodNodeEffects {
         }
         float screenPerUnit = viewportScale * (float) Minecraft.getInstance().getWindow().getGuiScale();
         GodNodeType[] types = GodNodeType.values();
-        // the stars in view, grouped by type and phase
         @SuppressWarnings("unchecked")
         List<GodNodeWidget>[] groups = new List[types.length * PHASES.length];
         boolean any = false;
@@ -164,20 +216,30 @@ public final class GodNodeEffects {
         if (!any) {
             return;
         }
-
-        int[] ramp = ramps()[god.ordinal()];
         double seconds = (Util.getMillis() % 86_400_000L) / 1000.0D;
+        if (gpu && GodNodeEffectsGpu.render(poseStack, god, settings, groups, front, seconds)) {
+            return;
+        }
+        renderCpu(poseStack, god, settings, groups, front, seconds);
+    }
+
+    static double phaseTime(double seconds, int phase) {
+        return seconds + PHASES[phase];
+    }
+
+    private static void renderCpu(PoseStack poseStack, VaultGod god, Map<GodNodeType, Look> settings,
+                                  List<GodNodeWidget>[] groups, boolean front, double seconds) {
+        int[] ramp = ramps()[god.ordinal()];
         Matrix4f pose = poseStack.last().pose();
         RenderSystem.setShader(GameRenderer::getPositionColorTexShader);
         RenderSystem.enableTexture();
         RenderSystem.enableBlend();
         if (front) {
-            // light over the star covers it as strongly as it shines, so a dimmed star doesn't show through its rays
             RenderSystem.defaultBlendFunc();
         } else {
             RenderSystem.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE);
         }
-        for (GodNodeType type : types) {
+        for (GodNodeType type : GodNodeType.values()) {
             Look look = settings.get(type);
             for (int phase = 0; phase < PHASES.length; phase++) {
                 List<GodNodeWidget> group = groups[type.ordinal() * PHASES.length + phase];
@@ -186,33 +248,40 @@ public final class GodNodeEffects {
                 }
                 Layer layer = layer(type, phase, look.size());
                 if (!front || !layer.painted) {
-                    layer.paint(look, ramp, seconds + PHASES[phase]);
+                    layer.paint(look, ramp, phaseTime(seconds, phase));
                 }
-                float u0 = front ? 0.5F : 0.0F;
                 float halfCells = layer.canvas.size / 2.0F;
                 RenderSystem.setShaderTexture(0, layer.id);
-                ScreenDrawHelper.draw(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR_TEX, buf -> {
-                    for (GodNodeWidget widget : group) {
-                        float half = halfCells * widget.getWidth() / CELL;
-                        float cx = widget.x + widget.getWidth() / 2.0F;
-                        float cy = widget.y + widget.getHeight() / 2.0F;
-                        int shade = Math.round(widget.effectBrightness() * 255.0F);
-                        // corners bottom-left, bottom-right, top-right, top-left; starting the texture's corners
-                        // further round turns each star's light by its own quarter turns
-                        float[] us = {u0, u0 + 0.5F, u0 + 0.5F, u0};
-                        float[] vs = {1.0F, 1.0F, 0.0F, 0.0F};
-                        int turn = widget.effectSeed() >>> 30;
-                        for (int corner = 0; corner < 4; corner++) {
-                            float x = corner == 0 || corner == 3 ? cx - half : cx + half;
-                            float y = corner < 2 ? cy + half : cy - half;
-                            int uv = (corner + turn) & 3;
-                            buf.vertex(pose, x, y, 0.0F).color(shade, shade, shade, 255).uv(us[uv], vs[uv]).endVertex();
-                        }
-                    }
-                });
+                ScreenDrawHelper.draw(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR_TEX,
+                        buf -> {
+                            quads(buf, pose, group, halfCells, front ? 0.5F : 0.0F, 0.5F);
+                        });
             }
         }
         RenderSystem.defaultBlendFunc();
+    }
+
+    /**
+     * Writes one POSITION_COLOR_TEX quad per star of a group: halfCells cell pixels either side of the star's centre,
+     * shaded by its state, reading u from u0 to u0 + uSpan of the light texture. Starting the texture's corners
+     * further round turns each star's light by its own quarter turns.
+     */
+    static void quads(BufferBuilder buf, Matrix4f pose, List<GodNodeWidget> group, float halfCells, float u0, float uSpan) {
+        for (GodNodeWidget widget : group) {
+            float half = halfCells * widget.getWidth() / CELL;
+            float cx = widget.x + widget.getWidth() / 2.0F;
+            float cy = widget.y + widget.getHeight() / 2.0F;
+            int shade = Math.round(widget.effectBrightness() * 255.0F);
+            int turn = widget.effectSeed() >>> 30;
+            for (int corner = 0; corner < 4; corner++) {
+                float x = corner == 0 || corner == 3 ? cx - half : cx + half;
+                float y = corner < 2 ? cy + half : cy - half;
+                int uv = (corner + turn) & 3;
+                float u = uv == 1 || uv == 2 ? u0 + uSpan : u0;
+                float v = uv < 2 ? 1.0F : 0.0F;
+                buf.vertex(pose, x, y, 0.0F).color(shade, shade, shade, 255).uv(u, v).endVertex();
+            }
+        }
     }
 
     private static int phase(GodNodeWidget widget) {
@@ -222,14 +291,12 @@ public final class GodNodeEffects {
     private static Layer layer(GodNodeType type, int phase, int size) {
         Layer[] row = LAYERS.computeIfAbsent(type, t -> new Layer[PHASES.length]);
         if (row[phase] == null || row[phase].canvas.size != size) {
-            // registering under the same id closes the texture it replaces
             row[phase] = new Layer(new ResourceLocation(WoldsVaults.MOD_ID,
                     "god_node_effects/" + type.name().toLowerCase(Locale.ROOT) + "_" + phase), size);
         }
         return row[phase];
     }
 
-    // One node type at one phase: its light buffers, and the texture they are painted into.
     private static final class Layer {
         private final ResourceLocation id;
         private final Canvas canvas;
@@ -262,8 +329,11 @@ public final class GodNodeEffects {
         }
     }
 
-    // The tuning page's tone map, as an ABGR pixel: light soft-clips, bands into tone steps and takes its colour from
-    // the ramp. Alpha carries the strength, so additive blending adds colour times strength, as the page does.
+    /**
+     * The tuning page's tone map, as an ABGR pixel: light soft-clips, bands into tone steps and takes its colour from
+     * the ramp. Alpha carries the strength, so additive blending adds colour times strength, as the page does.
+     * shaders/core/node_effect_tone.fsh reproduces this line for line; keep the two in step.
+     */
     private static int tone(Light light, int[] ramp, double value) {
         if (value <= 0.0D) {
             return 0;
@@ -280,11 +350,7 @@ public final class GodNodeEffects {
         return alpha << 24 | (rgb & 0xFF) << 16 | (rgb >> 8 & 0xFF) << 8 | (rgb >> 16 & 0xFF);
     }
 
-    // painting: the tuning page's drawing code, line for line ------------------------------------------------------
-
-    // Light summed per cell pixel for one star, behind it and over it, with the star's centre in the middle. The sums
-    // are floats, as on the page, so they round the same way.
-    private static final class Canvas {
+    private static final class Canvas implements Splat {
         private final int size;
         private final double centre;
         private final float[] behind;
@@ -300,22 +366,15 @@ public final class GodNodeEffects {
         void paint(Look look, double time) {
             Arrays.fill(this.behind, 0.0F);
             Arrays.fill(this.front, 0.0F);
-            this.glow(look.glow(), time);
-            this.arms(look.arms(), time);
-            this.motes(look.motes(), look.arms(), time);
-            this.rays(look.rays(), time);
+            GodNodeEffects.paint(look, time, this.centre, this);
         }
 
-        private void glow(Glow glow, double t) {
-            double radius = glow.radius();
-            if (!glow.enabled() || radius <= 0.0D || glow.brightness() <= 0.0D) {
-                return;
-            }
-            double k = glow.brightness() * (1.0D + glow.pulse() * Math.sin(TAU * glow.pulseRate() * t));
-            for (int y = (int) Math.floor(this.centre - radius); y <= (int) Math.ceil(this.centre + radius); y++) {
-                for (int x = (int) Math.floor(this.centre - radius); x <= (int) Math.ceil(this.centre + radius); x++) {
-                    double dx = x + 0.5D - this.centre;
-                    double dy = y + 0.5D - this.centre;
+        @Override
+        public void glow(double centre, double radius, double k) {
+            for (int y = (int) Math.floor(centre - radius); y <= (int) Math.ceil(centre + radius); y++) {
+                for (int x = (int) Math.floor(centre - radius); x <= (int) Math.ceil(centre + radius); x++) {
+                    double dx = x + 0.5D - centre;
+                    double dy = y + 0.5D - centre;
                     double d = Math.sqrt(dx * dx + dy * dy);
                     if (d < radius) {
                         this.add(this.behind, x, y, k * Math.pow(1.0D - d / radius, 2.0D));
@@ -324,135 +383,20 @@ public final class GodNodeEffects {
             }
         }
 
-        private void arms(Arms arms, double t) {
-            int n = arms.count();
-            if (!arms.enabled() || n <= 0 || arms.brightness() <= 0.0D) {
-                return;
-            }
-            double inner = arms.inner();
-            double length = Math.max(inner + 1.0D, arms.outer()) - inner;
-            for (int arm = 0; arm < n; arm++) {
-                double phi = armAngle(arms, arm, n, t);
-                double lastX = Double.NaN;
-                double lastY = Double.NaN;
-                for (int k = 0; k <= ARM_SAMPLES; k++) {
-                    double s = (double) k / ARM_SAMPLES;
-                    double r = inner + length * s;
-                    double th = phi + arms.twist() * s;
-                    double x = this.centre + Math.cos(th) * r;
-                    double y = this.centre + Math.sin(th) * r;
-                    // stamp about every half pixel along the arm
-                    if (!Double.isNaN(lastX) && Math.sqrt((x - lastX) * (x - lastX) + (y - lastY) * (y - lastY)) < 0.5D) {
-                        continue;
-                    }
-                    lastX = x;
-                    lastY = y;
-                    double m = 1.0D;
-                    if (arms.segments() > 0) {
-                        double d = fract(s * arms.segments() + t * arms.flow());
-                        m = d < arms.fill() ? 0.55D + 0.45D * (1.0D - d / arms.fill()) : 0.0D;
-                    }
-                    if (m == 0.0D) {
-                        continue;
-                    }
-                    double w = arms.widthCore() + (arms.widthTip() - arms.widthCore()) * s;
-                    double profile = Math.pow(Math.sin(Math.PI * s), 0.7D);
-                    this.dot(this.behind, x, y, arms.brightness() * profile * m * 0.5D / Math.max(1.0D, w), w);
-                }
-            }
+        @Override
+        public void dot(boolean front, double x, double y, double v, double w) {
+            this.stamp(front ? this.front : this.behind, x, y, v, w);
         }
 
-        private void motes(Motes motes, Arms arms, double t) {
-            if (!motes.enabled()) {
-                return;
-            }
-            float[] buf = motes.overStar() ? this.front : this.behind;
-            double life = Math.max(0.1D, motes.trip());
-            int count = Math.min(MAX_MOTES, motes.count());
-            double[] head = new double[2];
-            double[] point = new double[2];
-            for (int i = 0; i < count; i++) {
-                double[] mote = MOTES[i];
-                double q = fract(t / life + mote[0]);
-                double fade = smooth(0.0D, 0.15D, q) * (1.0D - smooth(0.72D, 1.0D, q));
-                double v = motes.brightness() * fade;
-                if (v <= 0.0D) {
-                    continue;
-                }
-                this.motePosition(motes, arms, mote, q, t, head);
-                this.dot(buf, head[0], head[1], v, motes.size());
-                // the trail: earlier points of the same path, each a little dimmer
-                for (int j = 1; j <= motes.trail(); j++) {
-                    double earlier = q - j * 0.018D;
-                    if (earlier < 0.0D) {
-                        break;
-                    }
-                    this.motePosition(motes, arms, mote, earlier, t - j * 0.018D * life, point);
-                    double f = 1.0D - (double) j / (motes.trail() + 1);
-                    this.stroke(buf, head[0], head[1], point[0], point[1], v * (f + 1.0D / (motes.trail() + 1)), v * f,
-                            motes.size(), motes.size());
-                    head[0] = point[0];
-                    head[1] = point[1];
-                }
-            }
-        }
-
-        private void motePosition(Motes motes, Arms arms, double[] mote, double q, double t, double[] out) {
-            double start = motes.start() * (0.85D + mote[2] * 0.3D);
-            double r = start + (motes.end() - start) * Math.pow(q, 1.35D);
-            double th;
-            if (motes.rideArms()) {
-                int n = Math.max(1, arms.count());
-                double inner = arms.inner();
-                double outer = Math.max(inner + 1.0D, arms.outer());
-                double s = (r - inner) / (outer - inner);
-                th = armAngle(arms, (int) Math.floor(mote[3] * 64.0D) % n, n, t) + arms.twist() * s + (mote[4] - 0.5D) * 0.35D;
-            } else {
-                th = mote[1] * TAU + motes.swirl() * TAU * Math.pow(q, 1.6D);
-            }
-            out[0] = this.centre + Math.cos(th) * r;
-            out[1] = this.centre + Math.sin(th) * r;
-        }
-
-        private void rays(Rays rays, double t) {
-            if (!rays.enabled()) {
-                return;
-            }
-            float[] buf = rays.overStar() ? this.front : this.behind;
-            int n = Math.min(MAX_RAYS, rays.count());
-            double lean = rays.lean() * Math.PI / 180.0D;
-            for (int i = 0; i < n; i++) {
-                double[] ray = RAYS[i];
-                double u = ray[0];
-                double spread = ray[1] * 2.0D - 1.0D;
-                double jitter = ray[2] - 0.5D;
-                double angle = (double) i / n * TAU + rays.spin() * t * TAU + jitter * (TAU / n) * 0.3D;
-                double pulse = 0.5D + 0.5D * Math.sin(TAU * rays.pulseRate() * t + (double) i / n * TAU * rays.waves()
-                        + u * TAU * rays.randomness());
-                double full = Math.max(1.0D, rays.length() + spread * rays.lengthSpread());
-                double length = full * (1.0D - rays.stretchPulse() + rays.stretchPulse() * pulse);
-                double v = rays.brightness() * (1.0D - rays.brightnessPulse() + rays.brightnessPulse() * pulse);
-                if (v <= 0.0D || length <= 0.0D) {
-                    continue;
-                }
-                double sx = this.centre + Math.cos(angle) * rays.start();
-                double sy = this.centre + Math.sin(angle) * rays.start();
-                double ex = sx + Math.cos(angle + lean) * length;
-                double ey = sy + Math.sin(angle + lean) * length;
-                if (!rays.fadeToTip()) {
-                    this.stroke(buf, sx, sy, ex, ey, v * 1.5D, v * 1.5D, rays.widthBase(), rays.widthTip());
-                    continue;
-                }
-                // fade toward the tip in short pieces so the falloff curves instead of running straight
-                int pieces = Math.max(2, (int) Math.ceil(length / 3.0D));
-                for (int k = 0; k < pieces; k++) {
-                    double a = (double) k / pieces;
-                    double b = (double) (k + 1) / pieces;
-                    this.stroke(buf, sx + (ex - sx) * a, sy + (ey - sy) * a, sx + (ex - sx) * b, sy + (ey - sy) * b,
-                            v * 1.8D * Math.pow(1.0D - a, 1.4D), v * 1.8D * Math.pow(1.0D - b, 1.4D),
-                            rays.widthBase() + (rays.widthTip() - rays.widthBase()) * a,
-                            rays.widthBase() + (rays.widthTip() - rays.widthBase()) * b);
-                }
+        @Override
+        public void stroke(boolean front, double x0, double y0, double x1, double y1, double v0, double v1, double w0, double w1) {
+            float[] buf = front ? this.front : this.behind;
+            double length = Math.sqrt((x1 - x0) * (x1 - x0) + (y1 - y0) * (y1 - y0));
+            int steps = Math.max(1, (int) Math.ceil(length * 2.0D));
+            for (int i = 0; i <= steps; i++) {
+                double t = (double) i / steps;
+                double w = w0 + (w1 - w0) * t;
+                this.stamp(buf, x0 + (x1 - x0) * t, y0 + (y1 - y0) * t, (v0 + (v1 - v0) * t) * 0.5D / Math.max(1.0D, w), w);
             }
         }
 
@@ -465,7 +409,7 @@ public final class GodNodeEffects {
             buf[iy * this.size + ix] += v;
         }
 
-        private void dot(float[] buf, double x, double y, double v, double w) {
+        private void stamp(float[] buf, double x, double y, double v, double w) {
             if (w <= 1.25D) {
                 this.add(buf, x, y, v);
                 return;
@@ -481,16 +425,152 @@ public final class GodNodeEffects {
                 }
             }
         }
+    }
 
-        // a stroke stamps every half pixel; each stamp carries half its value, split across the width,
-        // and the width can change from the start (w0) to the end (w1)
-        private void stroke(float[] buf, double x0, double y0, double x1, double y1, double v0, double v1, double w0, double w1) {
-            double length = Math.sqrt((x1 - x0) * (x1 - x0) + (y1 - y0) * (y1 - y0));
-            int steps = Math.max(1, (int) Math.ceil(length * 2.0D));
-            for (int i = 0; i <= steps; i++) {
-                double t = (double) i / steps;
-                double w = w0 + (w1 - w0) * t;
-                this.dot(buf, x0 + (x1 - x0) * t, y0 + (y1 - y0) * t, (v0 + (v1 - v0) * t) * 0.5D / Math.max(1.0D, w), w);
+    /**
+     * The tuning page's drawing code, line for line: places one star's glow, arms, motes and rays at time seconds
+     * into out, around the canvas centre. Both renderers sum exactly these primitives, so their geometry is the same.
+     */
+    static void paint(Look look, double time, double centre, Splat out) {
+        glow(look.glow(), time, centre, out);
+        arms(look.arms(), time, centre, out);
+        motes(look.motes(), look.arms(), time, centre, out);
+        rays(look.rays(), time, centre, out);
+    }
+
+    private static void glow(Glow glow, double t, double centre, Splat out) {
+        double radius = glow.radius();
+        if (!glow.enabled() || radius <= 0.0D || glow.brightness() <= 0.0D) {
+            return;
+        }
+        out.glow(centre, radius, glow.brightness() * (1.0D + glow.pulse() * Math.sin(TAU * glow.pulseRate() * t)));
+    }
+
+    private static void arms(Arms arms, double t, double centre, Splat out) {
+        int n = arms.count();
+        if (!arms.enabled() || n <= 0 || arms.brightness() <= 0.0D) {
+            return;
+        }
+        double inner = arms.inner();
+        double length = Math.max(inner + 1.0D, arms.outer()) - inner;
+        for (int arm = 0; arm < n; arm++) {
+            double phi = armAngle(arms, arm, n, t);
+            double lastX = Double.NaN;
+            double lastY = Double.NaN;
+            for (int k = 0; k <= ARM_SAMPLES; k++) {
+                double s = (double) k / ARM_SAMPLES;
+                double r = inner + length * s;
+                double th = phi + arms.twist() * s;
+                double x = centre + Math.cos(th) * r;
+                double y = centre + Math.sin(th) * r;
+                if (!Double.isNaN(lastX) && Math.sqrt((x - lastX) * (x - lastX) + (y - lastY) * (y - lastY)) < 0.5D) {
+                    continue;
+                }
+                lastX = x;
+                lastY = y;
+                double m = 1.0D;
+                if (arms.segments() > 0) {
+                    double d = fract(s * arms.segments() + t * arms.flow());
+                    m = d < arms.fill() ? 0.55D + 0.45D * (1.0D - d / arms.fill()) : 0.0D;
+                }
+                if (m == 0.0D) {
+                    continue;
+                }
+                double w = arms.widthCore() + (arms.widthTip() - arms.widthCore()) * s;
+                double profile = Math.pow(Math.sin(Math.PI * s), 0.7D);
+                out.dot(false, x, y, arms.brightness() * profile * m * 0.5D / Math.max(1.0D, w), w);
+            }
+        }
+    }
+
+    private static void motes(Motes motes, Arms arms, double t, double centre, Splat out) {
+        if (!motes.enabled()) {
+            return;
+        }
+        boolean over = motes.overStar();
+        double life = Math.max(0.1D, motes.trip());
+        int count = Math.min(MAX_MOTES, motes.count());
+        double[] head = new double[2];
+        double[] point = new double[2];
+        for (int i = 0; i < count; i++) {
+            double[] mote = MOTES[i];
+            double q = fract(t / life + mote[0]);
+            double fade = smooth(0.0D, 0.15D, q) * (1.0D - smooth(0.72D, 1.0D, q));
+            double v = motes.brightness() * fade;
+            if (v <= 0.0D) {
+                continue;
+            }
+            motePosition(motes, arms, mote, q, t, centre, head);
+            out.dot(over, head[0], head[1], v, motes.size());
+            for (int j = 1; j <= motes.trail(); j++) {
+                double earlier = q - j * 0.018D;
+                if (earlier < 0.0D) {
+                    break;
+                }
+                motePosition(motes, arms, mote, earlier, t - j * 0.018D * life, centre, point);
+                double f = 1.0D - (double) j / (motes.trail() + 1);
+                out.stroke(over, head[0], head[1], point[0], point[1], v * (f + 1.0D / (motes.trail() + 1)), v * f,
+                        motes.size(), motes.size());
+                head[0] = point[0];
+                head[1] = point[1];
+            }
+        }
+    }
+
+    private static void motePosition(Motes motes, Arms arms, double[] mote, double q, double t, double centre, double[] out) {
+        double start = motes.start() * (0.85D + mote[2] * 0.3D);
+        double r = start + (motes.end() - start) * Math.pow(q, 1.35D);
+        double th;
+        if (motes.rideArms()) {
+            int n = Math.max(1, arms.count());
+            double inner = arms.inner();
+            double outer = Math.max(inner + 1.0D, arms.outer());
+            double s = (r - inner) / (outer - inner);
+            th = armAngle(arms, (int) Math.floor(mote[3] * 64.0D) % n, n, t) + arms.twist() * s + (mote[4] - 0.5D) * 0.35D;
+        } else {
+            th = mote[1] * TAU + motes.swirl() * TAU * Math.pow(q, 1.6D);
+        }
+        out[0] = centre + Math.cos(th) * r;
+        out[1] = centre + Math.sin(th) * r;
+    }
+
+    private static void rays(Rays rays, double t, double centre, Splat out) {
+        if (!rays.enabled()) {
+            return;
+        }
+        boolean over = rays.overStar();
+        int n = Math.min(MAX_RAYS, rays.count());
+        double lean = rays.lean() * Math.PI / 180.0D;
+        for (int i = 0; i < n; i++) {
+            double[] ray = RAYS[i];
+            double u = ray[0];
+            double spread = ray[1] * 2.0D - 1.0D;
+            double jitter = ray[2] - 0.5D;
+            double angle = (double) i / n * TAU + rays.spin() * t * TAU + jitter * (TAU / n) * 0.3D;
+            double pulse = 0.5D + 0.5D * Math.sin(TAU * rays.pulseRate() * t + (double) i / n * TAU * rays.waves()
+                    + u * TAU * rays.randomness());
+            double full = Math.max(1.0D, rays.length() + spread * rays.lengthSpread());
+            double length = full * (1.0D - rays.stretchPulse() + rays.stretchPulse() * pulse);
+            double v = rays.brightness() * (1.0D - rays.brightnessPulse() + rays.brightnessPulse() * pulse);
+            if (v <= 0.0D || length <= 0.0D) {
+                continue;
+            }
+            double sx = centre + Math.cos(angle) * rays.start();
+            double sy = centre + Math.sin(angle) * rays.start();
+            double ex = sx + Math.cos(angle + lean) * length;
+            double ey = sy + Math.sin(angle + lean) * length;
+            if (!rays.fadeToTip()) {
+                out.stroke(over, sx, sy, ex, ey, v * 1.5D, v * 1.5D, rays.widthBase(), rays.widthTip());
+                continue;
+            }
+            int pieces = Math.max(2, (int) Math.ceil(length / 3.0D));
+            for (int k = 0; k < pieces; k++) {
+                double a = (double) k / pieces;
+                double b = (double) (k + 1) / pieces;
+                out.stroke(over, sx + (ex - sx) * a, sy + (ey - sy) * a, sx + (ex - sx) * b, sy + (ey - sy) * b,
+                        v * 1.8D * Math.pow(1.0D - a, 1.4D), v * 1.8D * Math.pow(1.0D - b, 1.4D),
+                        rays.widthBase() + (rays.widthTip() - rays.widthBase()) * a,
+                        rays.widthBase() + (rays.widthTip() - rays.widthBase()) * b);
             }
         }
     }
@@ -498,8 +578,6 @@ public final class GodNodeEffects {
     private static double armAngle(Arms arms, int arm, int count, double t) {
         return (double) arm / count * TAU + arms.spin() * t * TAU;
     }
-
-    // settings ------------------------------------------------------------------------------------------------
 
     private static Map<GodNodeType, Look> looks() {
         if (looks == null) {
@@ -519,7 +597,6 @@ public final class GodNodeEffects {
         return looks;
     }
 
-    // missing values fall back to the tuning page's own defaults
     private static Look look(JsonObject node) {
         JsonObject light = part(node, "light");
         JsonObject arms = part(node, "arms");
@@ -566,13 +643,24 @@ public final class GodNodeEffects {
                 ? element.getAsBoolean() : fallback;
     }
 
-    private static int[][] ramps() {
+    /**
+     * One 256-entry 0xRRGGBB ramp per god, indexed by {@link VaultGod#ordinal()}: the god's row of star_ramps.png, or
+     * {@link #themeRamp} where the image or its row is missing or unreadable. Never holds a null row.
+     */
+    static int[][] ramps() {
         if (ramps == null) {
-            ramps = new int[VaultGod.values().length][];
+            VaultGod[] gods = VaultGod.values();
+            int[][] rows = new int[gods.length][];
             try (Resource resource = Minecraft.getInstance().getResourceManager().getResource(RAMPS);
                  NativeImage image = NativeImage.read(resource.getInputStream())) {
-                for (VaultGod god : VaultGod.values()) {
+                if (image.getWidth() < 256) {
+                    WoldsVaults.LOGGER.warn("God star ramps {} is {} px wide, not 256; its last column repeats",
+                            RAMPS, image.getWidth());
+                }
+                for (VaultGod god : gods) {
                     if (god.ordinal() >= image.getHeight()) {
+                        WoldsVaults.LOGGER.warn("God star ramps {} has no row {} for {}; using the theme colours",
+                                RAMPS, god.ordinal(), god);
                         continue;
                     }
                     int[] row = new int[256];
@@ -580,21 +668,24 @@ public final class GodNodeEffects {
                         int abgr = image.getPixelRGBA(Math.min(t, image.getWidth() - 1), god.ordinal());
                         row[t] = (abgr & 0xFF) << 16 | (abgr >> 8 & 0xFF) << 8 | (abgr >> 16 & 0xFF);
                     }
-                    ramps[god.ordinal()] = row;
+                    rows[god.ordinal()] = row;
                 }
-            } catch (IOException e) {
+            } catch (IOException | RuntimeException e) {
                 WoldsVaults.LOGGER.warn("God star ramps {} could not be read; using the theme colours instead", RAMPS, e);
             }
-            for (VaultGod god : VaultGod.values()) {
-                if (ramps[god.ordinal()] == null) {
-                    ramps[god.ordinal()] = themeRamp(god);
+            for (VaultGod god : gods) {
+                if (rows[god.ordinal()] == null) {
+                    rows[god.ordinal()] = themeRamp(god);
                 }
             }
+            ramps = rows;
         }
         return ramps;
     }
 
-    // Black through the god's deep, dim and accent colours to white, when the ramp texture is missing.
+    /**
+     * Black through the god's deep, dim and accent colours to white, when the ramp texture is missing.
+     */
     private static int[] themeRamp(VaultGod god) {
         int[] stops = {0x000000, GodTreeTheme.accentDeep(god) & 0xFFFFFF, GodTreeTheme.accentDim(god) & 0xFFFFFF,
                 GodTreeTheme.accent(god) & 0xFFFFFF, 0xFFFFFF};
@@ -613,8 +704,9 @@ public final class GodNodeEffects {
         return row;
     }
 
-    // maths -----------------------------------------------------------------------------------------------------
-
+    /**
+     * The tuning page's random table: mulberry32 with the page's seeds, so a star there matches the star here.
+     */
     private static double[][] randomTable(int seed, int rows, int columns) {
         double[][] table = new double[rows][columns];
         int a = seed;

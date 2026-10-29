@@ -48,22 +48,19 @@ public class GodTreePanRegion extends GuiComponent implements GuiEventListener {
     private static final int BACKGROUND_STARS = 420;
     private static final long STAR_SEED = 0x1D0A57A2L;
 
-    private static final float FOCUS_SCALE = 0.7F; // zoom a clicked star settles at, unless already closer
-    private static final long FOCUS_MILLIS = 450L; // how long the glide takes
+    private static final float FOCUS_SCALE = 0.7F;
+    private static final long FOCUS_MILLIS = 450L;
 
-    // screen room kept clear when fitting the whole tree in view: the side tabs on the left, the XP bar along the top
     private static final int FIT_INSET_LEFT = 28;
     private static final int FIT_INSET_TOP = 32;
     private static final int FIT_INSET = 10;
-    private static final float FIT_PADDING = 24.0F; // tree units around the outermost stars, for their light
+    private static final float FIT_PADDING = 24.0F;
 
-    // the two white rings around each tree's starting stars
-    private static final float RING_GAP = 3.0F;          // tree units from the star's rim to the inner ring, and ring to ring
-    private static final float RING_BREATH = 1.0F;       // how far the outer ring swells while its star is unclaimed
-    private static final float RING_BREATH_RATE = 0.5F;  // breaths a second
+    private static final float RING_GAP = 3.0F;
+    private static final float RING_BREATH = 1.0F;
+    private static final float RING_BREATH_RATE = 0.5F;
     private static final int RING_SEGMENTS = 64;
 
-    // how far off an arrow's direction the next star may lie: along a constellation line, or anywhere
     private static final float LINKED_CONE = (float) Math.toRadians(70.0D);
     private static final float OPEN_CONE = (float) Math.toRadians(50.0D);
 
@@ -84,7 +81,7 @@ public class GodTreePanRegion extends GuiComponent implements GuiEventListener {
     protected Vec2 grabbedPos = new Vec2(0.0F, 0.0F);
     @Nullable
     private TransferSlotPopup popup;
-    private boolean fitPending; // asked to fit the tree before the chart had a size; done on the next frame
+    private boolean fitPending;
 
     public GodTreePanRegion(GodTreeScreen parentScreen, GodTreeDialog dialog, VaultGod god) {
         this.parentScreen = parentScreen;
@@ -199,7 +196,6 @@ public class GodTreePanRegion extends GuiComponent implements GuiEventListener {
         persistedScales.put(this.god, this.viewportScale);
     }
 
-    // Centres the whole tree, labels included, in the chart's free room and zooms just far enough out to show it.
     public void resetView() {
         this.glide = null;
         Rectangle bounds = this.getBounds();
@@ -237,7 +233,6 @@ public class GodTreePanRegion extends GuiComponent implements GuiEventListener {
         float roomHeight = bounds.height - FIT_INSET_TOP - FIT_INSET;
         float scale = this.clampViewportScale(Math.min(roomWidth / (maxX - minX + FIT_PADDING * 2.0F),
                 roomHeight / (maxY - minY + FIT_PADDING * 2.0F)));
-        // the drawing is centred on the chart's middle; nudge the tree into the middle of the free room instead
         float shiftX = (FIT_INSET_LEFT - FIT_INSET) / 2.0F;
         float shiftY = (FIT_INSET_TOP - FIT_INSET) / 2.0F;
         this.viewportScale = scale;
@@ -301,11 +296,12 @@ public class GodTreePanRegion extends GuiComponent implements GuiEventListener {
         this.dialog.setSelectedNode(widget.getNode().id());
     }
 
-    // Arrow keys step the selection to the star that lies that way, gliding the view to it: along a constellation line
-    // from the selected star where one runs that way, otherwise to the nearest star in that direction. With nothing
-    // selected yet, the first press picks the star nearest the middle of the view.
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (keyCode == org.lwjgl.glfw.GLFW.GLFW_KEY_F8) {
+            GodNodeEffects.togglePath();
+            return true;
+        }
         float dirX;
         float dirY;
         switch (keyCode) {
@@ -360,7 +356,6 @@ public class GodTreePanRegion extends GuiComponent implements GuiEventListener {
         return nearest;
     }
 
-    // The candidate within cone radians of the direction, seen from the star from, favouring straight, then near.
     @Nullable
     private GodNodeWidget closestToward(GodNodeWidget from, float dirX, float dirY, Iterable<GodNodeWidget> candidates, float cone) {
         float fromX = from.x + from.getWidth() / 2.0F;
@@ -441,7 +436,7 @@ public class GodTreePanRegion extends GuiComponent implements GuiEventListener {
         }
         this.updateGlide();
         RenderSystem.enableBlend();
-        float tick = (float) ClientScheduler.INSTANCE.getTick() + pTicks;      // moved up from below
+        float tick = (float) ClientScheduler.INSTANCE.getTick() + pTicks;
         GodTreeBackdrop.forGod(this.god).render(renderStack, containerBounds, this.viewportTranslation, this.viewportScale, tick);
 
         RenderSystem.enableBlend();
@@ -458,19 +453,19 @@ public class GodTreePanRegion extends GuiComponent implements GuiEventListener {
             renderStack.popPose();
             return;
         }
-        this.renderDecorations(renderStack, false);   // behind the lines
+        this.renderDecorations(renderStack, false);
         this.renderConstellationLines(renderStack);
         this.renderConstellationLabels(renderStack);
-        this.renderNodeEffects(renderStack, false);   // behind the stars
+        this.renderNodeEffects(renderStack, false);
         for (GodNodeWidget widget : this.nodeWidgets.values()) {
             widget.renderWidget(renderStack, containerBounds, mouseX, mouseY, containerMouseX, containerMouseY, pTicks, postRender);
         }
-        this.renderNodeEffects(renderStack, true);    // over the stars
+        this.renderNodeEffects(renderStack, true);
         this.renderStartRings(renderStack);
         for (GodNodeWidget widget : this.nodeWidgets.values()) {
             widget.renderIcon(renderStack);
         }
-        this.renderDecorations(renderStack, true);    // over the stars
+        this.renderDecorations(renderStack, true);
         if (this.popup != null) {
             GodNodeWidget anchor = this.nodeWidgets.get(this.popup.anchorNodeId());
             if (anchor != null) {
@@ -480,24 +475,20 @@ public class GodTreePanRegion extends GuiComponent implements GuiEventListener {
         renderStack.popPose();
     }
 
-    // One layer of the god's placed decorations (front: over the stars, else behind the lines); see GodTreeDecorations.
     private void renderDecorations(PoseStack renderStack, boolean front) {
         float[] view = this.visibleArea();
         GodTreeDecorations.render(renderStack, this.god, front, view[0], view[1], view[2], view[3]);
     }
 
-    // One layer of star effects (front: over the stars, else behind them), only for stars in view.
     private void renderNodeEffects(PoseStack renderStack, boolean front) {
         float[] view = this.visibleArea();
         GodNodeEffects.render(renderStack, this.god, this.nodeWidgets.values(), front,
                 view[0], view[1], view[2], view[3], this.viewportScale);
     }
 
-    // Two white rings around each starting star, so a tree's way in stands out. While a start is unclaimed both rings
-    // shine and the outer one slowly breathes; once claimed they hold still, quieter.
     private void renderStartRings(PoseStack renderStack) {
         float screenPerUnit = this.viewportScale * (float) Minecraft.getInstance().getWindow().getGuiScale();
-        float width = Math.max(1.0F, 1.0F / screenPerUnit); // never thinner than a screen pixel
+        float width = Math.max(1.0F, 1.0F / screenPerUnit);
         float seconds = (Util.getMillis() % 3_600_000L) / 1000.0F;
         float breath = 0.5F - 0.5F * Mth.cos((float) (Math.PI * 2.0D) * RING_BREATH_RATE * seconds);
         RenderSystem.setShader(GameRenderer::getPositionColorShader);
@@ -543,7 +534,6 @@ public class GodTreePanRegion extends GuiComponent implements GuiEventListener {
         }
     }
 
-    // The part of tree space the chart shows right now: min x, min y, max x, max y.
     private float[] visibleArea() {
         Rectangle bounds = this.getBounds();
         float halfWidth = bounds.width / 2.0F / this.viewportScale;
@@ -578,7 +568,6 @@ public class GodTreePanRegion extends GuiComponent implements GuiEventListener {
         buf.vertex(pose, x - half, y - half, 0.0F).color(r, g, b, a).endVertex();
     }
 
-    // The lattice edges, as glimmering bundles of thin strands; see GodConstellationLines.
     private void renderConstellationLines(PoseStack renderStack) {
         float[] view = this.visibleArea();
         GodConstellationLines.render(renderStack, this.god, this.edges, this.nodeWidgets,
@@ -614,7 +603,6 @@ public class GodTreePanRegion extends GuiComponent implements GuiEventListener {
 
     private void focusOn(GodNodeWidget widget) {
         Vec2 point = new Vec2(widget.x + widget.getWidth() / 2.0F, widget.y + widget.getHeight() / 2.0F);
-        // where the star is drawn right now, relative to the region's centre
         Vec2 offset = new Vec2(this.viewportScale * (point.x + this.viewportTranslation.x),
                 this.viewportScale * (point.y + this.viewportTranslation.y));
         float toScale = this.clampViewportScale(Math.max(this.viewportScale, FOCUS_SCALE));
@@ -627,8 +615,7 @@ public class GodTreePanRegion extends GuiComponent implements GuiEventListener {
         }
         Glide g = this.glide;
         float t = Mth.clamp((Util.getMillis() - g.start()) / (float) FOCUS_MILLIS, 0.0F, 1.0F);
-        float e = 1.0F - (1.0F - t) * (1.0F - t) * (1.0F - t); // ease out: quick start, soft landing
-        // zoom evenly on a log scale, and slide the star along a straight line into the centre
+        float e = 1.0F - (1.0F - t) * (1.0F - t) * (1.0F - t);
         this.viewportScale = g.fromScale() * (float) Math.pow(g.toScale() / g.fromScale(), e);
         float offsetX = g.fromOffset().x * (1.0F - e), offsetY = g.fromOffset().y * (1.0F - e);
         this.viewportTranslation = new Vec2(offsetX / this.viewportScale - g.point().x,
