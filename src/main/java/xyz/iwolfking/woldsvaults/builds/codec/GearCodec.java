@@ -228,12 +228,13 @@ public final class GearCodec {
     }
 
     /**
-     * Etches a built item the way the etching anvil does (WoldGearModifierHelper.addEtching): the item becomes UNIQUE
-     * rarity, carries the etching id and the etching's modifier as an implicit, and is renamed. The modifier is rolled
-     * from the etching config at {@code greed_tier}; a given {@code value} replaces the rolled one. Every etching the
-     * game could not produce is an error: a unique or already etched item, a gear type outside the etching's groups, a
-     * greed tier below the etching's minimum, an etching modifier already listed on the item, or a value outside what
-     * the etching rolls at that greed tier.
+     * Etches a built item the way the Etching Application Table does, which Wold's lets etch unique and sealed gear
+     * (MixinEtchingApplicationTableTileEntity): the item becomes UNIQUE rarity, carries the etching id and the
+     * etching's modifier as an implicit, and is renamed. The modifier is rolled from the etching config at
+     * {@code greed_tier}; a given {@code value} replaces the rolled one. Every etching the table could not produce is
+     * an error: an already etched item, a gear type outside the etching's groups, a greed tier below the etching's
+     * minimum, an etching modifier already listed on the item, or a value outside what the etching rolls at that greed
+     * tier.
      */
     private static void applyEtching(ItemStack stack, JsonObject json, String path, BuildReport report) {
         Json.onlyKeys(json, path, Set.of("id", "value", "snbt", "greed_tier"));
@@ -246,9 +247,6 @@ public final class GearCodec {
             throw new BuildException(path + ": only vault gear can be etched");
         }
         VaultGearData data = VaultGearData.read(stack);
-        if (data.getRarity() == VaultGearRarity.UNIQUE || hasAttribute(data, ModGearAttributes.UNIQUE_ITEM_KEY)) {
-            throw new BuildException(path + ": the etching anvil refuses unique gear, so " + id + " cannot go on this item");
-        }
         if (hasAttribute(data, ModGearAttributes.ETCHING)) {
             throw new BuildException(path + ": the item already lists an etching attribute; an item holds one etching");
         }
