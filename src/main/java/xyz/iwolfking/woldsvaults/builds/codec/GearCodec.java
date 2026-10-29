@@ -26,6 +26,7 @@ import net.minecraft.network.chat.TextComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Tuple;
 import net.minecraft.world.item.ItemStack;
+import xyz.iwolfking.woldsvaults.api.util.AncientUniqueHelper;
 import xyz.iwolfking.woldsvaults.builds.BuildException;
 import xyz.iwolfking.woldsvaults.builds.BuildReport;
 import xyz.iwolfking.woldsvaults.builds.Json;
@@ -257,6 +258,9 @@ public final class GearCodec {
             report.fallback(path + ": no etching value given; rolled " + readable(modifier) + " at greed tier " + tier);
         }
         VaultGearData data = VaultGearData.read(stack);
+        if (data.getRarity() == VaultGearRarity.UNIQUE) {
+            report.bypassed(path + ": the etching anvil refuses unique gear; etched " + id + " onto a unique anyway");
+        }
         data.setRarity(VaultGearRarity.UNIQUE);
         data.createOrReplaceAttributeValue(ModGearAttributes.ETCHING, id, true);
         data.addModifier(VaultGearModifier.AffixType.IMPLICIT, modifier, true);
@@ -453,6 +457,10 @@ public final class GearCodec {
                                                     List<VaultGearAttributeInstance<?>> attributeList, String path,
                                                     BuildReport report) {
         String modelText = Json.optString(json, "model", path);
+        boolean ancient = Boolean.TRUE.equals(Json.optBoolean(json, "ancient", path));
+        if (ancient && uniqueId == null) {
+            throw new BuildException(path + ".ancient: only a unique can be ancient");
+        }
         if (uniqueId != null) {
             UniqueGearConfig.Entry entry = ModConfigs.UNIQUE_GEAR.getEntry(uniqueId).orElseThrow(
                     () -> new BuildException(path + ".unique: no unique '" + uniqueId + "' exists in this game"));
@@ -461,8 +469,17 @@ public final class GearCodec {
                         + ", not a " + stack.getItem().getRegistryName());
             }
             attributeList.add(new VaultGearAttributeInstance<>(ModGearAttributes.UNIQUE_ITEM_KEY, uniqueId));
-            if (entry.getName() != null) {
-                attributeList.add(new VaultGearAttributeInstance<>(ModGearAttributes.GEAR_NAME, entry.getName()));
+            String name = entry.getName();
+            if (ancient) {
+                Optional<String> ancientName = AncientUniqueHelper.getAncientName(uniqueId);
+                if (ancientName.isPresent()) {
+                    name = ancientName.get();
+                } else {
+                    report.fallback(path + ": ancient " + uniqueId + " has no ancient name; it keeps the unique name " + name);
+                }
+            }
+            if (name != null) {
+                attributeList.add(new VaultGearAttributeInstance<>(ModGearAttributes.GEAR_NAME, name));
             }
             if (modelText == null && entry.getModels() != null) {
                 Optional<ResourceLocation> model = entry.getModels().getRandom();
@@ -475,11 +492,7 @@ public final class GearCodec {
         if (modelText != null) {
             attributeList.add(new VaultGearAttributeInstance<>(ModGearAttributes.GEAR_MODEL, Json.id(modelText, path + ".model")));
         }
-        Boolean ancient = Json.optBoolean(json, "ancient", path);
-        if (Boolean.TRUE.equals(ancient)) {
-            if (uniqueId == null) {
-                throw new BuildException(path + ".ancient: only a unique can be ancient");
-            }
+        if (ancient) {
             attributeList.add(new VaultGearAttributeInstance<>(xyz.iwolfking.woldsvaults.init.ModGearAttributes.ANCIENT_UNIQUE, true));
         }
     }
