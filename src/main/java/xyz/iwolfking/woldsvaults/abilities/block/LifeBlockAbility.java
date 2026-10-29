@@ -8,9 +8,6 @@ import net.minecraft.server.level.ServerPlayer;
 
 import java.util.Optional;
 
-// Life Block: every heal lifts the block instead of healing. Lifting it grants an absorption shield worth a share of
-// max health, Transfusion (each heal adds a damage stack for transfusionStackTicks) and Life Bond (a share of
-// the damage taken is dealt to the attacker instead).
 public class LifeBlockAbility extends AbstractBlockAbility {
     private float absorptionMin;
     private float absorptionMax;
@@ -143,13 +140,13 @@ public class LifeBlockAbility extends AbstractBlockAbility {
     @Override
     public void readJson(JsonObject json) {
         super.readJson(json);
-        this.absorptionMin = Adapters.FLOAT.readJson(json.get("absorptionMin")).orElse(0.0F);
-        this.absorptionMax = Adapters.FLOAT.readJson(json.get("absorptionMax")).orElse(0.0F);
-        this.transfusionMin = Adapters.FLOAT.readJson(json.get("transfusionMin")).orElse(0.0F);
-        this.transfusionMax = Adapters.FLOAT.readJson(json.get("transfusionMax")).orElse(0.0F);
-        this.transfusionMaxStacks = Adapters.INT.readJson(json.get("transfusionMaxStacks")).orElse(0);
-        this.transfusionStackTicks = Adapters.INT.readJson(json.get("transfusionStackTicks")).orElse(0);
-        this.lifeBondMin = Adapters.FLOAT.readJson(json.get("lifeBondMin")).orElse(0.0F);
-        this.lifeBondMax = Adapters.FLOAT.readJson(json.get("lifeBondMax")).orElse(0.0F);
+        this.absorptionMin = this.jsonFloat(json, "absorptionMin", 0.0F);
+        this.absorptionMax = this.jsonFloat(json, "absorptionMax", 0.0F);
+        this.transfusionMin = this.jsonFloat(json, "transfusionMin", 0.0F);
+        this.transfusionMax = this.jsonFloat(json, "transfusionMax", 0.0F);
+        this.transfusionMaxStacks = this.jsonInt(json, "transfusionMaxStacks", 0);
+        this.transfusionStackTicks = this.jsonInt(json, "transfusionStackTicks", 0);
+        this.lifeBondMin = this.jsonFloat(json, "lifeBondMin", 0.0F);
+        this.lifeBondMax = this.jsonFloat(json, "lifeBondMax", 0.0F);
     }
 }

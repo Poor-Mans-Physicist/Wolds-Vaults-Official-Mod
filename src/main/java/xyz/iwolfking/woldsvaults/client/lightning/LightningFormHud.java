@@ -61,7 +61,6 @@ public final class LightningFormHud {
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
 
-        // a dark panel behind the gaps between the slots
         GuiComponent.fill(pose, left + 22, top + 1, right - 22, top + 21, 0xC0101B33);
         GuiComponent.fill(pose, left + 22, top + 1, right - 22, top + 2, 0xFF0D2C4A);
         GuiComponent.fill(pose, left + 22, top + 20, right - 22, top + 21, 0xFF0D2C4A);
@@ -70,7 +69,6 @@ public final class LightningFormHud {
         slot(mc, pose, middle - 11, top, THUNDERSTRIKE, 0.0F, mc.options.keyPickItem);
         slot(mc, pose, right - 22, top, LIGHTNING_ROD, ClientLightningForm.rodCooldown(partialTick), mc.options.keyUse);
 
-        // the names; the rod's turns to its target's once it has one
         Font font = mc.font;
         int gap = middle - 11 - (left + 22);
         int textWidth = Mth.floor((gap - 6) / LABEL_SCALE);
@@ -79,7 +77,6 @@ public final class LightningFormHud {
         String rod = marked == null ? "Lightning Rod" : font.plainSubstrByWidth(marked.getDisplayName().getString(), textWidth);
         label(pose, font, rod, right - 25, top + 4, marked == null ? TEXT : SET_COLOUR, true);
 
-        // the form's time left, one bar in two halves either side of the middle slot that empties right to left
         int half = gap - 6;
         int filled = Math.round(half * 2 * ClientLightningForm.formLeft(partialTick));
         timeBar(pose, left + 25, top, half, Math.min(filled, half));
@@ -95,8 +92,6 @@ public final class LightningFormHud {
         }
     }
 
-    // a hotbar-style slot with the ability's icon, a pale veil over the part of its cooldown still to run (as items
-    // show theirs) and its key in the corner
     private static void slot(Minecraft mc, PoseStack pose, int x, int y, ResourceLocation icon, float cooldown, KeyMapping key) {
         RenderSystem.setShader(GameRenderer::getPositionTexShader);
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
@@ -124,7 +119,6 @@ public final class LightningFormHud {
         pose.popPose();
     }
 
-    // short enough for a slot's corner: the mouse buttons as LMB / RMB / MMB, anything else cut to four letters
     private static String keyName(KeyMapping key) {
         InputConstants.Key bound = key.getKey();
         if (bound.getType() == InputConstants.Type.MOUSE) {

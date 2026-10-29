@@ -8,9 +8,6 @@ import net.minecraft.server.level.ServerPlayer;
 
 import java.util.Optional;
 
-// Mana Block: every mana gain lifts the block instead of refilling mana. Lifting it grants Mana Shield (a share of
-// the damage taken drains mana instead of health), extra regeneration as a share of max mana per second, and Surging
-// Mana (added area of effect).
 public class ManaBlockAbility extends AbstractBlockAbility {
     private float manaShieldMin;
     private float manaShieldMax;
@@ -46,16 +43,13 @@ public class ManaBlockAbility extends AbstractBlockAbility {
         ManaBlockState.raise(player, this);
     }
 
-
     public float getManaShield() {
         return this.scale(this.manaShieldMin, this.manaShieldMax);
     }
 
-
     public float getManaRegen() {
         return this.scale(this.manaRegenMin, this.manaRegenMax);
     }
-
 
     public float getSurgingAoe() {
         return this.scale(this.surgingAoeMin, this.surgingAoeMax);
@@ -123,11 +117,11 @@ public class ManaBlockAbility extends AbstractBlockAbility {
     @Override
     public void readJson(JsonObject json) {
         super.readJson(json);
-        this.manaShieldMin = Adapters.FLOAT.readJson(json.get("manaShieldMin")).orElse(0.0F);
-        this.manaShieldMax = Adapters.FLOAT.readJson(json.get("manaShieldMax")).orElse(0.0F);
-        this.manaRegenMin = Adapters.FLOAT.readJson(json.get("manaRegenMin")).orElse(0.0F);
-        this.manaRegenMax = Adapters.FLOAT.readJson(json.get("manaRegenMax")).orElse(0.0F);
-        this.surgingAoeMin = Adapters.FLOAT.readJson(json.get("surgingAoeMin")).orElse(0.0F);
-        this.surgingAoeMax = Adapters.FLOAT.readJson(json.get("surgingAoeMax")).orElse(0.0F);
+        this.manaShieldMin = this.jsonFloat(json, "manaShieldMin", 0.0F);
+        this.manaShieldMax = this.jsonFloat(json, "manaShieldMax", 0.0F);
+        this.manaRegenMin = this.jsonFloat(json, "manaRegenMin", 0.0F);
+        this.manaRegenMax = this.jsonFloat(json, "manaRegenMax", 0.0F);
+        this.surgingAoeMin = this.jsonFloat(json, "surgingAoeMin", 0.0F);
+        this.surgingAoeMax = this.jsonFloat(json, "surgingAoeMax", 0.0F);
     }
 }

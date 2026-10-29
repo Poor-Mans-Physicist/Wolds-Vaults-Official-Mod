@@ -10,14 +10,10 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
+import xyz.iwolfking.woldsvaults.WoldsVaults;
 
 import java.util.Optional;
 
-// Shared shell for Life Block and Mana Block. Casting raises a block worth blockMultiplier times the
-// player's max health or mana, which regeneration lifts instead of refilling the bar. Lifting it grants buffs whose
-// strength runs from each buff's minimum at a 1x block to its maximum at a 10x
-// block. They last maxBuffTicks if the block was lifted within fastClearTicks, falling to
-// minBuffTicks at slowClearTicks or slower.
 public abstract class AbstractBlockAbility extends InstantManaAbility {
     public static final float MIN_BLOCK = 1.0F;
     public static final float MAX_BLOCK = 10.0F;
@@ -58,7 +54,6 @@ public abstract class AbstractBlockAbility extends InstantManaAbility {
             return ActionResult.successCooldownImmediate();
         }).orElse(ActionResult.fail());
     }
-
 
     public float getStrength() {
         return Mth.clamp((this.blockMultiplier - MIN_BLOCK) / (MAX_BLOCK - MIN_BLOCK), 0.0F, 1.0F);
@@ -154,10 +149,28 @@ public abstract class AbstractBlockAbility extends InstantManaAbility {
     @Override
     public void readJson(JsonObject json) {
         super.readJson(json);
-        this.blockMultiplier = Adapters.FLOAT.readJson(json.get("blockMultiplier")).orElse(MIN_BLOCK);
-        this.minBuffTicks = Adapters.INT.readJson(json.get("minBuffTicks")).orElse(0);
-        this.maxBuffTicks = Adapters.INT.readJson(json.get("maxBuffTicks")).orElse(0);
-        this.fastClearTicks = Adapters.INT.readJson(json.get("fastClearTicks")).orElse(0);
-        this.slowClearTicks = Adapters.INT.readJson(json.get("slowClearTicks")).orElse(0);
+        this.blockMultiplier = this.jsonFloat(json, "blockMultiplier", MIN_BLOCK);
+        this.minBuffTicks = this.jsonInt(json, "minBuffTicks", 0);
+        this.maxBuffTicks = this.jsonInt(json, "maxBuffTicks", 0);
+        this.fastClearTicks = this.jsonInt(json, "fastClearTicks", 0);
+        this.slowClearTicks = this.jsonInt(json, "slowClearTicks", 0);
+    }
+
+    /** Reads a float key of this ability's config, logging when it is missing and the fallback is used. */
+    protected float jsonFloat(JsonObject json, String key, float fallback) {
+        Optional<Float> value = Adapters.FLOAT.readJson(json.get(key));
+        if (value.isEmpty()) {
+            WoldsVaults.LOGGER.warn("{} config has no {}; using {}.", this.getClass().getSimpleName(), key, fallback);
+        }
+        return value.orElse(fallback);
+    }
+
+    /** Reads an int key of this ability's config, logging when it is missing and the fallback is used. */
+    protected int jsonInt(JsonObject json, String key, int fallback) {
+        Optional<Integer> value = Adapters.INT.readJson(json.get(key));
+        if (value.isEmpty()) {
+            WoldsVaults.LOGGER.warn("{} config has no {}; using {}.", this.getClass().getSimpleName(), key, fallback);
+        }
+        return value.orElse(fallback);
     }
 }

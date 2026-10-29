@@ -29,9 +29,7 @@ import java.util.Random;
 @Mod.EventBusSubscriber(modid = WoldsVaults.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public final class LightningLashRenderer {
     private static final float LENGTH = 3.0F;
-    // blocks per unit of vanilla's tube widths (its sideways steps keep vanilla's proportions)
     private static final float WIDTH = 0.1F;
-    // degrees turned each tick
     private static final float SPIN = 50.0F;
     private static final int FADE = 3;
     private static final List<Bolt> BOLTS = new ArrayList<>();
@@ -100,7 +98,6 @@ public final class LightningLashRenderer {
             return;
         }
         Vec3 center = bolt.origin.add(bolt.direction.scale(Math.min(bolt.length, bolt.speed * time)));
-        // the bolt's length turns about its line of flight; its jags go along the flight and square to both
         Vec3 up = Math.abs(bolt.direction.y) > 0.9 ? new Vec3(1.0, 0.0, 0.0) : new Vec3(0.0, 1.0, 0.0);
         Vec3 a = bolt.direction.cross(up).normalize();
         Vec3 b = a.cross(bolt.direction).normalize();
@@ -109,8 +106,6 @@ public final class LightningLashRenderer {
         vanillaBolt(consumer, matrix, center, bolt.direction, along, bolt.direction.cross(along), bolt.seed + bolt.age / 2, alpha);
     }
 
-    // vanilla's lightning in the bolt's own frame: along y from one end to the other, jagging in x and z (x, y, z a
-    // right-handed set so vanilla's faces still face outwards), centred on the given point
     private static void vanillaBolt(VertexConsumer consumer, Matrix4f matrix, Vec3 center, Vec3 x, Vec3 y, Vec3 z, long seed, float alpha) {
         float segment = LENGTH / 8.0F;
         float step = segment / 16.0F;
@@ -125,7 +120,6 @@ public final class LightningLashRenderer {
             totalX += random.nextInt(11) - 5;
             totalZ += random.nextInt(11) - 5;
         }
-        // vanilla ends its bolt at the point struck; this one is centred sideways as well as along
         float shiftX = totalX * 0.5F;
         float shiftZ = totalZ * 0.5F;
         Frame frame = new Frame(matrix, consumer, center, x, y, z, segment, step, shiftX, shiftZ, alpha);
@@ -161,7 +155,6 @@ public final class LightningLashRenderer {
         }
     }
 
-    // vanilla's quad, its sideways offsets and widths turned into blocks in the bolt's frame
     private record Frame(Matrix4f matrix, VertexConsumer consumer, Vec3 center, Vec3 x, Vec3 y, Vec3 z,
                          float segment, float step, float shiftX, float shiftZ, float alpha) {
         void quad(float lowX, float lowZ, int seg, float highX, float highZ, float highWidth, float lowWidth,

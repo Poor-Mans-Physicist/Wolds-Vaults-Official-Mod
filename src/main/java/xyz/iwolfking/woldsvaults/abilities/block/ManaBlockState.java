@@ -20,16 +20,11 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-// Mana Block's raised blocks and the buffs a lift grants. A block catches every mana gain after the fact on
-// MANA_MODIFY, puts the bar back and books the gain against the block; a gain clipped by the mana cap only
-// books what reached the bar. Mana Shield is a final-damage sub-stage, Surging Mana an
-// PlayerStat.AREA_OF_EFFECT listener.
 public final class ManaBlockState {
     private static final ResourceLocation MANA_SHIELD_STAGE = WoldsVaults.id("mana_block_mana_shield");
     private static final Object LISTENER_REF = new Object();
     private static final int PROGRESS_INTERVAL_TICKS = 10;
 
-    // mana drained per point of damage Mana Shield takes
     private static final float MANA_PER_DAMAGE = 1.0F;
 
     private static final Map<UUID, BlockProgress<ManaBlockAbility>> BLOCKS = new ConcurrentHashMap<>();
@@ -48,14 +43,12 @@ public final class ManaBlockState {
         return BLOCKS.containsKey(player.getUUID());
     }
 
-
     public static void raise(ServerPlayer player, ManaBlockAbility ability) {
         BlockProgress<ManaBlockAbility> block = new BlockProgress<>(ability,
                 Mana.getMax(player) * ability.getBlockMultiplier(), player.server.getTickCount());
         BLOCKS.put(player.getUUID(), block);
         block.showProgress(player, "message.woldsvaults.mana_block.progress", ChatFormatting.AQUA);
     }
-
 
     private static void onManaModify(ManaModifyEvent.Data data) {
         if (data.getAction() == ManaAction.SYSTEM || data.getNewAmount() <= data.getOldAmount()
@@ -80,7 +73,6 @@ public final class ManaBlockState {
         BUFFS.put(player.getUUID(), new Buff(ability, buffTicks));
         BlockProgress.announceLift(player, "message.woldsvaults.mana_block.lifted", ChatFormatting.AQUA, clearTicks, buffTicks);
     }
-
 
     private static float manaShield(LivingDamageEvent event, float amount) {
         if (amount <= 0.0F || event.getSource().isBypassInvul()

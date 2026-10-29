@@ -21,33 +21,25 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-// The lines between a god's stars, each drawn as a loose bundle of thin strands that gather at the two stars and drift
-// apart between them, with sparks of light running along every strand. A line between two owned stars burns brightest;
-// a line leaving an owned star runs warm, its sparks flowing out from that star toward the next. Lines that touch no
-// owned star are dim and hold still.
 public final class GodConstellationLines {
     private static final int STRANDS = 7;
-    private static final float SPREAD = 3.0F;          // tree units between the outermost strands, mid-line
-    private static final float WANDER = 0.35F;         // how far a strand drifts about its place in the bundle
-    private static final float WANDER_LENGTH = 36.0F;  // tree units along the line per drift
-    private static final float WANDER_SPEED = 0.25F;   // drifts a second
-    private static final float SPARK_SPACING = 64.0F;  // tree units between sparks on one strand
-    private static final float SPARK_LENGTH = 9.0F;    // tree units one spark spans
-    private static final float PIECE_PIXELS = 4.0F;    // aim for strand pieces about this many screen pixels long
+    private static final float SPREAD = 3.0F;
+    private static final float WANDER = 0.35F;
+    private static final float WANDER_LENGTH = 36.0F;
+    private static final float WANDER_SPEED = 0.25F;
+    private static final float SPARK_SPACING = 64.0F;
+    private static final float SPARK_LENGTH = 9.0F;
+    private static final float PIECE_PIXELS = 4.0F;
     private static final float TAU = (float) (Math.PI * 2.0D);
 
-    // How one kind of line looks: strand and spark colours, the strands' strength, the sparks' strength and pace, and
-    // whether the line moves at all.
     private record Palette(int strand, int spark, float strandAlpha, float sparkStrength, float sparkSpeed,
                            boolean animated) {}
 
-    // One line's ends, trimmed back to its stars' rims, running from the star its sparks flow out of.
     private record Line(float x0, float y0, float x1, float y1, float length, int seed, Palette palette) {}
 
     private GodConstellationLines() {
     }
 
-    // Draws every edge with any part in the given tree-space rectangle. viewportScale is the chart's zoom.
     public static void render(PoseStack poseStack, VaultGod god, Collection<GodTreeModel.Edge> edges,
                               Map<String, GodNodeWidget> widgets, float minX, float minY, float maxX, float maxY,
                               float viewportScale) {
@@ -68,21 +60,19 @@ public final class GodConstellationLines {
         }
 
         float screenPerUnit = viewportScale * (float) Minecraft.getInstance().getWindow().getGuiScale();
-        float strandWidth = Math.max(0.45F, 1.0F / screenPerUnit); // never thinner than a screen pixel
+        float strandWidth = Math.max(0.45F, 1.0F / screenPerUnit);
         float pieceLength = Math.max(2.0F, PIECE_PIXELS / screenPerUnit);
         float seconds = (Util.getMillis() % 3_600_000L) / 1000.0F;
         Matrix4f pose = poseStack.last().pose();
         RenderSystem.setShader(GameRenderer::getPositionColorShader);
         RenderSystem.enableBlend();
         RenderSystem.disableTexture();
-        // a soft shadow under each bundle, so its strands read against bright nebula
         RenderSystem.defaultBlendFunc();
         ScreenDrawHelper.draw(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR, buf -> {
             for (Line line : lines) {
                 shadow(buf, pose, line, pieceLength);
             }
         });
-        // the strands themselves, as light
         RenderSystem.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE);
         ScreenDrawHelper.draw(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR, buf -> {
             for (Line line : lines) {
@@ -103,7 +93,6 @@ public final class GodConstellationLines {
             return null;
         }
         if (!from.isUnlocked() && to.isUnlocked()) {
-            // sparks flow out from the owned star
             GodNodeWidget swap = from;
             from = to;
             to = swap;
@@ -127,7 +116,6 @@ public final class GodConstellationLines {
                 length - trimFrom - trimTo, edge.from().hashCode() * 31 + edge.to().hashCode(), palette);
     }
 
-    // How far the bundle has opened at s (0 at one star, 1 at the other): closed at the stars, widest mid-line.
     private static float taper(float s) {
         return (float) Math.pow(Mth.sin((float) Math.PI * s), 0.6D);
     }
@@ -136,7 +124,7 @@ public final class GodConstellationLines {
                                float seconds) {
         Palette palette = line.palette();
         if (!palette.animated()) {
-            seconds = 0.0F; // a line between unowned stars holds still: no drift, no twinkle, no sparks
+            seconds = 0.0F;
         }
         int pieces = Math.max(2, (int) Math.ceil(line.length() / pieceLength));
         float place = ((float) strand / (STRANDS - 1) - 0.5F) * SPREAD;
@@ -155,12 +143,10 @@ public final class GodConstellationLines {
             float offset = (place + wander) * taper;
             xs[i] = line.x0() + (line.x1() - line.x0()) * s - (line.y1() - line.y0()) / line.length() * offset;
             ys[i] = line.y0() + (line.y1() - line.y0()) * s + (line.x1() - line.x0()) / line.length() * offset;
-            // a spark is a short bright swell, every SPARK_SPACING units, sliding away from the line's first star
             float within = (along - travel) / SPARK_SPACING + sparkOffset;
             within = (within - (float) Math.floor(within)) * SPARK_SPACING;
             float spark = within < SPARK_LENGTH ? Mth.sin((float) Math.PI * within / SPARK_LENGTH) : 0.0F;
             spark = spark * spark * palette.sparkStrength();
-            // strands fade toward the stars, so the seven of them don't flare where they gather
             float base = palette.strandAlpha() * twinkle * (0.35F + 0.65F * taper);
             float alpha = Math.min(1.0F, base + spark * (1.0F - base));
             int rgb = mix(palette.strand(), palette.spark(), spark);
@@ -186,8 +172,6 @@ public final class GodConstellationLines {
         strip(buf, pose, xs, ys, colours, 0.0F, halves);
     }
 
-    // A ribbon through the points, each point's colour (ARGB) at its own place. Every point is widened along the
-    // average of its two neighbouring pieces, so the pieces meet without gaps or overlaps that would flash as beads.
     private static void strip(BufferBuilder buf, Matrix4f pose, float[] xs, float[] ys, int[] colours, float half,
                               @Nullable float[] halves) {
         int last = xs.length - 1;
@@ -224,7 +208,6 @@ public final class GodConstellationLines {
         return mix(colour & 0xFFFFFF, 0xFFFFFF, t);
     }
 
-    // A steady value in [0, 1) for one line and one index.
     private static float hash(int seed, int index) {
         int h = seed * 0x9E3779B9 + index * 0x85EBCA6B;
         h ^= h >>> 15;

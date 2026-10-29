@@ -49,13 +49,11 @@ public class GodNodeWidget extends AbstractWidget {
         this.unlocked = unlocked;
         this.available = available;
         this.nodeSize = sizeFor(node, style);
-        // the icon keeps its share of the frame when a star is drawn larger or smaller than its type's default
         this.iconSize = Math.round(iconSizeFor(node) * (float) this.nodeSize / defaultSizeFor(node));
         this.twinklePhase = node.id().hashCode() & 0xFF;
         this.selected = false;
     }
 
-    // a size from the tree's styles file, else the type's default
     private static int sizeFor(GodNode node, SkillStyle style) {
         return style instanceof GodNodeStyle sized && sized.size > 0 ? sized.size : defaultSizeFor(node);
     }
@@ -103,13 +101,10 @@ public class GodNodeWidget extends AbstractWidget {
         this.selected = false;
     }
 
-    // Stable per-node bits that set each star's effect clock and facing.
     public int effectSeed() {
         return this.node.id().hashCode() * 0x9E3779B9;
     }
 
-    // How bright this star's effects are: locked stars glimmer, unlocked ones shine, and selecting brightens either.
-    // Dimming darkens the light's colour rather than fading it, so the star never shows through its own rays.
     public float effectBrightness() {
         if (this.unlocked) {
             return this.selected ? 1.0F : 0.75F;

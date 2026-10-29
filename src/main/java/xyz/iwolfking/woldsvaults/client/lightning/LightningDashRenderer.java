@@ -45,14 +45,11 @@ public final class LightningDashRenderer {
     private static final int FORKS = 5;
     private static final int ARC_LIFE = 5;
     private static final int STRIKE_LIFE = 16;
-    // a Thunderstrike's bolt is this many times a dash trail's width
     private static final float STRIKE_SCALE = 10.0F;
-    // closer than this to a Thunderstrike's bolt, a viewer is inside it: the screen flashes instead of drawing it
     private static final double STRIKE_INSIDE = 3.0;
     private static final List<Streak> STREAKS = new ArrayList<>();
     private static final List<Arcs> ARCS = new ArrayList<>();
     private static final List<Strike> STRIKES = new ArrayList<>();
-    // the player whose drawn rotations this frame's render turned, and their own rotations to put back
     private static int turnedId = -1;
     private static final float[] SAVED = new float[4];
 
@@ -71,7 +68,6 @@ public final class LightningDashRenderer {
         }
     }
 
-    // short whips of lightning (Arc Lash, Lightning Rod): points in pairs, start then end
     private static final class Arcs {
         final List<Vec3> points;
         final long seed;
@@ -83,7 +79,6 @@ public final class LightningDashRenderer {
         }
     }
 
-    // a Thunderstrike: one giant bolt down onto a spot and a ring of arcs racing out across the ground to its reach
     private static final class Strike {
         final Vec3 at;
         final float radius;
@@ -164,7 +159,6 @@ public final class LightningDashRenderer {
         double flat = way.x * way.x + way.z * way.z;
         float after = streak.age + event.getPartialTick() - streak.ticks;
         float weight = after <= FACE_HOLD ? 1.0F : 1.0F - (after - FACE_HOLD) / FACE_BLEND;
-        // straight up or down has no way to face
         if (flat < 0.25 || weight <= 0.0F) {
             return;
         }
@@ -181,7 +175,6 @@ public final class LightningDashRenderer {
         player.yHeadRotO = player.yHeadRot = head;
     }
 
-    // the turned player's own rotations back once they're drawn
     @SubscribeEvent
     public static void onRenderPlayerPost(RenderPlayerEvent.Post event) {
         Player player = event.getPlayer();
@@ -194,7 +187,6 @@ public final class LightningDashRenderer {
         }
     }
 
-    // the entity's most recent dash still being drawn, if any
     private static Streak latest(int entityId) {
         Streak latest = null;
         for (Streak streak : STREAKS) {
@@ -248,13 +240,10 @@ public final class LightningDashRenderer {
         Entity entity = mc.level == null ? null : mc.level.getEntity(streak.entityId);
         Vec3 body = new Vec3(0.0, (entity == null ? 1.8F : entity.getBbHeight()) * 0.5, 0.0);
         Vec3 end = streak.path.get(streak.path.size() - 1);
-        // the player as drawn this frame (on the path if they aren't loaded here); the trail's head is on them while
-        // they cross, and at the path's end once they reappear
         Vec3 feet = entity != null ? entity.getPosition(partialTick) : LightningFiend.along(streak.path, time / streak.ticks);
         Vec3 from = streak.path.get(0).add(body);
         Vec3 head = (time < streak.ticks ? feet : end).add(body);
 
-        // the same seed for two ticks at a time, so the bolt holds its shape briefly before it re-forks
         Random random = new Random(streak.seed + streak.age / 2);
         if (from.distanceToSqr(head) > 0.04) {
             List<Vec3> channel = smooth(jagged(from, head, random, 4, 0.15), 2);
@@ -267,8 +256,6 @@ public final class LightningDashRenderer {
             }
         }
 
-        // the player's body as lightning while they cross, staying a moment over them as they reappear; not drawn
-        // from inside it in first person
         boolean firstPerson = entity == mc.getCameraEntity() && mc.options.getCameraType().isFirstPerson();
         if (time < streak.ticks + LINGER && !firstPerson) {
             float bodyLife = time < streak.ticks ? 1.0F : 1.0F - (time - streak.ticks) / LINGER;
@@ -276,7 +263,6 @@ public final class LightningDashRenderer {
         }
     }
 
-    // each arc a thin jagged whip with a little fork, re-forking every tick and fading fast
     private static void draw(VertexConsumer consumer, Matrix4f matrix, Vec3 cam, Arcs arcs, float partialTick) {
         float life = 1.0F - (arcs.age + partialTick) / ARC_LIFE;
         if (life <= 0.0F) {
@@ -297,8 +283,6 @@ public final class LightningDashRenderer {
         }
     }
 
-    // the giant bolt from high overhead down onto the spot with big forks off its lower part, unless the viewer is
-    // standing in it; and a ring of arcs racing out over the ground to the strike's reach, with spokes back to the middle
     private static void draw(VertexConsumer consumer, Matrix4f matrix, Vec3 cam, Strike strike, float partialTick) {
         float time = strike.age + partialTick;
         float life = 1.0F - time / STRIKE_LIFE;
@@ -335,7 +319,6 @@ public final class LightningDashRenderer {
         }
     }
 
-    // a knot of bolts from feet to head, a little apart, re-forking every tick
     private static void bodyBolts(VertexConsumer consumer, Matrix4f matrix, Vec3 cam, Vec3 feet, double height, Random random, float life) {
         for (int i = 0; i < 3; i++) {
             Vec3 bottom = feet.add((random.nextDouble() - 0.5) * 0.5, -0.1, (random.nextDouble() - 0.5) * 0.5);
@@ -344,16 +327,12 @@ public final class LightningDashRenderer {
         }
     }
 
-    // a wide blue glow, a pale body and a white-hot core; the body is about as wide as a player. Forks taper to a
-    // point; the trail narrows only right at its tail
     private static void layers(VertexConsumer consumer, Matrix4f matrix, Vec3 cam, List<Vec3> path, float life, float scale, boolean fork) {
         ribbon(consumer, matrix, cam, path, 1.0F * scale, fork, 0.25F, 0.55F, 1.0F, 0.3F * life);
         ribbon(consumer, matrix, cam, path, 0.5F * scale, fork, 0.55F, 0.85F, 1.0F, 0.55F * life);
         ribbon(consumer, matrix, cam, path, 0.18F * scale, fork, 1.0F, 1.0F, 1.0F, 1.0F * life);
     }
 
-    // corner cutting: each pass swaps every corner for two points a quarter of the way along its segments, rounding
-    // the zigzag so a wide strip bends instead of folding over itself
     private static List<Vec3> smooth(List<Vec3> points, int passes) {
         for (int pass = 0; pass < passes; pass++) {
             List<Vec3> next = new ArrayList<>(points.size() * 2);
@@ -369,7 +348,6 @@ public final class LightningDashRenderer {
         return points;
     }
 
-    // midpoint displacement: each pass splits every segment and pushes its middle sideways, less each pass
     private static List<Vec3> jagged(Vec3 from, Vec3 to, Random random, int passes, double roughness) {
         List<Vec3> points = new ArrayList<>(List.of(from, to));
         double amplitude = from.distanceTo(to) * roughness;
@@ -388,7 +366,6 @@ public final class LightningDashRenderer {
         return points;
     }
 
-    // a random unit vector square to the given direction
     private static Vec3 perpendicular(Vec3 direction, Random random) {
         Vec3 dir = direction.lengthSqr() < 1.0E-8 ? new Vec3(1.0, 0.0, 0.0) : direction.normalize();
         Vec3 up = Math.abs(dir.y) > 0.9 ? new Vec3(1.0, 0.0, 0.0) : new Vec3(0.0, 1.0, 0.0);
@@ -398,9 +375,6 @@ public final class LightningDashRenderer {
         return a.scale(Math.cos(angle)).add(b.scale(Math.sin(angle)));
     }
 
-    // one unbroken strip along the path, turned to face the camera: each point has one sideways offset that both
-    // segments meeting there share, so the strip bends without gaps or overlapping squares. It's brightest down the
-    // middle and fades to nothing at its sides, and is drawn both ways round so culling never hides it
     private static void ribbon(VertexConsumer consumer, Matrix4f matrix, Vec3 cam, List<Vec3> path, float halfWidth, boolean fork, float r, float g, float b, float a) {
         int n = path.size();
         Vec3[] sides = new Vec3[n];
@@ -412,7 +386,6 @@ public final class LightningDashRenderer {
                 continue;
             }
             side = side.normalize();
-            // keep the strip from flipping over where the path turns towards the camera
             if (i > 0 && side.dot(sides[i - 1]) < 0.0) {
                 side = side.scale(-1.0);
             }
@@ -431,7 +404,6 @@ public final class LightningDashRenderer {
         }
     }
 
-    // a quad from one side's edge (clear) in to the middle line (full alpha), both windings
     private static void soft(VertexConsumer consumer, Matrix4f matrix, Vec3 edge1, Vec3 middle1, Vec3 middle2, Vec3 edge2, float r, float g, float b, float a) {
         vertex(consumer, matrix, edge1, r, g, b, 0.0F);
         vertex(consumer, matrix, middle1, r, g, b, a);

@@ -24,8 +24,9 @@ public class LightningArcFxMessage {
 
     public static void encode(LightningArcFxMessage message, FriendlyByteBuf buffer) {
         buffer.writeLong(message.seed);
-        buffer.writeVarInt(message.points.size());
-        for (Vec3 point : message.points) {
+        int size = Math.min(message.points.size(), MAX_POINTS);
+        buffer.writeVarInt(size);
+        for (Vec3 point : message.points.subList(0, size)) {
             buffer.writeDouble(point.x);
             buffer.writeDouble(point.y);
             buffer.writeDouble(point.z);

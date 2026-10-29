@@ -35,10 +35,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-// Decorations placed on the god trees: tinted sprites from textures/gui/gods/decorations.png (named in
-// god_tree/decoration_sprites.json) and soft glows, laid out per god in god_tree/decorations.json, the
-// export of the God Tree Editor. Each sits behind the constellation lines or over the stars, can spin, and can pulse.
-// Positions and sizes are tree units, as the tree's own layout uses.
 public final class GodTreeDecorations {
     private static final ResourceLocation SETTINGS = WoldsVaults.id("god_tree/decorations.json");
     private static final ResourceLocation SPRITES = WoldsVaults.id("god_tree/decoration_sprites.json");
@@ -48,7 +44,6 @@ public final class GodTreeDecorations {
     private static Map<VaultGod, List<Decoration>> decorations;
     private static Sheet sheet;
 
-    // One sprite's rectangle in the sheet, as uv, and its height over its width.
     private record Sprite(float u0, float v0, float u1, float v1, float aspect) {}
 
     private record Sheet(ResourceLocation texture, Map<String, Sprite> sprites) {}
@@ -74,8 +69,6 @@ public final class GodTreeDecorations {
         }
     }
 
-    // Draws god's decorations of one layer (front: over the stars, else behind the lines) that touch
-    // the tree-space rectangle in view, in the caller's tree-space pose.
     public static void render(PoseStack poseStack, VaultGod god, boolean front, float minX, float minY, float maxX, float maxY) {
         List<Decoration> list = decorations().get(god);
         if (list == null || list.isEmpty()) {
@@ -93,6 +86,7 @@ public final class GodTreeDecorations {
             }
             Sprite sprite = d.glow() ? new Sprite(0.0F, 0.0F, 1.0F, 1.0F, 1.0F) : sprites.sprites().get(d.sprite());
             if (sprite == null) {
+                GodTreeLog.warnOnce("decoration_sprite:" + d.sprite(), "God tree decoration sprite {} is not in decoration_sprites.json; skipping it.", d.sprite());
                 continue;
             }
             float halfW = d.size() / 2.0F;
@@ -114,7 +108,6 @@ public final class GodTreeDecorations {
             float cos = (float) Math.cos(angle);
             float sin = (float) Math.sin(angle);
             if (d.glow()) {
-                // the glow is a smooth falloff, so it is read between its pixels
                 Minecraft.getInstance().getTextureManager().getTexture(GLOW).setFilter(true, false);
             }
             RenderSystem.setShaderTexture(0, d.glow() ? GLOW : sprites.texture());
@@ -136,7 +129,6 @@ public final class GodTreeDecorations {
         RenderSystem.defaultBlendFunc();
     }
 
-    // accent, dim, deep and white name the god's own colours; anything else is #rrggbb.
     private static int color(VaultGod god, String name) {
         return switch (name) {
             case "accent" -> GodTreeTheme.accent(god) & 0xFFFFFF;
@@ -147,6 +139,7 @@ public final class GodTreeDecorations {
                 try {
                     yield Integer.parseInt(name.startsWith("#") ? name.substring(1) : name, 16) & 0xFFFFFF;
                 } catch (NumberFormatException e) {
+                    GodTreeLog.warnOnce("decoration_color:" + name, "God tree decoration colour {} is not a colour name or hex value; using white.", name);
                     yield 0xFFFFFF;
                 }
             }
@@ -178,7 +171,6 @@ public final class GodTreeDecorations {
         return decorations;
     }
 
-    // missing values fall back to the editor's defaults for a new decoration
     private static Decoration decoration(JsonObject json) {
         boolean glow = "glow".equals(s(json, "type", "sprite"));
         return new Decoration(glow, s(json, "sprite", "sparkle"), f(json, "x", 0.0F), f(json, "y", 0.0F),

@@ -111,7 +111,6 @@ public class GodTreeScreen extends AbstractSkillTabElementContainerScreen<GodTre
         return new Rectangle(x, pan.y + 17, XP_BAR_WIDTH, GodXpBarRenderer.BAR_HEIGHT);
     }
 
-    // Opens a page. Opening a god's tree, even the one already open, brings the whole tree into view.
     public void selectTab(GodScreenTab tab) {
         boolean reopened = selectedTab == tab;
         if (reopened && tab.isOverview()) {

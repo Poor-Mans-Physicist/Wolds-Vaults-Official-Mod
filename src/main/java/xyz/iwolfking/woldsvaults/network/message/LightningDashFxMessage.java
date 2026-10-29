@@ -33,8 +33,9 @@ public class LightningDashFxMessage {
         buffer.writeVarInt(message.entityId);
         buffer.writeVarInt(message.ticks);
         buffer.writeLong(message.seed);
-        buffer.writeVarInt(message.path.size());
-        for (Vec3 point : message.path) {
+        int size = Math.min(message.path.size(), MAX_POINTS);
+        buffer.writeVarInt(size);
+        for (Vec3 point : message.path.subList(0, size)) {
             buffer.writeDouble(point.x);
             buffer.writeDouble(point.y);
             buffer.writeDouble(point.z);

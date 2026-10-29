@@ -27,21 +27,19 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
 
-
 public final class GodTreeBackdrop {
     private static final String DIR = "textures/gui/gods/backdrop/";
-    private static final float DRIFT_SPEED = 3.0F;    // GUI units per second at depth 1
-    private static final float DRIFT_ANGLE = 12.0F;   // degrees, 0 = drifting right
-    private static final float FAN_SPREAD = 12.0F;    // degrees a fanned nebula turns away from the pan direction
+    private static final float DRIFT_SPEED = 3.0F;
+    private static final float DRIFT_ANGLE = 12.0F;
+    private static final float FAN_SPREAD = 12.0F;
     private static final float METEORS_PER_MINUTE = 10.0F;
     private static final int GALAXY_COUNT = 6;
     private static final int GALAXY_SCALE = 2;
-    private static final int SPAN_W = 768, SPAN_H = 432; // sprites wrap inside this many GUI units
+    private static final int SPAN_W = 768, SPAN_H = 432;
 
-    private static final int CLOUDS_PER_SHEET = 3; // clouds_*.png sheets are 3 square cells side by side
+    private static final int CLOUDS_PER_SHEET = 3;
 
     private record Tile(ResourceLocation texture, int size, float depth, float alpha) {}
-    // cloud sheet, cell size, depth, opacity, fan, grid spacing (art px), chance a grid cell holds a cloud, size range
     private record Clouds(ResourceLocation texture, int cell, float depth, float alpha, float fan, float spacing,
                           float fill, float minScale, float maxScale, long seed) {}
     private record Sheet(ResourceLocation texture, int width, int height) {}
@@ -65,28 +63,27 @@ public final class GodTreeBackdrop {
     private final List<Meteor> meteors = new ArrayList<>();
     private final Random random = new Random();
     private float lastSeconds = -1.0F, spawnIn = 2.0F;
-    private final Map<Long, Float> voidCells = new HashMap<>(); // sky square -> the time the black hole last ate it
+    private final Map<Long, Float> voidCells = new HashMap<>();
     private final List<Mote> motes = new ArrayList<>();
     private BlackHole hole;
     private float holeIn, moteIn;
 
-    private static final float ZOOM = 0.5F; // GUI units per art pixel: lower shows more of the sky at once
-    private static final float BRIGHTNESS = .25F; //Darkens the rendered frame from 0.0F (pitch black) to 2.0F (pure white). 1.0F is no brightness change
+    private static final float ZOOM = 0.5F;
+    private static final float BRIGHTNESS = .25F;
 
     private static final float GRADE_BRIGHTNESS = 45, GRADE_CONTRAST = 37, GRADE_GAMMA = 1.14F, GRADE_VIBRANCE = 90;
 
-    // black hole sizes and speeds are in GUI units, so it looks the same whatever ZOOM is
-    private static final float BLACK_HOLES_PER_MINUTE = 60F;
-    private static final float HOLE_DEPTH = 0.2F;            // pans with the sky like a mid layer
-    private static final float HOLE_CROSSING = 14.0F;        // seconds to cross the region
-    private static final float HOLE_CELL = 1.0F;             // size of one void square
-    private static final float HOLE_EAT_RADIUS = 9.0F;       // squares this close to the hole go black
-    private static final float HOLE_PULL_RADIUS = 24.0F;     // loose pixels start falling in from this far out
-    private static final float HOLE_MOTE_SPEED = 8.0F;       // how fast they fall at the rim, GUI units per second
+    private static final float BLACK_HOLES_PER_MINUTE = 0.5F;
+    private static final float HOLE_DEPTH = 0.2F;
+    private static final float HOLE_CROSSING = 14.0F;
+    private static final float HOLE_CELL = 1.0F;
+    private static final float HOLE_EAT_RADIUS = 9.0F;
+    private static final float HOLE_PULL_RADIUS = 24.0F;
+    private static final float HOLE_MOTE_SPEED = 8.0F;
     private static final float HOLE_MOTES_PER_SECOND = 70.0F;
-    private static final float HOLE_VOID_HOLD = 3.0F;        // seconds a square stays pure black
-    private static final float HOLE_VOID_FADE = 2.5F;        // seconds it then takes to fade back in
-    private static final float HOLE_FADE_JITTER = 2.0F;      // per-square delay spread, so the sky returns a few pixels at a time
+    private static final float HOLE_VOID_HOLD = 3.0F;
+    private static final float HOLE_VOID_FADE = 2.5F;
+    private static final float HOLE_FADE_JITTER = 2.0F;
     private static final int[] MOTE_COLORS = {0xFFFFFFFF, 0xFFBFD4FF, 0xFFFFE2A8, 0xFF8A6FB8, 0xFF6B5A3A};
 
     public static GodTreeBackdrop forGod(VaultGod god) {
@@ -126,7 +123,8 @@ public final class GodTreeBackdrop {
 
     private static void useGradeShader() {
         ShaderInstance shader = GodTreeShaders.backdropGrade;
-        if (shader == null) { // failed to load: draw ungraded rather than not at all
+        if (shader == null) {
+            GodTreeLog.errorOnce("backdrop_grade", "God tree backdrop grade shader did not load; drawing the sky ungraded.");
             RenderSystem.setShader(GameRenderer::getPositionTexShader);
             return;
         }
@@ -142,7 +140,6 @@ public final class GodTreeBackdrop {
         float dt = this.lastSeconds < 0 ? 0.0F : Mth.clamp(seconds - this.lastSeconds, 0.0F, 0.1F);
         this.lastSeconds = seconds;
         float angle = (float) Math.toRadians(DRIFT_ANGLE);
-        // the pan is in screen GUI units but the sky is drawn ZOOM times smaller, so it moves 1/ZOOM as far to keep pace
         float panX = (scale * translation.x - Mth.cos(angle) * DRIFT_SPEED * seconds) / ZOOM;
         float panY = (scale * translation.y - Mth.sin(angle) * DRIFT_SPEED * seconds) / ZOOM;
         Rectangle b = new Rectangle(0, 0, Mth.ceil(bounds.width / ZOOM), Mth.ceil(bounds.height / ZOOM));
@@ -178,14 +175,10 @@ public final class GodTreeBackdrop {
         if (amount <= 0.0F) {
             return;
         }
-        //noinspection ConstantValue
-        int rgb = BRIGHTNESS < 1.0F ? 0x000000 : 0xFFFFFF; // fade toward black below 1, toward white above it
+        int rgb = BRIGHTNESS < 1.0F ? 0x000000 : 0xFFFFFF;
         GuiComponent.fill(pose, b.x, b.y, b.x + b.width, b.y + b.height, (Mth.floor(amount * 255.0F) << 24) | rgb);
     }
 
-    // Loose clouds scattered over the sky. The sky is split into a grid, and each grid cell rolls its own cloud from
-    // its position: whether it has one, where in the cell, which sheet cell, size, angle and mirroring. Nothing
-    // repeats, and a cloud stays the same while it pans past. All of a layer's clouds go out in one draw.
     private static void clouds(PoseStack pose, Rectangle b, Clouds c, float panX, float panY) {
         float x = panX * c.depth(), y = panY * c.depth();
         if (c.fan() != 0) {
@@ -195,7 +188,7 @@ public final class GodTreeBackdrop {
             x = rx;
         }
         float offX = x, offY = y, spacing = c.spacing();
-        float reach = c.cell() * c.maxScale() * 0.75F; // half a cloud's diagonal at its biggest, so ones centred just off screen still draw
+        float reach = c.cell() * c.maxScale() * 0.75F;
         int col0 = Mth.floor((b.x - offX - reach) / spacing), col1 = Mth.floor((b.x + b.width - offX + reach) / spacing);
         int row0 = Mth.floor((b.y - offY - reach) / spacing), row1 = Mth.floor((b.y + b.height - offY + reach) / spacing);
         useGradeShader();
@@ -214,12 +207,11 @@ public final class GodTreeBackdrop {
                     float half = c.cell() * Mth.lerp(fraction(key, 4), c.minScale(), c.maxScale()) / 2.0F;
                     float angle = fraction(key, 5) * Mth.TWO_PI, cos = Mth.cos(angle) * half, sin = Mth.sin(angle) * half;
                     float u0 = (float) index / CLOUDS_PER_SHEET, u1 = (index + 1.0F) / CLOUDS_PER_SHEET;
-                    if (fraction(key, 6) < 0.5F) { // mirrored: swap the u's rather than the corners, so the winding stays the same
+                    if (fraction(key, 6) < 0.5F) {
                         float swap = u0;
                         u0 = u1;
                         u1 = swap;
                     }
-                    // the four corners of the cell, turned by angle around the cloud's centre
                     buf.vertex(matrix, cx - cos - sin, cy - sin + cos, 0.0F).uv(u0, 1.0F).endVertex();
                     buf.vertex(matrix, cx + cos - sin, cy + sin + cos, 0.0F).uv(u1, 1.0F).endVertex();
                     buf.vertex(matrix, cx + cos + sin, cy + sin - cos, 0.0F).uv(u1, 0.0F).endVertex();
@@ -234,7 +226,7 @@ public final class GodTreeBackdrop {
         int size = t.size(), half = size / 2;
         RenderSystem.setShaderTexture(0, t.texture());
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, t.alpha());
-        RenderSystem.disableCull(); // mirrored cells flip the quad's winding
+        RenderSystem.disableCull();
         for (int col = Mth.floor(-x / size); col * size + x < b.width; col++) {
             for (int row = Mth.floor(-y / size); row * size + y < b.height; row++) {
                 long h = mix(seed ^ (col * 0x9E3779B97F4A7C15L) ^ (row * 0xC2B2AE3D27D4EB4FL));
@@ -274,7 +266,7 @@ public final class GodTreeBackdrop {
                     }
 
                     pose.pushPose();
-                    pose.translate(b.x + dx, b.y + dy, 0.0D); // float translate keeps the drift smooth
+                    pose.translate(b.x + dx, b.y + dy, 0.0D);
                     GuiComponent.blit(pose, 0, 0, w, h, s.u(), s.v(), s.w(), s.h(), sheet.width(), sheet.height());
                     pose.popPose();
                 }
@@ -289,7 +281,7 @@ public final class GodTreeBackdrop {
             this.spawnIn = (float) (-Math.log(1 - this.random.nextDouble()) * 60.0 / METEORS_PER_MINUTE);
         }
         RenderSystem.setShaderTexture(0, COMETS.texture());
-        RenderSystem.disableCull(); // a mirrored meteor flips the quad's winding
+        RenderSystem.disableCull();
         for (Iterator<Meteor> it = this.meteors.iterator(); it.hasNext(); ) {
             Meteor m = it.next();
             m.age += dt;
@@ -306,7 +298,6 @@ public final class GodTreeBackdrop {
             if (m.flip) {
                 pose.scale(-1.0F, 1.0F, 1.0F);
             }
-            // head pixel of each cell in comets.png: shooting star (44,3), comet (42,7)
             GuiComponent.blit(pose, m.comet ? -42 : -44, m.comet ? -7 : -3, m.comet ? 48 : 0, 0, 48, 16,
                     COMETS.width(), COMETS.height());
             pose.popPose();
@@ -327,11 +318,9 @@ public final class GodTreeBackdrop {
                 comet ? 7.0F : 3.0F));
     }
 
-    // A rare black hole that crosses the sky. Squares it passes over go pure black, stay that way for a few seconds,
-    // then fade back in a few at a time. Loose pixels spiral into it as it goes.
     private void blackHole(PoseStack pose, Rectangle b, float panX, float panY, float seconds, float dt) {
         float unit = 1.0F / ZOOM, cell = HOLE_CELL * unit, eat = HOLE_EAT_RADIUS * unit, pull = HOLE_PULL_RADIUS * unit;
-        float offX = panX * HOLE_DEPTH, offY = panY * HOLE_DEPTH; // a sky position plus this is its position in b
+        float offX = panX * HOLE_DEPTH, offY = panY * HOLE_DEPTH;
         this.holeIn -= dt;
         if (this.hole == null && this.holeIn <= 0) {
             this.hole = this.newHole(b, offX, offY, seconds, pull);
@@ -350,7 +339,7 @@ public final class GodTreeBackdrop {
         if (this.hole != null) {
             BlackHole h = this.hole;
             float dx = h.endX() - h.startX(), dy = h.endY() - h.startY(), len = Mth.sqrt(dx * dx + dy * dy);
-            float sway = Mth.sin(t * Mth.TWO_PI + h.phase()) * 10.0F * unit; // a gentle S-bend so it doesn't run on rails
+            float sway = Mth.sin(t * Mth.TWO_PI + h.phase()) * 10.0F * unit;
             hx = h.startX() + dx * t - dy / len * sway;
             hy = h.startY() + dy * t + dx / len * sway;
 
@@ -358,7 +347,7 @@ public final class GodTreeBackdrop {
             for (int cx = hcx - reach; cx <= hcx + reach; cx++) {
                 for (int cy = hcy - reach; cy <= hcy + reach; cy++) {
                     long key = (long) cx << 32 | (cy & 0xFFFFFFFFL);
-                    float ragged = eat * (0.75F + 0.5F * fraction(key, 1)); // each square has its own reach, so the void's edge is ragged
+                    float ragged = eat * (0.75F + 0.5F * fraction(key, 1));
                     float ex = (cx + 0.5F) * cell - hx, ey = (cy + 0.5F) * cell - hy;
                     if (ex * ex + ey * ey <= ragged * ragged) {
                         this.voidCells.put(key, seconds);
@@ -373,7 +362,6 @@ public final class GodTreeBackdrop {
             for (Iterator<Mote> it = this.motes.iterator(); it.hasNext(); ) {
                 Mote m = it.next();
                 m.age += dt;
-                // falls faster and spins faster the closer it gets, then vanishes into the core
                 m.radius -= HOLE_MOTE_SPEED * unit * (1.0F + 3.0F * (1.0F - m.radius / pull)) * dt;
                 m.angle += 1.2F * pull / Math.max(m.radius, cell) * dt;
                 if (m.radius < eat * 0.3F) {
@@ -383,7 +371,7 @@ public final class GodTreeBackdrop {
         }
 
         float sx = hx + offX, sy = hy + offY;
-        RenderSystem.setShader(GameRenderer::getPositionColorShader); // the grade shader is position_tex and would read the colours as uvs
+        RenderSystem.setShader(GameRenderer::getPositionColorShader);
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
         RenderSystem.disableTexture();
@@ -412,7 +400,6 @@ public final class GodTreeBackdrop {
                 square(buf, matrix, sx + Mth.cos(m.angle) * m.radius - cell / 2, sy + Mth.sin(m.angle) * m.radius - cell / 2,
                         cell, alpha << 24 | m.color & 0xFFFFFF);
             }
-            // the hole itself, for now just black squares: a solid core with a few loose ones whirling round its rim
             int core = Mth.ceil(eat * 0.7F / cell);
             for (int i = -core; i <= core; i++) {
                 for (int j = -core; j <= core; j++) {
@@ -431,7 +418,6 @@ public final class GodTreeBackdrop {
     }
 
     private BlackHole newHole(Rectangle b, float offX, float offY, float seconds, float margin) {
-        // crosses the part of the sky on screen right now, entering and leaving just past opposite edges
         float left = b.x - offX - margin, right = b.x + b.width - offX + margin;
         float y0 = b.y - offY + b.height * (0.2F + 0.6F * this.random.nextFloat());
         float y1 = b.y - offY + b.height * (0.2F + 0.6F * this.random.nextFloat());
@@ -448,12 +434,10 @@ public final class GodTreeBackdrop {
         buf.vertex(matrix, x, y, 0.0F).color(r, g, bl, a).endVertex();
     }
 
-    // A steady 0..1 value for a sky square, so its ragged edge and fade delay don't flicker between frames.
     private static float fraction(long key, long salt) {
         return (mix(key * 31 + salt) >>> 40) / (float) (1L << 24);
     }
 
-    // Seconds until the next event of something that happens perMinute times a minute on average.
     private static float nextWait(Random random, float perMinute) {
         return (float) (-Math.log(1 - random.nextDouble()) * 60.0 / perMinute);
     }

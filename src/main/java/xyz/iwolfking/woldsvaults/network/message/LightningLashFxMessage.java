@@ -37,8 +37,9 @@ public class LightningLashFxMessage {
         buffer.writeDouble(message.origin.z);
         buffer.writeFloat(message.speed);
         buffer.writeLong(message.seed);
-        buffer.writeVarInt(message.directions.size());
-        for (int i = 0; i < message.directions.size(); i++) {
+        int count = Math.min(message.directions.size(), MAX_BOLTS);
+        buffer.writeVarInt(count);
+        for (int i = 0; i < count; i++) {
             Vec3 direction = message.directions.get(i);
             buffer.writeFloat((float) direction.x);
             buffer.writeFloat((float) direction.y);

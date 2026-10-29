@@ -51,11 +51,9 @@ public final class GodTreeTheme {
 
     public static final int SPACE_BACKGROUND = 0xFF060309;
 
-    // God's Mastery idols: one 64px cell per god level down the sheet, 0 the broken idol, 1-10 tan to god colour.
     public static final int IDOL_CELL = 64;
     public static final int IDOL_LEVELS = 11;
 
-    // Transfer slot circles, 30px cells: columns locked/empty/assigned/dormant, rows in DISPLAY_ORDER.
     public static final ResourceLocation TRANSFER_SLOTS = WoldsVaults.id("textures/gui/gods/transfer_slots.png");
     public static final int SLOT_CELL = 30;
     public static final int SLOT_RING_RADIUS = 13;
@@ -123,7 +121,6 @@ public final class GodTreeTheme {
         };
     }
 
-    // The God's Mastery page's accent: the theme accent, except Idona, who is the deep red of her slot rings there.
     public static int masteryAccent(VaultGod god) {
         return god == VaultGod.IDONA ? 0xFFE0182D : accent(god);
     }

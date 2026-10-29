@@ -46,7 +46,6 @@ import java.util.List;
 @Mod.EventBusSubscriber(modid = WoldsVaults.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public final class ClientLightningForm {
     private static final float DASH_FOV = 1.15F;
-    // how far the client looks for a target under the crosshair; the server holds each ability to its own range
     private static final double AIM_RANGE = 32.0;
 
     private static int formTicks;
@@ -63,7 +62,6 @@ public final class ClientLightningForm {
     private static boolean pickWasDown;
     private static int markId = -1;
 
-    // the local player's dash under way, if any, and the level it's in
     private static List<Vec3> path;
     private static Level travelLevel;
     private static int travelTicks;
@@ -83,7 +81,6 @@ public final class ClientLightningForm {
         rodCooldownTicks = rodCooldown;
         sinceRod = rodCooldown;
         markId = -1;
-        // a key already held when the form starts doesn't act until it is pressed again
         Options options = Minecraft.getInstance().options;
         KeyMapping[] keys = keys(options);
         for (int i = 0; i < keys.length; i++) {
@@ -128,8 +125,6 @@ public final class ClientLightningForm {
         return remaining > 0 || path != null;
     }
 
-    // for the ability bar: how much of the form is left, how far through each cooldown, and the marked target
-
     static float formLeft(float partialTick) {
         return formTicks <= 0 ? 0.0F : Math.max(0.0F, (remaining - partialTick) / formTicks);
     }
@@ -142,7 +137,6 @@ public final class ClientLightningForm {
         return cooldown(sinceRod, rodCooldownTicks, partialTick);
     }
 
-    // the part of a cooldown still to run, 1 just used to 0 ready
     private static float cooldown(int since, int ticks, float partialTick) {
         return ticks <= 0 ? 0.0F : Math.max(0.0F, 1.0F - (since + partialTick) / ticks);
     }
@@ -151,14 +145,10 @@ public final class ClientLightningForm {
         return markId;
     }
 
-    // in the order of LightningFiend.Dash: jump dashes up, sneak dashes down
     private static KeyMapping[] keys(Options options) {
         return new KeyMapping[] { options.keyUp, options.keyLeft, options.keyRight, options.keyDown, options.keyJump, options.keyShift };
     }
 
-    // which way is forward: where the camera faces, so a third-person camera turned away from the player's body
-    // (Shoulder Surfing's decoupled camera) dashes the way it looks; but in the front-facing view, the player's own
-    // facing, as vanilla walks relative to it there
     private static float dashYaw(Minecraft mc) {
         if (mc.player == null || mc.options.getCameraType() == CameraType.THIRD_PERSON_FRONT) {
             return mc.player == null ? 0.0F : mc.player.getYRot();
@@ -166,7 +156,6 @@ public final class ClientLightningForm {
         return mc.gameRenderer.getMainCamera().getYRot();
     }
 
-    // lightning doesn't jump or crouch: jump and sneak only dash while the form lasts
     @SubscribeEvent
     public static void onMovementInput(MovementInputUpdateEvent event) {
         if (isLightning(event.getPlayer())) {
@@ -175,7 +164,6 @@ public final class ClientLightningForm {
         }
     }
 
-    // nor does it attack, mine, use items or pick blocks: the three clicks belong to its abilities while it lasts
     @SubscribeEvent
     public static void onClick(InputEvent.ClickInputEvent event) {
         if (isActive() && Minecraft.getInstance().player != null) {
@@ -201,7 +189,6 @@ public final class ClientLightningForm {
             return;
         }
         remaining--;
-        // the cooldown runs from when the player reappears
         if (path == null) {
             sinceDash++;
         }
@@ -217,8 +204,6 @@ public final class ClientLightningForm {
             WAS_DOWN[i] = down;
         }
 
-        // holding attack lashes again each time the cooldown allows; use marks and pick block strikes on each fresh
-        // press
         boolean useDown = mc.options.keyUse.isDown();
         boolean pickDown = mc.options.keyPickItem.isDown();
         if (mc.screen == null) {
@@ -243,8 +228,6 @@ public final class ClientLightningForm {
         ModNetwork.sendToServer(new LightningAbilityMessage(ability, crosshairTarget(mc, camera), new Vec3(look.x(), look.y(), look.z())));
     }
 
-    // the living entity under the crosshair, looking from the camera (which may sit behind or beside the player in
-    // third person) out to AIM_RANGE past the player, stopped by blocks; -1 for none
     private static int crosshairTarget(Minecraft mc, Camera camera) {
         Player player = mc.player;
         if (player == null || mc.level == null) {
@@ -263,8 +246,6 @@ public final class ClientLightningForm {
         return hit == null ? -1 : hit.getEntity().getId();
     }
 
-    // after the player's own movement each tick, put them where the dash has got to; the position the client then
-    // sends is what the server sees, and the frames in between glide from the last spot to this one
     @SubscribeEvent
     public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
         if (event.phase != TickEvent.Phase.END || event.side != LogicalSide.CLIENT || path == null || event.player != Minecraft.getInstance().player) {
@@ -277,8 +258,6 @@ public final class ClientLightningForm {
         }
         travelAge++;
         float progress = (float) travelAge / travelTicks;
-        // a fast dash crosses many path steps a tick; send each one, so the server checks short steps against the
-        // blocks rather than one long jump that could clip a corner where the path steps up and pull the player back
         if (player instanceof LocalPlayer local) {
             int reached = (int) (Math.min(1.0F, progress) * (path.size() - 1));
             for (; sentStep < reached; sentStep++) {
@@ -296,7 +275,6 @@ public final class ClientLightningForm {
         }
     }
 
-    // a little wider view while the dash lasts; vanilla eases the field of view in and out
     @SubscribeEvent
     public static void onFov(FOVModifierEvent event) {
         if (path != null && event.getEntity() == Minecraft.getInstance().player) {

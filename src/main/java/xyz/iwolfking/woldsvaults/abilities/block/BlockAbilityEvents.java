@@ -15,8 +15,6 @@ import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.server.ServerLifecycleHooks;
 import xyz.iwolfking.woldsvaults.WoldsVaults;
 
-// Server-side lifecycle for Life Block and Mana Block: the tick loop, the heal hook, and the teardown paths. A
-// death, logout or change of dimension drops both a raised block and any running buffs.
 @Mod.EventBusSubscriber(modid = WoldsVaults.MOD_ID)
 public final class BlockAbilityEvents {
     private BlockAbilityEvents() {

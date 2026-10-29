@@ -48,7 +48,6 @@ public class LightningFiendArmorLayers extends ArmorLayers {
 
     @OnlyIn(Dist.CLIENT)
     public static class MainLayer extends ArmorLayers.MainLayer {
-        // a part named like horn_left_2: a segment of a chain, hanging off the end of the one numbered before it
         private static final Pattern CHAIN_SEGMENT = Pattern.compile(".+_(\\d+)");
         private static Field polygonNormal;
 
@@ -58,14 +57,6 @@ public class LightningFiendArmorLayers extends ArmorLayers {
             fixOverlappingFaces(root);
         }
 
-        // Two kinds of face sit exactly on top of each other here, and drawn translucent they fight over every pixel
-        // (the striping on the arm bolts, crown, ears and horns):
-        //  - a zero-thickness box still gets both of its large faces, on the same plane. Nothing culls them, so one
-        //    shows from both sides: each flat box keeps only the first of its pair (north, east or down; the textures
-        //    paint both alike) and loses its zero-area edges;
-        //  - a chain segment (horn_left_1 hangs off the end of horn_left_0, and so on) starts on its parent's end
-        //    face: its own face there, the top of its box through its pivot, goes and the parent's end covers the joint.
-        // Minecraft keeps faces private, so this goes by reflection.
         @SuppressWarnings("unchecked")
         private static void fixOverlappingFaces(ModelPart root) {
             try {

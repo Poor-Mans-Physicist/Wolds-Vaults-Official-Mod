@@ -44,7 +44,6 @@ public final class GodOverviewPage {
     private static final int FOOTER_HEIGHT = 9;
     private static final int CAPTION_HEIGHT = 10;
     private static final int CAPTION_GAP = 6;
-    // the idol is drawn in whole GUI pixels per pixel of its 16px art; at 160 a slot cell is drawn at its own 30px
     private static final int IDOL_STEP = 16;
     private static final int IDOL_MIN = 64;
     private static final int IDOL_MAX = 160;
@@ -114,9 +113,13 @@ public final class GodOverviewPage {
         return new Layout(inner, panelWidth, panelHeight, top, idol);
     }
 
-    // How many slots the page shows: those the curve grants, as far as the cloud has openings for them.
     private static int slotCount() {
-        return Math.min(GodIdolCloud.openings().size(), GodLevels.maxMinorTransferSlots());
+        int openings = GodIdolCloud.openings().size();
+        int granted = GodLevels.maxMinorTransferSlots();
+        if (granted > openings) {
+            GodTreeLog.warnOnce("transfer_slots", "god_levels grants {} transfer slots but the idol cloud has {} openings; the page shows {}.", granted, openings, openings);
+        }
+        return Math.min(openings, granted);
     }
 
     public void render(PoseStack poseStack, Rectangle frame, int mouseX, int mouseY, List<Runnable> postRender) {
@@ -220,7 +223,6 @@ public final class GodOverviewPage {
         return lines;
     }
 
-    // One transfer slot set into the idol; returns whether it showed its tooltip.
     private boolean renderSlot(PoseStack poseStack, Layout layout, int column, int slot, GodIdolCloud.Opening opening,
                                VaultGod god, boolean dormant, boolean mayTooltip, int mouseX, int mouseY,
                                List<Runnable> postRender) {
@@ -302,7 +304,6 @@ public final class GodOverviewPage {
         });
     }
 
-    // Right-click on a filled slot clears it; any other left-click on a god's column opens its constellation.
     public boolean mouseClicked(Rectangle frame, double mouseX, double mouseY, int button) {
         Layout layout = layout(frame);
         VaultGod[] order = GodTreeTheme.DISPLAY_ORDER;

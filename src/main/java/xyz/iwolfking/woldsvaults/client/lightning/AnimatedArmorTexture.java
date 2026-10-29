@@ -30,7 +30,6 @@ import java.util.Map;
 @Mod.EventBusSubscriber(modid = WoldsVaults.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public class AnimatedArmorTexture extends AbstractTexture implements Tickable {
     private static final int FRAME_TICKS = 2;
-    // armor texture -> its frames
     private static final Map<ResourceLocation, ResourceLocation> ANIMATED = Map.of(
             new ResourceLocation("the_vault", "textures/item/gear/armor/lightning_fiend/armor_layer1_overlay.png"),
             new ResourceLocation(WoldsVaults.MOD_ID, "textures/armor/lightning_fiend/armor_layer1_overlay_frames.png"));
@@ -56,6 +55,7 @@ public class AnimatedArmorTexture extends AbstractTexture implements Tickable {
         try (Resource resource = resourceManager.getResource(this.frames)) {
             image = NativeImage.read(resource.getInputStream());
         } catch (IOException missing) {
+            WoldsVaults.LOGGER.error("Lightning Fiend armor frame strip {} could not be read; drawing {} unanimated.", this.frames, this.location, missing);
             animated = false;
             try (Resource resource = resourceManager.getResource(this.location)) {
                 image = NativeImage.read(resource.getInputStream());
@@ -82,7 +82,6 @@ public class AnimatedArmorTexture extends AbstractTexture implements Tickable {
         this.show(0);
     }
 
-    // uploads one frame of the strip as the whole texture
     private void show(int frame) {
         if (this.strip == null) {
             return;
@@ -112,8 +111,6 @@ public class AnimatedArmorTexture extends AbstractTexture implements Tickable {
         }
     }
 
-    // stands in at each animated armor path once a world is up, and again if anything (a resource reload that failed
-    // to read it, say) leaves something else there; the texture manager reloads and ticks it from then on
     @SubscribeEvent
     public static void onClientTick(TickEvent.ClientTickEvent event) {
         Minecraft mc = Minecraft.getInstance();

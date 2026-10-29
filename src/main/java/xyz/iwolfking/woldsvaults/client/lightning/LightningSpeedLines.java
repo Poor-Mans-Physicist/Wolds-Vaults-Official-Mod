@@ -86,8 +86,6 @@ public final class LightningSpeedLines {
         }
         int width = event.getWindow().getGuiScaledWidth();
         int height = event.getWindow().getGuiScaledHeight();
-        // the lines rush out from where the player is heading: the middle for forward and back, off to the side for
-        // a sideways dash, up or down for a dash up or down
         double yaw = Math.toRadians(mc.gameRenderer.getMainCamera().getYRot());
         Vec3 right = new Vec3(-Math.cos(yaw), 0.0, -Math.sin(yaw));
         Vec3 way = heading.lengthSqr() < 1.0E-6 ? Vec3.ZERO : heading.normalize();
@@ -108,17 +106,14 @@ public final class LightningSpeedLines {
         BufferBuilder buffer = Tesselator.getInstance().getBuilder();
         buffer.begin(VertexFormat.Mode.TRIANGLES, DefaultVertexFormat.POSITION_COLOR);
         for (int i = 0; i < LINES; i++) {
-            // spread evenly round the circle, each nudged a little, starting at different distances from the middle
             double angle = (i + random.nextDouble()) * Math.PI * 2.0 / LINES;
             float dx = (float) Math.cos(angle), dy = (float) Math.sin(angle);
-            // just past the screen's edge in this direction
             float tx = dx > 1.0E-4F ? (width - cx) / dx : dx < -1.0E-4F ? -cx / dx : reach;
             float ty = dy > 1.0E-4F ? (height - cy) / dy : dy < -1.0E-4F ? -cy / dy : reach;
             float edge = Math.min(tx, ty) + 4.0F;
             float inner = Math.min(near * (0.28F + random.nextFloat() * 0.18F), edge * 0.7F);
             float halfWidth = 0.6F + random.nextFloat() * 1.4F;
             float alpha = strength * (0.35F + random.nextFloat() * 0.45F);
-            // a long thin wedge: clear at its point near the middle, widest and brightest at the screen's edge
             buffer.vertex(matrix, cx + dx * inner, cy + dy * inner, 0.0F).color(1.0F, 1.0F, 1.0F, 0.0F).endVertex();
             buffer.vertex(matrix, cx + dx * edge - dy * halfWidth, cy + dy * edge + dx * halfWidth, 0.0F).color(0.85F, 0.93F, 1.0F, alpha).endVertex();
             buffer.vertex(matrix, cx + dx * edge + dy * halfWidth, cy + dy * edge - dx * halfWidth, 0.0F).color(0.85F, 0.93F, 1.0F, alpha).endVertex();

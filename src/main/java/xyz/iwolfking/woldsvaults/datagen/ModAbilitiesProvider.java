@@ -10,7 +10,6 @@ import xyz.iwolfking.woldsvaults.abilities.block.ManaBlockAbility;
 import java.io.IOException;
 
 public class ModAbilitiesProvider extends AbstractAbilityProvider {
-    // Life Block and Mana Block ramp from a 100% to a 1000% block over the learnable tiers, then hold.
     private static final int BLOCK_RAMP_TIERS = 8;
     private static final int BLOCK_TIERS = 30;
 
@@ -161,7 +160,6 @@ public class ModAbilitiesProvider extends AbstractAbilityProvider {
 
     }
 
-    // The block for a 0-based tier: 1x at the first tier to 10x at the last ramp tier, rounded to 0.01.
     private static float blockMultiplier(int tier) {
         float t = Math.min(tier, BLOCK_RAMP_TIERS - 1) / (float) (BLOCK_RAMP_TIERS - 1);
         return Math.round((1.0F + 9.0F * t) * 100.0F) / 100.0F;
