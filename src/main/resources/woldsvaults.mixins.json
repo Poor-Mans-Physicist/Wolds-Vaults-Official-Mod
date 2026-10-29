@@ -36,6 +36,7 @@
     "MixinServerLevelEffectCloudMerge",
     "RangedAttributeAccessor",
     "ThrownTridentAccessor",
+    "accessors.AbstractArrowAccessor",
     "accessors.ChaosTaskAccessor",
     "vaulthunters.accessors.DeckModifierValueAccessor",
     "accessors.EvokerFangsAccessor",
@@ -646,6 +647,7 @@
     "vaulthunters.skills.MixinAbilityLabelFactory",
     "vaulthunters.skills.MixinAreaOfEffectHelper",
     "vaulthunters.skills.MixinHealEffectAbility",
+    "vaulthunters.skills.MixinLuckyHitTalentDerivedHits",
     "vaulthunters.skills.MixinModAbilityLabelBindings",
     "vaulthunters.skills.MixinResistanceHelper",
     "vaulthunters.skills.MixinSkill",
@@ -671,6 +673,7 @@
   ],
   "client": [
     "AccessorParticleEngine",
+    "accessors.ModelAccessor",
     "MixinAbstractContainerScreen",
     "MixinAnvilScreen",
     "MixinDynamicBakedModelOverrides",
