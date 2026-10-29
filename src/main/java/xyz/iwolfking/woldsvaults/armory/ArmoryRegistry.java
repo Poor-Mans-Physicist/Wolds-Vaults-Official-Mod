@@ -19,6 +19,7 @@ import net.minecraftforge.fml.common.Mod;
 import xyz.iwolfking.woldsvaults.WoldsVaults;
 import xyz.iwolfking.woldsvaults.armory.block.ArmoryBlock;
 import xyz.iwolfking.woldsvaults.armory.block.ArmoryBlockEntity;
+import xyz.iwolfking.woldsvaults.armory.menu.ArmoryGodMenus;
 import xyz.iwolfking.woldsvaults.armory.menu.ArmoryMenu;
 import xyz.iwolfking.woldsvaults.armory.menu.ArmoryTreeMenus;
 import xyz.iwolfking.woldsvaults.init.ModCreativeTabs;
@@ -70,6 +71,7 @@ public final class ArmoryRegistry {
         ARMORY_MENU = IForgeMenuType.create(ArmoryMenu::client);
         event.getRegistry().register(ARMORY_MENU.setRegistryName(WoldsVaults.id("armory")));
         ArmoryTreeMenus.register(event);
+        ArmoryGodMenus.register(event);
     }
 
     private static final class UpgradeItem extends Item {
