@@ -72,6 +72,7 @@ public class ArmoryScreen extends AbstractSkillTabElementContainerScreen<ArmoryM
     private Button confirmButton;
     private Button cancelButton;
     private boolean confirming;
+    private final List<Button> titleButtons = new ArrayList<>();
     private final List<IElement> gearElements = new ArrayList<>();
 
     public ArmoryScreen(ArmoryMenu menu, Inventory inventory, Component title) {
@@ -251,6 +252,7 @@ public class ArmoryScreen extends AbstractSkillTabElementContainerScreen<ArmoryM
     @Override
     protected void init() {
         super.init();
+        this.titleButtons.clear();
         ISpatial title = this.getTabContentSpatial();
         int x = title.right() - 4;
         int y = title.y() + 3;
@@ -276,8 +278,14 @@ public class ArmoryScreen extends AbstractSkillTabElementContainerScreen<ArmoryM
 
     private Button titleButton(String label, int right, int y, Button.OnPress onPress) {
         int width = this.font.width(label) + BUTTON_PAD;
-        return this.addRenderableWidget(new Button(right - width, y, width, BUTTON_HEIGHT, new TextComponent(label), onPress,
+        return this.titleButton(new Button(right - width, y, width, BUTTON_HEIGHT, new TextComponent(label), onPress,
                 (button, poseStack, mouseX, mouseY) -> this.renderComponentTooltip(poseStack, this.buttonTooltip(label), mouseX, mouseY)));
+    }
+
+    /** VH element screens only hand clicks to their elements, so the title buttons are clicked from {@link #mouseClicked}. */
+    private Button titleButton(Button button) {
+        this.titleButtons.add(button);
+        return this.addRenderableWidget(button);
     }
 
     private List<Component> buttonTooltip(String label) {
@@ -366,6 +374,11 @@ public class ArmoryScreen extends AbstractSkillTabElementContainerScreen<ArmoryM
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (this.confirming) {
             return this.confirmButton.mouseClicked(mouseX, mouseY, button) || this.cancelButton.mouseClicked(mouseX, mouseY, button) || true;
+        }
+        for (Button title : this.titleButtons) {
+            if (title.mouseClicked(mouseX, mouseY, button)) {
+                return true;
+            }
         }
         if (button == 1 && this.hoveredSlot instanceof ArmoryMenu.PageSlot pageSlot) {
             this.click(ArmoryMenu.BUTTON_MARK + SlotKeys.indexOf(pageSlot.key()));
