@@ -87,7 +87,7 @@ public final class GodAltarXpHandler {
         GodAlignmentData alignmentData = GodAlignmentData.get(server);
         for (ServerPlayer player : players) {
             long xp = altarXpFor(alignmentData.getTotalAltarCompletions(player.getUUID()), altarBaseMultiplier(player));
-            long banked = alignmentData.previewScaledXp(player, xp);
+            long banked = alignmentData.previewScaledXp(player, god, xp);
             alignmentData.grantGodXp(player, god, xp);
             alignmentData.incrementAltarCompletions(player.getUUID(), god);
             reportAward(player, god, banked, data.getReputationGained());

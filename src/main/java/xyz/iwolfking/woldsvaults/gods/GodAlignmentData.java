@@ -54,6 +54,9 @@ public class GodAlignmentData extends SavedData {
 
     private static final Set<String> WARNED_STALE_TRANSFERS = ConcurrentHashMap.newKeySet();
 
+    /** God XP multiplier while the player wears an unbroken charm of the god being awarded. */
+    public static final double GOD_CHARM_XP_MULTIPLIER = 1.2D;
+
     private static final Map<String, Long> LAST_UNINITIATED_NOTICE = new ConcurrentHashMap<>();
     private static final long UNINITIATED_NOTICE_INTERVAL_MS = 30_000L;
 
@@ -215,12 +218,12 @@ public class GodAlignmentData extends SavedData {
         return this.grantGodXp(player, god, amount);
     }
 
-    /** Banks god XP without the initiation gate - god altars and commands; scaled by God's Disciple powers. */
+    /** Banks god XP without the initiation gate - god altars and commands; scaled by God's Disciple and the god's charm. */
     public int grantGodXp(ServerPlayer player, VaultGod god, long amount) {
         if (amount <= 0L) {
             return 0;
         }
-        amount = applyGodExperiencePowers(player, amount);
+        amount = applyGodExperienceScaling(player, god, amount);
         GodState state = this.mutableState(player.getUUID(), god);
         int before = GodLevels.gatedLevel(state.xp, state.sacrifices);
         state.xp += amount;
@@ -250,24 +253,34 @@ public class GodAlignmentData extends SavedData {
     }
 
     /** The amount {@link #addGodXp} would bank for {@code amount} raw experience, without banking it. */
-    public long previewScaledXp(ServerPlayer player, long amount) {
-        return applyGodExperiencePowers(player, amount);
+    public long previewScaledXp(ServerPlayer player, VaultGod god, long amount) {
+        return applyGodExperienceScaling(player, god, amount);
     }
 
-    /** Scales a god XP award by the God's Disciple powers, which add before the multiply. Rounds up. */
-    private static long applyGodExperiencePowers(ServerPlayer player, long amount) {
+    /**
+     * Scales a god XP award by the God's Disciple powers, which add before the multiply, then by
+     * {@link #GOD_CHARM_XP_MULTIPLIER} when the player wears that god's charm. Rounds up.
+     */
+    private static long applyGodExperienceScaling(ServerPlayer player, VaultGod god, long amount) {
+        double multiplier = 1.0D;
         if (player.getServer() == null) {
             WoldsVaults.LOGGER.debug("God XP awarded with no server attached; skipping God's Disciple scaling.");
+        } else {
+            float bonus = 0.0F;
+            for (GodExperiencePrestigePower power : PrestigePowerHelper.getPrestigePowersOfType(player, GodExperiencePrestigePower.class)) {
+                bonus += power.getExperienceIncrease();
+            }
+            if (bonus > 0.0F) {
+                multiplier *= 1.0D + (double) bonus;
+            }
+        }
+        if (ActiveGodResolver.isActive(player, god)) {
+            multiplier *= GOD_CHARM_XP_MULTIPLIER;
+        }
+        if (multiplier == 1.0D) {
             return amount;
         }
-        float bonus = 0.0F;
-        for (GodExperiencePrestigePower power : PrestigePowerHelper.getPrestigePowersOfType(player, GodExperiencePrestigePower.class)) {
-            bonus += power.getExperienceIncrease();
-        }
-        if (bonus <= 0.0F) {
-            return amount;
-        }
-        return (long) Math.ceil((double) amount * (1.0D + (double) bonus));
+        return (long) Math.ceil((double) amount * multiplier);
     }
 
     /** Forces a god level, granting the sacrifice gates it needs; only levels gained fire an event. */
