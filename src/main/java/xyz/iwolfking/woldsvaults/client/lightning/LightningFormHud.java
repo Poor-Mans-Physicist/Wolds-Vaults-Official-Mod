@@ -66,7 +66,7 @@ public final class LightningFormHud {
         GuiComponent.fill(pose, left + 22, top + 20, right - 22, top + 21, 0xFF0D2C4A);
 
         slot(mc, pose, left, top, ARC_LASH, ClientLightningForm.lashCooldown(partialTick), mc.options.keyAttack);
-        slot(mc, pose, middle - 11, top, THUNDERSTRIKE, 0.0F, mc.options.keyPickItem);
+        slot(mc, pose, middle - 11, top, THUNDERSTRIKE, ClientLightningForm.thunderCooldown(partialTick), mc.options.keyPickItem);
         slot(mc, pose, right - 22, top, LIGHTNING_ROD, ClientLightningForm.rodCooldown(partialTick), mc.options.keyUse);
 
         Font font = mc.font;
