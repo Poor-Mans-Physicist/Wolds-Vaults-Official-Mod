@@ -74,6 +74,7 @@ public final class LightningFiend {
     private static final Map<UUID, Form> FORMS = new HashMap<>();
 
     private static final class Form {
+        long startTick;
         long endTick;
         float attackDamage;
         float damage;
@@ -173,10 +174,11 @@ public final class LightningFiend {
         }
         GearSetConfig.Lightning tuning = config.getLightning();
         Form form = FORMS.computeIfAbsent(player.getUUID(), id -> new Form());
-        form.endTick = player.server.getTickCount() + tuning.formDurationTicks;
+        form.startTick = player.server.getTickCount();
+        form.endTick = form.startTick + tuning.formDurationTicks;
         form.attackDamage = attackDamage(player);
         form.damage = form.attackDamage * channelingMultiplier(player) * multiplier;
-        ModNetwork.sendToClient(new LightningFormMessage(tuning.formDurationTicks, tuning.dashCooldownTicks, tuning.arcLashCooldownTicks, tuning.rodCooldownTicks), player);
+        ModNetwork.sendToClient(new LightningFormMessage(tuning.formDurationTicks, tuning.dashCooldownTicks, tuning.arcLashCooldownTicks, tuning.rodCooldownTicks, tuning.thunderMinFormTicks), player);
         visualBolt(player.getLevel(), player.position());
     }
 
@@ -350,7 +352,8 @@ public final class LightningFiend {
     /**
      * Thunderstrike (middle click): spends the rest of the form on one giant bolt down onto the player, striking every
      * enemy within thunderRadius (across) for the throw's attack damage times thunderDamagePerSecond for each second of
-     * form left, so it hits hardest the sooner it's used. Ends the form.
+     * form left, so it hits hardest the sooner it's used, but only once the form has lasted thunderMinFormTicks.
+     * Ends the form.
      */
     public static void thunderstrike(ServerPlayer player) {
         GearSetConfig config = GearSetHelper.config();
@@ -360,6 +363,9 @@ public final class LightningFiend {
             return;
         }
         GearSetConfig.Lightning tuning = config.getLightning();
+        if (now - form.startTick < tuning.thunderMinFormTicks) {
+            return;
+        }
         float damage = form.attackDamage * tuning.thunderDamagePerSecond * (form.endTick - now) / 20.0F;
         float radius = tuning.thunderRadius;
         ServerLevel level = player.getLevel();
@@ -387,7 +393,7 @@ public final class LightningFiend {
         }
         FORMS.remove(player.getUUID());
         if (notify) {
-            ModNetwork.sendToClient(new LightningFormMessage(0, 0, 0, 0), player);
+            ModNetwork.sendToClient(new LightningFormMessage(0, 0, 0, 0, 0), player);
         }
     }
 
