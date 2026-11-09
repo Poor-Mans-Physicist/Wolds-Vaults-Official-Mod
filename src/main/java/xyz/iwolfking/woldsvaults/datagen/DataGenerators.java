@@ -25,6 +25,7 @@ public class DataGenerators {
             gen.addProvider(new ModLanguageProvider(gen));
             gen.addProvider(new ModBlockStateProvider(gen, efh));
             gen.addProvider(new ModItemModelProvider(gen, efh));
+            gen.addProvider(new ModCitProvider(gen));
             gen.addProvider(new ModSoundDefinitionsProvider(gen, efh));
         }
 
@@ -109,12 +110,14 @@ public class DataGenerators {
             gen.addProvider(new ModGreedMilestonesProvider(gen));
             gen.addProvider(new ModGreedMedallionsProvider(gen));
             gen.addProvider(new ModGreedChampionProvider(gen));
+            gen.addProvider(new ModStatScreenProvider(gen));
             gen.addProvider(new ModGearSetsProvider(gen));
             gen.addProvider(new ModFocusAugmentsProvider(gen));
             gen.addProvider(new ModSpellHasteProvider(gen));
             gen.addProvider(new ModObjectiveDifficultyProvider(gen));
             gen.addProvider(new ModHyperObjectiveProvider(gen));
             gen.addProvider(new ModExtractorCostsProvider(gen));
+            gen.addProvider(new ModMultiCellRoomsProvider(gen));
             gen.addProvider(new ModExtractionObjectiveProvider(gen));
             gen.addProvider(new ModExtractorPartsProvider(gen));
             gen.addProvider(new ModRecipeTagProvider(gen, efh));

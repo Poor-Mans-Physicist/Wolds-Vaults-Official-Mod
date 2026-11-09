@@ -39,6 +39,7 @@ public class ModConfigs {
     public static SurvivalObjectiveConfig SURVIVAL_OBJECTIVE;
     public static HyperObjectiveConfig HYPER_OBJECTIVE;
     public static ExtractionObjectiveConfig EXTRACTION_OBJECTIVE = ExtractionObjectiveConfig.inert();
+    public static xyz.iwolfking.woldsvaults.config.MultiCellRoomsConfig MULTI_CELL_ROOMS = xyz.iwolfking.woldsvaults.config.MultiCellRoomsConfig.inert();
     public static xyz.iwolfking.woldsvaults.config.ExtractorPartsConfig EXTRACTOR_PARTS = xyz.iwolfking.woldsvaults.config.ExtractorPartsConfig.inert();
     public static xyz.iwolfking.woldsvaults.config.ExtractorCostsConfig EXTRACTOR_COSTS = xyz.iwolfking.woldsvaults.config.ExtractorCostsConfig.inert();
     public static xyz.iwolfking.woldsvaults.config.ObjectiveDifficultyConfig OBJECTIVE_DIFFICULTY;
@@ -78,6 +79,7 @@ public class ModConfigs {
     public static GreedMilestonesConfig GREED_MILESTONES;
     public static GreedMedallionsConfig GREED_MEDALLIONS;
     public static GreedChampionConfig GREED_CHAMPION;
+    public static StatScreenConfig STAT_SCREEN;
 
     public static final Map<VaultGod, GodTreeConfig> GOD_TREES = new EnumMap<>(VaultGod.class);
     public static final Map<VaultGod, GodTreeGuiStylesConfig> GOD_TREE_GUI_STYLES = new EnumMap<>(VaultGod.class);

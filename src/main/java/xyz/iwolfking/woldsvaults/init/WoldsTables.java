@@ -18,7 +18,9 @@ import xyz.iwolfking.woldsvaults.config.GreedMedallionsConfig;
 import xyz.iwolfking.woldsvaults.config.GreedMilestonesConfig;
 import xyz.iwolfking.woldsvaults.config.GreedRanksConfig;
 import xyz.iwolfking.woldsvaults.config.HyperObjectiveConfig;
+import xyz.iwolfking.woldsvaults.config.MultiCellRoomsConfig;
 import xyz.iwolfking.woldsvaults.config.ObjectiveDifficultyConfig;
+import xyz.iwolfking.woldsvaults.config.StatScreenConfig;
 import xyz.iwolfking.woldsvaults.config.WoldsTable;
 import xyz.iwolfking.woldsvaults.config.gods.GodLevelsConfig;
 import xyz.iwolfking.woldsvaults.config.gods.GodNodeEffectsConfig;
@@ -50,6 +52,7 @@ public final class WoldsTables {
     public static final WoldsTableLoader<GearSetConfig> GEAR_SETS = new WoldsTableLoader<>(new GearSetConfig(), "gear/sets");
     public static final WoldsTableLoader<ObjectiveDifficultyConfig> OBJECTIVE_DIFFICULTY = new WoldsTableLoader<>(new ObjectiveDifficultyConfig(), "objectives/difficulty");
     public static final WoldsTableLoader<HyperObjectiveConfig> HYPER_OBJECTIVE = new WoldsTableLoader<>(new HyperObjectiveConfig(), "objectives/hyper");
+    public static final WoldsTableLoader<MultiCellRoomsConfig> MULTI_CELL_ROOMS = new WoldsTableLoader<>(new MultiCellRoomsConfig(), "layout/multi_cell_rooms");
     public static final WoldsTableLoader<ExtractionObjectiveConfig> EXTRACTION_OBJECTIVE = new WoldsTableLoader<>(new ExtractionObjectiveConfig(), "objectives/extraction");
     public static final WoldsTableLoader<ExtractorPartsConfig> EXTRACTOR_PARTS = new WoldsTableLoader<>(new ExtractorPartsConfig(), "extraction/parts");
     public static final WoldsTableLoader<ExtractorCostsConfig> EXTRACTOR_COSTS = new WoldsTableLoader<>(new ExtractorCostsConfig(), "extraction/costs");
@@ -59,6 +62,7 @@ public final class WoldsTables {
     public static final WoldsTableLoader<GreedChampionConfig> GREED_CHAMPION = new WoldsTableLoader<>(new GreedChampionConfig(), "greed/champion");
     public static final WoldsTableLoader<FocusAugmentsConfig> FOCUS_AUGMENTS = new WoldsTableLoader<>(new FocusAugmentsConfig(), "focus_augments");
     public static final WoldsTableLoader<SpellHasteConfig> SPELL_HASTE = new WoldsTableLoader<>(new SpellHasteConfig(), "spell_haste");
+    public static final WoldsTableLoader<StatScreenConfig> STAT_SCREEN = new WoldsTableLoader<>(new StatScreenConfig(), "gui/stat_screen");
 
     private WoldsTables() {
     }
@@ -72,6 +76,7 @@ public final class WoldsTables {
         LoaderRegistry.addConfigProcessor(GEAR_SETS);
         LoaderRegistry.addConfigProcessor(OBJECTIVE_DIFFICULTY);
         LoaderRegistry.addConfigProcessor(HYPER_OBJECTIVE);
+        LoaderRegistry.addConfigProcessor(MULTI_CELL_ROOMS);
         LoaderRegistry.addConfigProcessor(EXTRACTION_OBJECTIVE);
         LoaderRegistry.addConfigProcessor(EXTRACTOR_PARTS);
         LoaderRegistry.addConfigProcessor(EXTRACTOR_COSTS);
@@ -81,6 +86,7 @@ public final class WoldsTables {
         LoaderRegistry.addConfigProcessor(GREED_CHAMPION);
         LoaderRegistry.addConfigProcessor(FOCUS_AUGMENTS);
         LoaderRegistry.addConfigProcessor(SPELL_HASTE);
+        LoaderRegistry.addConfigProcessor(STAT_SCREEN);
     }
 
     /** Installs the tables after the loaders have run; lowest priority so every loader has gathered first. */
@@ -98,9 +104,14 @@ public final class WoldsTables {
         ModConfigs.GEAR_SETS = require(GEAR_SETS, "gear_sets");
         ModConfigs.OBJECTIVE_DIFFICULTY = require(OBJECTIVE_DIFFICULTY, "objective_difficulty");
         ModConfigs.HYPER_OBJECTIVE = require(HYPER_OBJECTIVE, "hyper_objective");
+        MultiCellRoomsConfig multiCell = require(MULTI_CELL_ROOMS, "multi_cell_rooms");
+        if (multiCell != null) {
+            ModConfigs.MULTI_CELL_ROOMS = multiCell;
+        }
         installExtraction();
         ModConfigs.SPELL_HASTE = require(SPELL_HASTE, "spell_haste");
         ModConfigs.FOCUS_AUGMENTS = require(FOCUS_AUGMENTS, "focus_augments");
+        ModConfigs.STAT_SCREEN = require(STAT_SCREEN, "player_stats");
         WoldsVaults.LOGGER.info("Installed the generated Wold's Vaults tables");
     }
 
