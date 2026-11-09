@@ -1,5 +1,8 @@
 package xyz.iwolfking.woldsvaults.init;
 
+import xyz.iwolfking.woldsvaults.stats.ClientboundStatSyncMessage;
+import xyz.iwolfking.woldsvaults.stats.ServerboundStatSyncRequestMessage;
+
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.network.NetworkDirection;
@@ -88,6 +91,8 @@ public class ModNetwork {
         CHANNEL.registerMessage(id++, SpellBarEditMessage.class, SpellBarEditMessage::encode, SpellBarEditMessage::decode, SpellBarEditMessage::handle, Optional.of(NetworkDirection.PLAY_TO_SERVER));
         CHANNEL.registerMessage(id++, SpellEditMessage.class, SpellEditMessage::encode, SpellEditMessage::decode, SpellEditMessage::handle, Optional.of(NetworkDirection.PLAY_TO_SERVER));
         CHANNEL.registerMessage(id++, xyz.iwolfking.woldsvaults.network.packets.StatMirrorMessage.class, xyz.iwolfking.woldsvaults.network.packets.StatMirrorMessage::encode, xyz.iwolfking.woldsvaults.network.packets.StatMirrorMessage::decode, xyz.iwolfking.woldsvaults.network.packets.StatMirrorMessage::handle, Optional.of(NetworkDirection.PLAY_TO_CLIENT));
+        CHANNEL.registerMessage(id++, ServerboundStatSyncRequestMessage.class, ServerboundStatSyncRequestMessage::encode, ServerboundStatSyncRequestMessage::decode, ServerboundStatSyncRequestMessage::handle, Optional.of(NetworkDirection.PLAY_TO_SERVER));
+        CHANNEL.registerMessage(id++, ClientboundStatSyncMessage.class, ClientboundStatSyncMessage::encode, ClientboundStatSyncMessage::decode, ClientboundStatSyncMessage::handle, Optional.of(NetworkDirection.PLAY_TO_CLIENT));
     }
 
     public static <T> void sendToServer(T message) {
