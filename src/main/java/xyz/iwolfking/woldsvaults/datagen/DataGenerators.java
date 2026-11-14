@@ -114,7 +114,7 @@ public class DataGenerators {
             gen.addProvider(new ModGearSetsProvider(gen));
             gen.addProvider(new ModRiptideProvider(gen));
             gen.addProvider(new ModLightningFiendProvider(gen));
-            gen.addProvider(new ModFocusAugmentsProvider(gen));
+            gen.addProvider(new ModSpellcraftProvider(gen));
             gen.addProvider(new ModSpellHasteProvider(gen));
             gen.addProvider(new ModObjectiveDifficultyProvider(gen));
             gen.addProvider(new ModHyperObjectiveProvider(gen));

@@ -6,10 +6,9 @@ import iskallia.vault.config.Config;
 import javax.annotation.Nullable;
 
 /**
- * Spell haste, generated as {@code vault_configs/spell_haste/spell_haste.json}. VH's cooldown reduction attribute and
- * player stat now carry haste: a cooldown is divided by {@code 1 + haste} (negative haste multiplies it by
- * {@code 1 + |haste|}), and positive haste is capped at {@code baseCap} plus the player's cooldown reduction cap
- * attribute. Cooldown skip chance is capped at {@code skipChanceCap}.
+ * Spell haste, generated as {@code vault_configs/spell_haste/spell_haste.json}. {@code baseCap} caps positive haste
+ * before the player's cooldown reduction cap attribute is added, in haste (1.0 is +100%). {@code skipChanceCap} caps
+ * the summed cooldown skip chance, from 0 to 1.
  */
 public class SpellHasteConfig extends Config implements WoldsTable {
     @Expose public float baseCap;

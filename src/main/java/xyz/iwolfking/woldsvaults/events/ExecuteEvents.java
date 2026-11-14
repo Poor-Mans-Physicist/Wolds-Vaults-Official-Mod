@@ -19,7 +19,7 @@ import net.minecraftforge.fml.common.Mod;
 import xyz.iwolfking.woldsvaults.WoldsVaults;
 import xyz.iwolfking.woldsvaults.api.util.WoldEventHelper;
 import xyz.iwolfking.woldsvaults.init.ModGearAttributes;
-import xyz.iwolfking.woldsvaults.spellcraft.chain.SpellChainDamage;
+import xyz.iwolfking.woldsvaults.spellcraft.scope.ChainScope;
 
 import java.util.Map;
 import java.util.WeakHashMap;
@@ -61,7 +61,7 @@ public final class ExecuteEvents {
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void execute(LivingDamageEvent event) {
-        if (SpellChainDamage.active()) {
+        if (ChainScope.active()) {
             return;
         }
         LivingEntity target = event.getEntityLiving();

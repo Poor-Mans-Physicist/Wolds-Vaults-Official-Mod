@@ -3,15 +3,14 @@ package xyz.iwolfking.woldsvaults.integration.create;
 import com.simibubi.create.content.logistics.filter.ItemAttribute;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
-import xyz.iwolfking.woldsvaults.augments.item.SpellcraftItemData;
-import xyz.iwolfking.woldsvaults.augments.item.SpellcraftRoller;
+import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Create attribute filter entry matching a spellcraft focus or wand whose arcana budget is at least a threshold.
- * A stack lists one entry per multiple of {@link #STEP} up to its own budget.
+ * Create attribute filter entry matching a spellcraft focus or wand whose arcana budget is at least a threshold. A
+ * stack lists one entry per multiple of {@link #STEP} up to its own budget.
  */
 public class SpellcraftArcanaAttribute implements ItemAttribute {
     public static final String KEY = "woldsvaults_spellcraft_arcana";
@@ -25,13 +24,13 @@ public class SpellcraftArcanaAttribute implements ItemAttribute {
 
     @Override
     public boolean appliesTo(ItemStack stack) {
-        return SpellcraftRoller.canCarry(stack) && SpellcraftItemData.has(stack) && SpellcraftItemData.budget(stack) >= this.min;
+        return SpellcraftItemData.canCarry(stack) && SpellcraftItemData.has(stack) && SpellcraftItemData.budget(stack) >= this.min;
     }
 
     @Override
     public List<ItemAttribute> listAttributesOf(ItemStack stack) {
         List<ItemAttribute> attributes = new ArrayList<>();
-        if (!SpellcraftRoller.canCarry(stack) || !SpellcraftItemData.has(stack)) {
+        if (!SpellcraftItemData.canCarry(stack) || !SpellcraftItemData.has(stack)) {
             return attributes;
         }
         int budget = SpellcraftItemData.budget(stack);

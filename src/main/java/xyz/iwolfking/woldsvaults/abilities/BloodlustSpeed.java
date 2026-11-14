@@ -5,7 +5,7 @@ import iskallia.vault.skill.base.TieredSkill;
 import iskallia.vault.skill.tree.AbilityTree;
 import iskallia.vault.world.data.PlayerAbilitiesData;
 import net.minecraft.server.level.ServerPlayer;
-import xyz.iwolfking.woldsvaults.augments.effect.BuffGlyphs;
+import xyz.iwolfking.woldsvaults.spellcraft.buff.BuffGlyphs;
 
 import java.util.Set;
 import java.util.UUID;

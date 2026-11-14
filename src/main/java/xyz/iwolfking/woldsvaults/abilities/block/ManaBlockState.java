@@ -14,7 +14,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.event.entity.living.LivingDamageEvent;
 import xyz.iwolfking.woldsvaults.WoldsVaults;
 import xyz.iwolfking.woldsvaults.gods.combat.FinalDamageStage;
-import xyz.iwolfking.woldsvaults.augments.effect.BuffGlyphs;
+import xyz.iwolfking.woldsvaults.spellcraft.buff.BuffGlyphs;
 
 import java.util.Iterator;
 import java.util.Map;

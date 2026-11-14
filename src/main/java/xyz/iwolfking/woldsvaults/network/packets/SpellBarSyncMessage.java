@@ -5,12 +5,13 @@ import net.minecraft.world.InteractionHand;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.network.NetworkEvent;
-import xyz.iwolfking.woldsvaults.augments.item.SpellcraftItemData;
-import xyz.iwolfking.woldsvaults.augments.spell.SpellModel;
-import xyz.iwolfking.woldsvaults.augments.spell.SpellcraftRules;
-import xyz.iwolfking.woldsvaults.client.spellcraft.ClientSpellBar;
+import xyz.iwolfking.woldsvaults.client.spellcraft.state.ClientSpellBar;
 import xyz.iwolfking.woldsvaults.spellcraft.bar.EffectiveBar;
 import xyz.iwolfking.woldsvaults.spellcraft.bar.SpellBarData;
+import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
+import xyz.iwolfking.woldsvaults.spellcraft.spell.GlyphState;
+import xyz.iwolfking.woldsvaults.spellcraft.spell.PlacedGlyph;
+import xyz.iwolfking.woldsvaults.spellcraft.spell.SpellcraftRules;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -18,20 +19,18 @@ import java.util.List;
 import java.util.function.Supplier;
 
 /**
- * Server to client: the player's default bar, selected slot, and the effective bar the server resolved. Each slot
- * carries its occupant (item key and spell id, or the base group), the spell's name and tokens, its source item and
- * hand, priority, LOCKED state and reason, the implicit flag, the groups it holds, the overlays it shadows, and every
- * glyph's state and line. Each equipped arcana item reports its arcana, budget, budget-greyed glyphs and errors. The
- * client never resolves the bar from its own item NBT.
+ * Server to client: the player's default bar, selected slot and the effective bar the server resolved, with every
+ * equipped arcana item's arcana, budget, greyed glyphs and errors. The client never resolves the bar from its own item
+ * NBT.
  */
 public record SpellBarSyncMessage(String[] defaults, int selected, List<Entry> entries, List<Source> sources) {
     private static final int MAX_LIST = 256;
 
     /** One placed glyph as the server read it: its token index, state, dependence and line. */
     public record Glyph(int token, int state, boolean dependent, float potency, float quality, int cost) {
-        public SpellModel.State stateEnum() {
-            SpellModel.State[] states = SpellModel.State.values();
-            return this.state >= 0 && this.state < states.length ? states[this.state] : SpellModel.State.INACTIVE_SOURCE;
+        public GlyphState stateEnum() {
+            GlyphState[] states = GlyphState.values();
+            return this.state >= 0 && this.state < states.length ? states[this.state] : GlyphState.INACTIVE_SOURCE;
         }
     }
 
@@ -41,7 +40,6 @@ public record SpellBarSyncMessage(String[] defaults, int selected, List<Entry> e
                         List<String> groups, List<String> shadowed, List<Glyph> glyphs) {
     }
 
-    /** One equipped arcana item: its key, name, hand, budget, active arcana, budget-greyed glyphs and errors. */
     public record Source(String key, String name, int hand, int budget, int arcana, int budgetInactive, List<String> errors) {
     }
 
@@ -50,13 +48,13 @@ public record SpellBarSyncMessage(String[] defaults, int selected, List<Entry> e
         for (EffectiveBar.Slot slot : bar.slots()) {
             List<Glyph> glyphs = new ArrayList<>();
             if (slot.model() != null) {
-                for (SpellModel.Glyph glyph : slot.model().glyphs()) {
+                for (PlacedGlyph glyph : slot.model().glyphs()) {
                     glyphs.add(new Glyph(glyph.token(), glyph.state().ordinal(), glyph.dependent(), glyph.potency(), glyph.quality(), glyph.cost()));
                 }
             }
-            entries.add(new Entry(slot.kind().ordinal(), slot.group(), slot.key(), slot.sourceKey() == null ? "" : slot.sourceKey(),
+            entries.add(new Entry(slot.kind().ordinal(), slot.group(), slot.occupantKey(), slot.itemKey() == null ? "" : slot.itemKey(),
                     slot.spellId(), slot.spell() == null ? "" : slot.spell().name(), slot.spell() == null ? List.of() : slot.spell().tokens(),
-                    slot.sourceName(), hand(slot.hand()), slot.prio(), slot.locked(), slot.lockReason(), slot.implicit(), slot.hidden(),
+                    slot.itemName(), hand(slot.hand()), slot.prio(), slot.locked(), slot.lockReason(), slot.implicit(), slot.hidden(),
                     List.copyOf(slot.groups()), slot.shadowed(), glyphs));
         }
         List<Source> sources = new ArrayList<>();

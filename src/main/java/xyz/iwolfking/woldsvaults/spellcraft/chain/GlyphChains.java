@@ -16,11 +16,12 @@ import net.minecraftforge.fml.common.Mod;
 import xyz.iwolfking.woldsvaults.WoldsVaults;
 import xyz.iwolfking.woldsvaults.api.cast.CastContext;
 import xyz.iwolfking.woldsvaults.api.cast.CastTag;
-import xyz.iwolfking.woldsvaults.augments.AugmentType;
-import xyz.iwolfking.woldsvaults.augments.cast.CastScope;
-import xyz.iwolfking.woldsvaults.augments.effect.DeferredReach;
-import xyz.iwolfking.woldsvaults.augments.effect.SpellHits;
-import xyz.iwolfking.woldsvaults.spellcraft.gear.GlyphGrants;
+import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
+import xyz.iwolfking.woldsvaults.spellcraft.hit.OwnHits;
+import xyz.iwolfking.woldsvaults.spellcraft.scope.CastScope;
+import xyz.iwolfking.woldsvaults.spellcraft.scope.ChainScope;
+import xyz.iwolfking.woldsvaults.spellcraft.scope.DeferredReach;
+import xyz.iwolfking.woldsvaults.spellcraft.scope.GlyphGrants;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -30,13 +31,10 @@ import java.util.Set;
 import java.util.WeakHashMap;
 
 /**
- * The Chaining glyph (loadout spec sec. 6.2, 9.5). Every DIRECT own hit of a spell step with an active Chaining glyph
- * (cast-time hits, hits of what the step threw, its Echo and Shotgun copies) starts one chain: at HIGH priority the hurt
- * is marked, so VH's own chain on the same hit stands down, and at LOWEST priority the chain runs with the hit's final
- * amount. Links follow {@link ChainLinks} (VH's range, targets and step, with the etching and Chainlash's prefix) for
- * the player's chain count. Each link re-hurts with the same damage source inside {@code IS_CHAINING_ATTACKING} and the
- * WV chain scope, so it keeps kill credit and on-kill effects but procs nothing, never chains again and respects hurt
- * immunity. There is no 2-tick chain lockout.
+ * The Chaining glyph. Every DIRECT own hit of a spell step with an active Chaining glyph starts one chain: at HIGH
+ * priority the hurt is marked so VH's own chain on the same hit stands down, and at LOWEST priority the chain runs with
+ * the hit's final amount. Each link re-hurts with the same damage source inside {@code IS_CHAINING_ATTACKING} and the
+ * WV chain scope, so it keeps kill credit but procs nothing, never chains again and respects hurt immunity.
  */
 @Mod.EventBusSubscriber(modid = WoldsVaults.MOD_ID)
 public final class GlyphChains {
@@ -56,7 +54,7 @@ public final class GlyphChains {
         if (target.level.isClientSide() || !(event.getSource().getEntity() instanceof ServerPlayer player)) {
             return;
         }
-        if (SpellChainDamage.active() || ActiveFlags.IS_CHAINING_ATTACKING.isSet()) {
+        if (ChainScope.active() || ActiveFlags.IS_CHAINING_ATTACKING.isSet()) {
             return;
         }
         if (chainsFrom(player, event.getSource())) {
@@ -83,7 +81,7 @@ public final class GlyphChains {
         float step = ChainLinks.step(player);
         List<Vec3> points = new ArrayList<>();
         points.add(ChainLinks.linkPoint(attacked));
-        SpellChainDamage.run(() -> ActiveFlags.IS_CHAINING_ATTACKING.runIfNotSet(() -> {
+        ChainScope.run(() -> ActiveFlags.IS_CHAINING_ATTACKING.runIfNotSet(() -> {
             float multiplier = step;
             for (Mob mob : targets) {
                 Vec3 movement = mob.getDeltaMovement();
@@ -97,24 +95,20 @@ public final class GlyphChains {
         ChainLinks.particles(player, points);
     }
 
-    /**
-     * Whether the hit is a DIRECT own hit of a spell step whose glyphs hold an active Chaining: the open cast scope's
-     * step, the step that threw the hit's direct entity, or the deferred step whose carrier delivers it.
-     */
     private static boolean chainsFrom(ServerPlayer player, DamageSource source) {
-        CastScope.Active scope = CastScope.current().filter(active -> active.player() == player).orElse(null);
+        CastScope.Active scope = CastScope.forPlayer(player);
         if (scope != null) {
-            return chaining(scope.modifiers().grants()) && SpellHits.isOwnDirectHit(scope.spec(), source, null);
+            return chaining(scope.modifiers().grants()) && OwnHits.isOwnDirectHit(scope.spec(), source, null);
         }
         CastTag tag = CastContext.tagOf(source.getDirectEntity());
         if (tag != null && tag.glyphs() != null && tag.glyphs().isOwnedBy(player)) {
-            return chaining(tag.glyphs().modifiers().grants()) && SpellHits.isOwnDirectHit(tag.glyphs().spec(), source, null);
+            return chaining(tag.glyphs().modifiers().grants()) && OwnHits.isOwnDirectHit(tag.glyphs().spec(), source, null);
         }
         DeferredReach.Reach reach = DeferredReach.forHit(source);
-        return reach != null && chaining(reach.glyphs().modifiers().grants()) && SpellHits.isOwnDirectHit(reach.glyphs().spec(), source, null);
+        return reach != null && chaining(reach.glyphs().modifiers().grants()) && OwnHits.isOwnDirectHit(reach.glyphs().spec(), source, null);
     }
 
     private static boolean chaining(@Nullable GlyphGrants grants) {
-        return grants != null && grants.has(AugmentType.CHAINING);
+        return grants != null && grants.has(GlyphType.CHAINING);
     }
 }

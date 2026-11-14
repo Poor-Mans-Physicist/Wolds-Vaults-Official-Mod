@@ -3,8 +3,7 @@ package xyz.iwolfking.woldsvaults.integration.create;
 import com.simibubi.create.content.logistics.filter.ItemAttribute;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
-import xyz.iwolfking.woldsvaults.augments.item.SpellcraftItemData;
-import xyz.iwolfking.woldsvaults.augments.item.SpellcraftRoller;
+import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,13 +23,13 @@ public class SpellcraftDepthAttribute implements ItemAttribute {
 
     @Override
     public boolean appliesTo(ItemStack stack) {
-        return SpellcraftRoller.canCarry(stack) && SpellcraftItemData.has(stack) && SpellcraftItemData.depth(stack) >= this.min;
+        return SpellcraftItemData.canCarry(stack) && SpellcraftItemData.has(stack) && SpellcraftItemData.depth(stack) >= this.min;
     }
 
     @Override
     public List<ItemAttribute> listAttributesOf(ItemStack stack) {
         List<ItemAttribute> attributes = new ArrayList<>();
-        if (!SpellcraftRoller.canCarry(stack) || !SpellcraftItemData.has(stack)) {
+        if (!SpellcraftItemData.canCarry(stack) || !SpellcraftItemData.has(stack)) {
             return attributes;
         }
         int depth = SpellcraftItemData.depth(stack);

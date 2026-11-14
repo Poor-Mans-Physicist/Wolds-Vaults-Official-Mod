@@ -8,7 +8,7 @@ import net.minecraftforge.client.settings.KeyConflictContext;
 import net.minecraftforge.client.settings.KeyModifier;
 import org.lwjgl.glfw.GLFW;
 import xyz.iwolfking.woldsvaults.WoldsVaults;
-import xyz.iwolfking.woldsvaults.client.spellcraft.SpellBarKeys;
+import xyz.iwolfking.woldsvaults.client.spellcraft.keys.SpellBarKeys;
 
 public class ModKeybinds {
     public static KeyMapping isFeatherFixed;

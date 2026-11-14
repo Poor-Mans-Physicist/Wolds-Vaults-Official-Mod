@@ -1,12 +1,11 @@
 package xyz.iwolfking.woldsvaults.datagen.patches;
 
-import xyz.iwolfking.woldsvaults.datagen.ModSpellHasteProvider;
-
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import xyz.iwolfking.woldsvaults.config.patch.ConfigPatch;
+import xyz.iwolfking.woldsvaults.datagen.ModSpellHasteProvider;
 import xyz.iwolfking.woldsvaults.datagen.lib.AbstractConfigPatchProvider.Node;
 import xyz.iwolfking.woldsvaults.datagen.lib.AbstractConfigPatchProvider.Patch;
 
@@ -23,15 +22,16 @@ import static xyz.iwolfking.woldsvaults.datagen.lib.AbstractConfigPatchProvider.
 import static xyz.iwolfking.woldsvaults.datagen.lib.AbstractConfigPatchProvider.where;
 
 /**
- * Spell haste replaces cooldown reduction: a cooldown lasts {@code base / (1 + haste)}. The attribute and the
- * {@code COOLDOWN_REDUCTION} player stat keep their ids and carry haste, so every upstream source is converted here
- * as a {@code scale} on upstream's own number, and upstream retunes keep flowing through the conversion. Each text
- * that quotes a converted value is formatted from the seeded value times the same factor.
+ * Spell haste replaces cooldown reduction: a cooldown lasts {@code base / (1 + haste)}. The attribute and the {@code
+ * COOLDOWN_REDUCTION} player stat keep their ids and carry haste, so every upstream source is converted here as a
+ * {@code scale} on upstream's own number. Each text that quotes a converted value is formatted from the seeded value
+ * times the same factor.
  */
 public final class SpellHastePatches {
-    /** What one point of old cooldown reduction from an attribute source (gear, cards, charms, nodes, talents) is worth as haste. */
+    /** Haste per point of cooldown reduction from an attribute source (gear, cards, charms, nodes, talents). */
     public static final int ATTRIBUTE_FACTOR = 3;
-    /** What one point of a vault modifier's cooldown reduction player stat addend is worth as haste. */
+
+    /** Haste per point of a vault modifier's cooldown reduction player stat addend. */
     public static final int VAULT_MODIFIER_FACTOR = 2;
     public static final String NAME = "Spell Haste";
 
@@ -81,7 +81,6 @@ public final class SpellHastePatches {
         return ConfigPatch.scaled(value, json(VAULT_MODIFIER_FACTOR));
     }
 
-    /** Every gear modifier paying the cooldown reduction attribute, in every upstream gear file, every tier. */
     private static void gearModifiers(Function<String, Patch> patches) {
         for (String path : seededFiles(GEAR_MODIFIERS)) {
             JsonElement root = seeded(path);
@@ -150,8 +149,8 @@ public final class SpellHastePatches {
     }
 
     /**
-     * Evolution cards keep upstream's numbers as haste (1% at tier 5): the deck's adds and multipliers already lifted one
-     * of them past the whole haste cap at x3.
+     * Evolution cards keep upstream's numbers as haste: scaled by {@link #ATTRIBUTE_FACTOR}, the deck's adds and
+     * multipliers lifted one of them past the whole haste cap.
      */
     private static boolean evolution(JsonObject card) {
         JsonArray groups = card.getAsJsonArray("groups");
@@ -166,7 +165,6 @@ public final class SpellHastePatches {
         return false;
     }
 
-    /** Every gear card paying cooldown reduction: each pool roll scaled (evolution cards excepted), the card renamed. */
     private static void cards(Patch cards) {
         JsonObject values = seeded("card/modifiers.json").getAsJsonObject().getAsJsonObject("values");
         for (Map.Entry<String, JsonElement> entry : values.entrySet()) {
@@ -185,7 +183,6 @@ public final class SpellHastePatches {
         }
     }
 
-    /** The greed tree's cooldown reduction nodes, their node names and their skill descriptions. */
     private static void greedNodes(Patch nodes, Patch descriptions) {
         JsonArray skills = seeded("greed/greed_nodes.json").getAsJsonObject().getAsJsonObject("tree").getAsJsonArray("skills");
         for (JsonElement element : skills) {
@@ -212,7 +209,6 @@ public final class SpellHastePatches {
         }
     }
 
-    /** Mind Meld's cooldown reduction per mana step, every tier. */
     private static void mindMeld(Patch talents) {
         JsonArray skills = seeded("talents.json").getAsJsonObject().getAsJsonObject("tree").getAsJsonArray("skills");
         for (JsonElement element : skills) {
@@ -229,7 +225,6 @@ public final class SpellHastePatches {
         throw new IllegalStateException("The seeded talents.json has no Mind_Meld talent to convert to spell haste");
     }
 
-    /** Every cooldown reduction player stat modifier, and the grouped modifiers whose text quotes one. */
     private static void vaultModifiers(Patch modifiers) {
         JsonObject groups = seeded("vault_modifiers.json").getAsJsonObject().getAsJsonObject("modifiers");
         JsonObject stats = groups.getAsJsonObject(PLAYER_STAT_MODIFIERS);
@@ -281,7 +276,6 @@ public final class SpellHastePatches {
         return new JsonPrimitive(value.getAsBigDecimal().abs());
     }
 
-    /** Cufflinks' effect text, quoting its own spell haste percentile. */
     private static void cufflinks(Patch trinkets) {
         JsonElement value = seeded("trinket.json").getAsJsonObject().getAsJsonObject("TRINKETS")
                 .getAsJsonObject("the_vault:cufflinks").getAsJsonObject("config").get("value");
@@ -289,7 +283,6 @@ public final class SpellHastePatches {
                 "Increases your " + NAME + " by " + percent(value) + " of your total " + NAME);
     }
 
-    /** The statistics tab's description of the attribute. */
     private static void statDescription(Patch descriptions) {
         descriptions.at("MOD_GEAR_ATTRIBUTE_DESCRIPTIONS").set(ATTRIBUTE,
                 "Your \u00A7bspell haste\u00A77 for \u00A7aany Ability\u00A77: cooldowns are divided by \u00A7b1 + spell haste\u00A77,"
@@ -298,7 +291,6 @@ public final class SpellHastePatches {
                         + "\u00A77 plus your Spell Haste Cap");
     }
 
-    /** The archetypes quest line naming cooldown reduction as a gear goal. */
     private static void quest(Patch quests, String path) {
         String lower = OLD_NAME.toLowerCase(Locale.ROOT);
         for (JsonElement element : seeded(path).getAsJsonObject().getAsJsonArray("quests")) {

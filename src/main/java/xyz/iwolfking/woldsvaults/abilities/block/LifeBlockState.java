@@ -14,7 +14,7 @@ import net.minecraftforge.event.entity.living.LivingHealEvent;
 import xyz.iwolfking.woldsvaults.WoldsVaults;
 import xyz.iwolfking.woldsvaults.gods.combat.FinalDamageStage;
 import xyz.iwolfking.woldsvaults.gods.combat.GlobalDamageMultiplierRegistry;
-import xyz.iwolfking.woldsvaults.augments.effect.BuffGlyphs;
+import xyz.iwolfking.woldsvaults.spellcraft.buff.BuffGlyphs;
 
 import java.util.ArrayDeque;
 import java.util.Iterator;

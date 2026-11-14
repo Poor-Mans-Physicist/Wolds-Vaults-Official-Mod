@@ -18,7 +18,7 @@ import xyz.iwolfking.woldsvaults.init.*;
 import xyz.iwolfking.woldsvaults.integration.arsnouveau.init.ArsSpawnEggItems;
 import xyz.iwolfking.woldsvaults.integration.mekanism.init.ModGases;
 import xyz.iwolfking.woldsvaults.integration.mekanism.init.ModPigments;
-import xyz.iwolfking.woldsvaults.augments.AugmentType;
+import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
 import xyz.iwolfking.woldsvaults.integration.create.SpellcraftArcanaAttribute;
 import xyz.iwolfking.woldsvaults.integration.create.SpellcraftDepthAttribute;
 import xyz.iwolfking.woldsvaults.integration.create.SpellcraftGlyphAttribute;
@@ -988,7 +988,7 @@ public class ModLanguageProvider extends LanguageProvider {
         add("create.item_attributes.extractor_blueprint_identified.inverted", "isn't an identified Extractor blueprint");
         add("create.item_attributes.extractor_attachment_durability", "is an Extractor attachment with at least \"%1$s\" percent durability left");
         add("create.item_attributes.extractor_attachment_durability.inverted", "isn't an Extractor attachment with at least \"%1$s\" percent durability left");
-        add(new SpellcraftGlyphAttribute(AugmentType.AMPLIFY_AREA), "has the \"%1$s\" glyph", "doesn't have the \"%1$s\" glyph");
+        add(new SpellcraftGlyphAttribute(GlyphType.AMPLIFY_AREA), "has the \"%1$s\" glyph", "doesn't have the \"%1$s\" glyph");
         add(new SpellcraftDepthAttribute(1), "has a depth of %1$s or more (glyphs per spell)", "has a depth below %1$s (glyphs per spell)");
         add(new SpellcraftArcanaAttribute(SpellcraftArcanaAttribute.STEP), "has %1$s or more arcana", "has less than %1$s arcana");
         add("entity.the_vault.black_widow_boss", "Black Widow Boss");

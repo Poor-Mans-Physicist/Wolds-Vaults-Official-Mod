@@ -5,7 +5,7 @@ import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
-import xyz.iwolfking.woldsvaults.augments.effect.BuffGlyphs;
+import xyz.iwolfking.woldsvaults.spellcraft.buff.BuffGlyphs;
 
 
 final class BlockProgress<A extends AbstractBlockAbility> {

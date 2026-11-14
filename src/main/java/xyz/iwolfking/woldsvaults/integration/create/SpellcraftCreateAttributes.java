@@ -1,7 +1,7 @@
 package xyz.iwolfking.woldsvaults.integration.create;
 
 import com.simibubi.create.content.logistics.filter.ItemAttribute;
-import xyz.iwolfking.woldsvaults.augments.AugmentType;
+import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
 
 public final class SpellcraftCreateAttributes {
     private SpellcraftCreateAttributes() {
@@ -12,7 +12,7 @@ public final class SpellcraftCreateAttributes {
      * classes, so call it only when Create is loaded.
      */
     public static void register() {
-        ItemAttribute.register(new SpellcraftGlyphAttribute(AugmentType.AMPLIFY_AREA));
+        ItemAttribute.register(new SpellcraftGlyphAttribute(GlyphType.AMPLIFY_AREA));
         ItemAttribute.register(new SpellcraftDepthAttribute(1));
         ItemAttribute.register(new SpellcraftArcanaAttribute(SpellcraftArcanaAttribute.STEP));
     }

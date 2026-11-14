@@ -27,7 +27,7 @@ import xyz.iwolfking.woldsvaults.objectives.data.bosses.WoldBoss;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;
-import xyz.iwolfking.woldsvaults.augments.bundle.AugmentBundleEntity;
+import xyz.iwolfking.woldsvaults.spellcraft.projectile.BundledSpellOrb;
 import xyz.iwolfking.woldsvaults.entities.extraction.ExtractorEntity;
 import xyz.iwolfking.woldsvaults.entities.extraction.ThumperEntity;
 
@@ -61,7 +61,7 @@ public class ModEntities {
     public static EntityType<ThumperEntity> THUMPER;
     public static EntityType<VaultMeteor> VAULT_METEOR;
     public static EntityType<MagicMissileEntity> MAGIC_MISSILE;
-    public static EntityType<AugmentBundleEntity> AUGMENT_BUNDLE;
+    public static EntityType<BundledSpellOrb> BUNDLED_SPELL_ORB;
 
     public static void register(RegistryEvent.Register<EntityType<?>> event) {
         WOLD = registerLiving("wold", EntityType.Builder.of(WoldBoss::new, MobCategory.MONSTER)
@@ -92,7 +92,7 @@ public class ModEntities {
         THUMPER = registerLivingWV("thumper", EntityType.Builder.of(ThumperEntity::new, MobCategory.MISC).sized(1.6F, 2.5F).clientTrackingRange(10).fireImmune().setCustomClientFactory(((spawnEntity, level) -> new ThumperEntity(THUMPER, level))), ThumperEntity::createAttributes, event);
         VAULT_METEOR = registerWV("vault_meteor", EntityType.Builder.<VaultMeteor>of(VaultMeteor::new, MobCategory.MISC).sized(1.0F, 1.0F).clientTrackingRange(16).fireImmune().setCustomClientFactory(((spawnEntity, level) -> new VaultMeteor(VAULT_METEOR, level))), event);
         MAGIC_MISSILE = registerWV("magic_missile", EntityType.Builder.<MagicMissileEntity>of(MagicMissileEntity::new, MobCategory.MISC).sized(0.5F, 0.5F).clientTrackingRange(8).updateInterval(2).fireImmune().setCustomClientFactory(((spawnEntity, level) -> new MagicMissileEntity(MAGIC_MISSILE, level))), event);
-        AUGMENT_BUNDLE = registerWV("augment_bundle", EntityType.Builder.<AugmentBundleEntity>of(AugmentBundleEntity::new, MobCategory.MISC).sized(0.5F, 0.5F).clientTrackingRange(8).updateInterval(1).fireImmune().setCustomClientFactory(((spawnEntity, level) -> new AugmentBundleEntity(AUGMENT_BUNDLE, level))), event);
+        BUNDLED_SPELL_ORB = registerWV("augment_bundle", EntityType.Builder.<BundledSpellOrb>of(BundledSpellOrb::new, MobCategory.MISC).sized(0.5F, 0.5F).clientTrackingRange(8).updateInterval(1).fireImmune().setCustomClientFactory(((spawnEntity, level) -> new BundledSpellOrb(BUNDLED_SPELL_ORB, level))), event);
         VAULT_RANG = registerWV("rang", EntityType.Builder.<VaultRangEntity>of(VaultRangEntity::new, MobCategory.MISC)
                 .sized(0.4F, 0.4F)
                 .clientTrackingRange(4)

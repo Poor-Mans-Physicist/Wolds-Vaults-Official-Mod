@@ -5,17 +5,17 @@ import iskallia.vault.init.ModGearAttributes;
 import iskallia.vault.snapshot.AttributeSnapshotHelper;
 import iskallia.vault.util.calc.CooldownHelper;
 import net.minecraft.world.entity.LivingEntity;
+import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
 import xyz.iwolfking.woldsvaults.config.SpellHasteConfig;
 import xyz.iwolfking.woldsvaults.init.ModConfigs;
 
 import javax.annotation.Nullable;
-import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
 
 /**
- * Spell haste. VH's cooldown reduction attribute, its Cufflinks percentile and the cooldown reduction player stat now
- * carry haste. A cooldown is divided by the haste factor: {@code 1 + haste} for positive haste, {@code 1 / (1 + |haste|)}
- * for negative haste, times any spell multipliers (Quicken, Discount), and never above {@code 1 + cap}. The cap is the
- * table's base cap plus the player's cooldown reduction cap attribute.
+ * Spell haste, carried by VH's cooldown reduction attribute, its Cufflinks percentile and the cooldown reduction player
+ * stat. A cooldown is divided by the haste factor: {@code 1 + haste} for positive haste and {@code 1 / (1 + |haste|)}
+ * for negative haste, times any spell multiplier, never above {@code 1 + cap}. The cap is the table's base cap plus the
+ * player's cooldown reduction cap attribute.
  */
 public final class SpellHaste {
     private static boolean missingLogged;
@@ -23,7 +23,9 @@ public final class SpellHaste {
     private SpellHaste() {
     }
 
-    /** The spell haste table, or null (logged once) when it failed to install; VH's own cooldown reduction then applies. */
+    /**
+     * The spell haste table, or null (logged once) when it failed to install; VH's own cooldown reduction then applies.
+     */
     @Nullable
     public static SpellHasteConfig config() {
         SpellHasteConfig config = ModConfigs.SPELL_HASTE;
@@ -34,8 +36,7 @@ public final class SpellHaste {
         return config;
     }
 
-    /** Uncapped haste: gear, talents and every other source, Cufflinks, and the player stat event. */
-    public static float raw(LivingEntity entity) {
+    private static float raw(LivingEntity entity) {
         return CooldownHelper.getCooldownMultiplierUnlimited(entity);
     }
 
@@ -82,7 +83,9 @@ public final class SpellHaste {
         return spellFactor(factor(raw(entity), 1.0F, cap), glyphHaste, cap, headroom);
     }
 
-    /** The share of a cooldown the factor removes, the form VH's cooldown code subtracts; negative for slowed casting. */
+    /**
+     * The share of a cooldown the factor removes, the form VH's cooldown code subtracts; negative for slowed casting.
+     */
     public static float reduction(float factor) {
         return 1.0F - 1.0F / factor;
     }

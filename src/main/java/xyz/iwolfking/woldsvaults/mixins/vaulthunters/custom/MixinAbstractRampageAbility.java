@@ -7,7 +7,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-import xyz.iwolfking.woldsvaults.augments.effect.BuffGlyphs;
+import xyz.iwolfking.woldsvaults.spellcraft.buff.BuffGlyphs;
 import xyz.iwolfking.woldsvaults.gods.combat.UltraRampaging;
 
 @Mixin(value = AbstractRampageAbility.class, remap = false)

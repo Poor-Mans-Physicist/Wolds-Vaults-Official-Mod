@@ -26,7 +26,7 @@ import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import xyz.iwolfking.woldsvaults.WoldsVaults;
-import xyz.iwolfking.woldsvaults.augments.effect.BuffGlyphs;
+import xyz.iwolfking.woldsvaults.spellcraft.buff.BuffGlyphs;
 import xyz.iwolfking.woldsvaults.abilities.flexible.FlexibleAbility;
 import xyz.iwolfking.woldsvaults.api.util.ManaSustain;
 import xyz.iwolfking.woldsvaults.api.util.WoldEtchingHelper;

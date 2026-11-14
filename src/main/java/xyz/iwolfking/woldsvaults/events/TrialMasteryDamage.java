@@ -9,7 +9,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import xyz.iwolfking.woldsvaults.WoldsVaults;
 import xyz.iwolfking.woldsvaults.milestones.trials.TrialMastery;
-import xyz.iwolfking.woldsvaults.spellcraft.chain.SpellChainDamage;
+import xyz.iwolfking.woldsvaults.spellcraft.scope.ChainScope;
 
 /**
  * Applies the trial mastery bonus as one multiplicative layer on everything a rank-up trial's runner
@@ -27,7 +27,7 @@ public final class TrialMasteryDamage {
 
     @SubscribeEvent(priority = EventPriority.LOW)
     public static void applyTrialMastery(LivingHurtEvent event) {
-        if (SpellChainDamage.active()) {
+        if (ChainScope.active()) {
             return;
         }
         PostMultiplierFlatAdds.apply(event);

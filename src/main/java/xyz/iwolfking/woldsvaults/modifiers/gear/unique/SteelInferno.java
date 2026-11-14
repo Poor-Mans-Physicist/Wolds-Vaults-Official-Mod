@@ -6,7 +6,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import xyz.iwolfking.woldsvaults.entities.projectiles.VaultMeteor;
-import xyz.iwolfking.woldsvaults.spellcraft.gear.GearGlyphs;
+import xyz.iwolfking.woldsvaults.spellcraft.gear.ConvertedAffixes;
 
 import javax.annotation.Nullable;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -46,7 +46,7 @@ public final class SteelInferno {
         if (fireball instanceof VaultMeteor) {
             return new Explosion(pos, null, true);
         }
-        return new Explosion(pos, GearGlyphs.steelCore(fireball), false);
+        return new Explosion(pos, ConvertedAffixes.steelCore(fireball), false);
     }
 
     /** Squared distance from {@code pos} to the nearest point of {@code entity}'s hitbox. */

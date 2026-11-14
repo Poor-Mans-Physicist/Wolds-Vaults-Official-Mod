@@ -19,7 +19,7 @@ import java.util.EnumMap;
 import java.util.Map;
 import xyz.iwolfking.woldsvaults.config.ExtractorCostsConfig;
 import xyz.iwolfking.woldsvaults.config.ExtractorPartsConfig;
-import xyz.iwolfking.woldsvaults.config.FocusAugmentsConfig;
+import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
 import xyz.iwolfking.woldsvaults.config.GearSetConfig;
 import xyz.iwolfking.woldsvaults.config.LightningFiendConfig;
 import xyz.iwolfking.woldsvaults.config.RiptideConfig;
@@ -55,7 +55,7 @@ public class ModConfigs {
     public static GearSetConfig GEAR_SETS;
     public static RiptideConfig RIPTIDE;
     public static LightningFiendConfig LIGHTNING_FIEND;
-    public static FocusAugmentsConfig FOCUS_AUGMENTS;
+    public static SpellcraftConfig SPELLCRAFT;
     public static SpellHasteConfig SPELL_HASTE;
 
     public static AugmentRecipesConfig AUGMENT_RECIPES;

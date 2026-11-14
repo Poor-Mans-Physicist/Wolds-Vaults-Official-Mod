@@ -2,7 +2,6 @@ package xyz.iwolfking.woldsvaults.mixins.vaulthunters.accessors;
 
 import iskallia.vault.client.gui.screen.player.legacy.SplitTabContent;
 import iskallia.vault.client.gui.screen.player.legacy.tab.split.spi.AbstractDialog;
-import iskallia.vault.client.gui.screen.player.legacy.tab.split.spi.AbstractPanRegion;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
@@ -11,7 +10,4 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 public interface SplitTabContentAccessor {
     @Accessor("dialog")
     AbstractDialog<?> woldsvaults$getDialog();
-
-    @Accessor("panRegion")
-    AbstractPanRegion<?> woldsvaults$getPanRegion();
 }

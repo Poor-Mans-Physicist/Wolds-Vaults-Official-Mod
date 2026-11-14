@@ -3,16 +3,16 @@ package xyz.iwolfking.woldsvaults.network.packets;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkEvent;
-import xyz.iwolfking.woldsvaults.augments.FocusAugments;
+import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
+import xyz.iwolfking.woldsvaults.spellcraft.play.SpellEdits;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
-import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
 
 /**
- * Client to server: create (spell id 0), change or delete an augmented spell on the focus or wand in
- * {@code inventorySlot}. The server checks the whole item against the table before storing anything.
+ * Client to server: create (spell id 0), change or delete an augmented spell on the focus or wand in {@code
+ * inventorySlot}. The server checks the whole item against the table before storing anything.
  */
 public record SpellEditMessage(int inventorySlot, int spellId, String name, List<String> tokens, boolean delete) {
     private static final int MAX_TOKENS = 64;
@@ -43,7 +43,7 @@ public record SpellEditMessage(int inventorySlot, int spellId, String name, List
             ServerPlayer player = context.get().getSender();
             if (player != null) {
                 try {
-                    FocusAugments.editSpell(player, message.inventorySlot, message.spellId, message.name, message.tokens, message.delete);
+                    SpellEdits.editSpell(player, message.inventorySlot, message.spellId, message.name, message.tokens, message.delete);
                 } catch (RuntimeException e) {
                     WoldLogger.error("Spellcraft: saving spell {} failed", message.spellId, e);
                 }

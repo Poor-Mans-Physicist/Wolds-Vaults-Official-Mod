@@ -6,23 +6,22 @@ import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.saveddata.SavedData;
-import xyz.iwolfking.woldsvaults.augments.item.SpellcraftItemData;
+import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
+import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
 
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
 
 /**
- * Each player's default spell bar (ability group per slot, empty string for an empty slot), the selected slot the
- * cast key fires, and whether the bar was filled from their learned abilities yet. Saved with the overworld.
+ * Each player's default spell bar (ability group per slot, empty string for an empty slot), the selected slot the cast
+ * key fires, and whether the bar was filled from their learned abilities yet. Saved with the overworld.
  */
 public class SpellBarData extends SavedData {
     private static final String NAME = "woldsvaults_spell_bars";
     private final Map<UUID, PlayerBar> bars = new HashMap<>();
 
-    /** One player's saved bar. */
     public static final class PlayerBar {
         public final String[] defaults = new String[SpellcraftItemData.SLOTS];
         public int selected;

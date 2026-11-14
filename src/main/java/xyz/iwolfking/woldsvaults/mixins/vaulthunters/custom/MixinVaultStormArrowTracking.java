@@ -23,9 +23,9 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import xyz.iwolfking.woldsvaults.api.lib.TrackingStorm;
-import xyz.iwolfking.woldsvaults.augments.AugmentType;
-import xyz.iwolfking.woldsvaults.spellcraft.gear.GearGlyphs;
-import xyz.iwolfking.woldsvaults.spellcraft.gear.GlyphGrants;
+import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
+import xyz.iwolfking.woldsvaults.spellcraft.gear.ConvertedAffixes;
+import xyz.iwolfking.woldsvaults.spellcraft.scope.GlyphGrants;
 
 /**
  * Stormcrown storm tracking: when the arrow's cast carried the Tracking Storm glyph, the storm spawned on hit locks
@@ -48,9 +48,9 @@ public abstract class MixinVaultStormArrowTracking extends AbstractArrow {
         if (storm.getStormArrowType() != VaultStormArrow.StormType.BASE) {
             return;
         }
-        GlyphGrants.Grant tracking = GearGlyphs.carried(this, player).get(AugmentType.STORM_TRACKING);
+        GlyphGrants.Grant tracking = ConvertedAffixes.carried(this, player).get(GlyphType.STORM_TRACKING);
         if (tracking == null) {
-            tracking = GearGlyphs.grant(player, AugmentType.STORM_TRACKING);
+            tracking = ConvertedAffixes.grant(player, GlyphType.STORM_TRACKING);
         }
         if (tracking == null) {
             return;

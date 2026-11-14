@@ -2,17 +2,16 @@ package xyz.iwolfking.woldsvaults.api.cast;
 
 import iskallia.vault.skill.base.Skill;
 import net.minecraft.server.level.ServerPlayer;
-import xyz.iwolfking.woldsvaults.augments.cast.DeferredGlyphs;
+import xyz.iwolfking.woldsvaults.spellcraft.scope.DeferredGlyphs;
 
 import javax.annotation.Nullable;
-
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * One ability cast: who cast it, which skill, and the per-cast state its hits share. Entities spawned
- * and tasks scheduled during the cast carry the same instance, so a value filled in after the cast
- * starts (the mana it paid) is visible to every later hit.
+ * One ability cast: who cast it, which skill, and the per-cast state its hits share. Entities spawned and tasks
+ * scheduled during the cast carry the same instance, so a value filled in after the cast starts (the mana it paid) is
+ * visible to every later hit.
  */
 public final class CastTag {
     private static final AtomicLong NEXT_ID = new AtomicLong();
@@ -54,7 +53,6 @@ public final class CastTag {
         return player != null && this.owner.equals(player.getUUID());
     }
 
-    /** Whether this tag belongs to {@code player}'s cast of {@code skill}. */
     public boolean isCastOf(ServerPlayer player, Skill skill) {
         return this.isOwnedBy(player) && this.skill == skill;
     }
@@ -127,8 +125,8 @@ public final class CastTag {
     }
 
     /**
-     * Claims the cast's one Mana Steal proc for {@code event}. The same hurt event may claim again, so a
-     * proc that runs twice on one hit (Luckiest Hit) still doubles.
+     * Claims the cast's one Mana Steal proc for {@code event}. The same hurt event may claim again, so a proc that runs
+     * twice on one hit (Luckiest Hit) still doubles.
      */
     public boolean claimManaSteal(Object event) {
         if (this.manaStealEvent == null) {

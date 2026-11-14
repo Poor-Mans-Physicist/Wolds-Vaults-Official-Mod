@@ -12,8 +12,8 @@ import xyz.iwolfking.woldsvaults.api.cast.CastTag;
 import xyz.iwolfking.woldsvaults.events.WoldActiveFlags;
 
 /**
- * Mana Steal and Life Steal proc at most once per fang cast. The hurt event that claimed the proc may
- * run it again, so Luckiest Hit still doubles it.
+ * Mana Steal and Life Steal proc at most once per fang cast. The hurt event that claimed the proc may run it again, so
+ * Luckiest Hit still doubles it.
  */
 @Mixin(value = {HealthLeechLuckyHitTalent.class, ManaLeechLuckyHitTalent.class}, remap = false)
 public class MixinLeechLuckyHitFangCast {

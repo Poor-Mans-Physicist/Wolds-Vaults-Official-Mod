@@ -15,6 +15,6 @@ public class RegisterCommandEventHandler {
         VaultChampionCommand.register(event.getDispatcher());
         ExtractionCommand.register(event.getDispatcher());
         HyperTestCommand.register(event.getDispatcher());
-        AugmentsCommand.register(event.getDispatcher());
+        SpellcraftCommand.register(event.getDispatcher());
     }
 }
