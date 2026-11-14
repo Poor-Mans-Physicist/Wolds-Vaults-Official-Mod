@@ -20,11 +20,13 @@ import xyz.iwolfking.woldsvaults.modifiers.gear.unique.StormTrackingAttribute;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
-import xyz.iwolfking.woldsvaults.spellcraft.gear.ConvertedAffixes;
 import xyz.iwolfking.woldsvaults.init.ModConfigs;
 
 /**
@@ -36,8 +38,64 @@ import xyz.iwolfking.woldsvaults.init.ModConfigs;
  * multiplier in the glyph's linked radius range, so the cast reproduces both rolled values.
  */
 public final class GearAffixLines {
+    private static Index index;
 
     private GearAffixLines() {
+    }
+
+    public record Index(SpellcraftConfig config, Set<String> convertedKeys, Map<GlyphType, List<SpellcraftConfig.GearGlyph>> byType) {
+    }
+
+    /** The table's gear glyph entries, or an empty list (logged once) when the section is missing. */
+    public static List<SpellcraftConfig.GearGlyph> entries(SpellcraftConfig config) {
+        if (config.gearGlyphs == null) {
+            WoldLogger.errorOnce("ConvertedAffixes:missing", "Spellcraft: the focus augments table has no gearGlyphs section; converted gear affixes grant no glyphs "
+                    + "and stay switched off");
+            return List.of();
+        }
+        return config.gearGlyphs;
+    }
+
+    @Nullable
+    public static Index index() {
+        SpellcraftConfig config = ModConfigs.SPELLCRAFT;
+        if (config == null) {
+            return null;
+        }
+        Index current = index;
+        if (current != null && current.config() == config) {
+            return current;
+        }
+        Set<String> keys = new HashSet<>();
+        Map<GlyphType, List<SpellcraftConfig.GearGlyph>> byType = new HashMap<>();
+        for (SpellcraftConfig.GearGlyph entry : entries(config)) {
+            keys.add(entry.attribute + "|" + entry.key);
+            GlyphType type = GlyphType.byId(entry.glyph);
+            if (type != null) {
+                byType.computeIfAbsent(type, t -> new ArrayList<>()).add(entry);
+            }
+        }
+        current = new Index(config, Collections.unmodifiableSet(keys), byType);
+        index = current;
+        return current;
+    }
+
+    public static void resetIndex() {
+        index = null;
+    }
+
+    @Nullable
+    public static SpellcraftConfig.Linked linked(SpellcraftConfig config, GlyphType type, String name) {
+        SpellcraftConfig.GlyphDefinition glyph = config.glyph(type);
+        if (glyph == null || glyph.potency == null || glyph.potency.linked == null) {
+            return null;
+        }
+        for (SpellcraftConfig.Linked linked : glyph.potency.linked) {
+            if (name.equals(linked.name)) {
+                return linked;
+            }
+        }
+        return null;
     }
 
     /** The {@link GlyphLineProviders} provider. */
@@ -53,7 +111,7 @@ public final class GearAffixLines {
         if (config == null || stack.isEmpty() || !AttributeGearData.hasData(stack)) {
             return List.of();
         }
-        List<SpellcraftConfig.GearGlyph> entries = ConvertedAffixes.entries(config);
+        List<SpellcraftConfig.GearGlyph> entries = entries(config);
         if (entries.isEmpty()) {
             return List.of();
         }
@@ -88,7 +146,7 @@ public final class GearAffixLines {
             if (attribute == null || type == null) {
                 continue;
             }
-            SpellcraftConfig.Linked linked = ConvertedAffixes.linked(config, type, entry.linked);
+            SpellcraftConfig.Linked linked = linked(config, type, entry.linked);
             if (linked == null) {
                 WoldLogger.errorOnce("GearAffixLines:linked:" + type.id() + ":" + entry.linked, "Spellcraft: " + type.id() + " has no linked value " + entry.linked
                         + "; the " + entry.attribute + " affix that fills it is ignored");
@@ -119,7 +177,7 @@ public final class GearAffixLines {
         if (!(raw instanceof VaultGearData data)) {
             return List.of();
         }
-        List<SpellcraftConfig.GearGlyph> entries = ConvertedAffixes.entries(config);
+        List<SpellcraftConfig.GearGlyph> entries = entries(config);
         List<Grant> grants = new ArrayList<>();
         for (VaultGearModifier.AffixType affixType : VaultGearModifier.AffixType.values()) {
             for (VaultGearModifier<?> modifier : data.getModifiers(affixType)) {
@@ -148,7 +206,7 @@ public final class GearAffixLines {
         float quality;
         if (value instanceof SteelInfernoAttribute steel) {
             potency = entry.potency(steel.getCentreBonus());
-            SpellcraftConfig.Linked radius = ConvertedAffixes.linked(config, type, "radius");
+            SpellcraftConfig.Linked radius = linked(config, type, "radius");
             quality = GlyphQuality.linkedQuality(radius, steel.getRadiusMultiplier());
         } else {
             Float raw = number(entry, value);
@@ -170,7 +228,7 @@ public final class GearAffixLines {
     }
 
     private static boolean hasLinkedEntry(SpellcraftConfig config, GlyphType type) {
-        for (SpellcraftConfig.GearGlyph entry : ConvertedAffixes.entries(config)) {
+        for (SpellcraftConfig.GearGlyph entry : entries(config)) {
             if (entry.linked != null && type.id().equals(entry.glyph)) {
                 return true;
             }

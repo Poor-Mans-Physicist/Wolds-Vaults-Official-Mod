@@ -10,19 +10,18 @@ import javax.annotation.Nullable;
  * slot already paid. {@code suppressCastEvent} keeps a step from firing on-cast effects (Shotgun copies).
  * {@code fullyCharged}: the slot was cast with Charge held to full.
  */
-public record CastBilling(Mode mode, @Nullable String triggerSpec, float otherAbilitiesMana, float manaFactor,
+public record CastBilling(@Nullable String triggerSpec, float otherAbilitiesMana, float manaFactor,
                           @Nullable EffectiveBar.Slot slot, boolean suppressCastEvent, boolean fullyCharged) {
     public static CastBilling trigger(String triggerSpec, float otherAbilitiesMana, float manaFactor, EffectiveBar.Slot slot,
                                       boolean fullyCharged) {
-        return new CastBilling(Mode.TRIGGER, triggerSpec, otherAbilitiesMana, manaFactor, slot, false, fullyCharged);
+        return new CastBilling(triggerSpec, otherAbilitiesMana, manaFactor, slot, false, fullyCharged);
     }
 
     public static CastBilling free(boolean suppressCastEvent) {
-        return new CastBilling(Mode.FREE, null, 0.0F, 1.0F, null, suppressCastEvent, false);
+        return new CastBilling(null, 0.0F, 1.0F, null, suppressCastEvent, false);
     }
 
-    public enum Mode {
-        TRIGGER,
-        FREE
+    public boolean isTrigger() {
+        return this.triggerSpec != null;
     }
 }

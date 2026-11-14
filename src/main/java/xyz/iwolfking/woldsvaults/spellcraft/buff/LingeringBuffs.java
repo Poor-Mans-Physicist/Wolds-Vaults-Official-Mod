@@ -13,7 +13,6 @@ import net.minecraftforge.event.server.ServerStoppedEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import xyz.iwolfking.woldsvaults.WoldsVaults;
-import xyz.iwolfking.woldsvaults.api.cast.CastContext;
 import xyz.iwolfking.woldsvaults.api.cast.CastTag;
 import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
 import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
@@ -23,6 +22,7 @@ import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
 import xyz.iwolfking.woldsvaults.spellcraft.source.EquippedSources;
 import xyz.iwolfking.woldsvaults.spellcraft.source.GlyphViewLine;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.GlyphGrants;
+import xyz.iwolfking.woldsvaults.spellcraft.scope.PlacedBlockGlyphs;
 import xyz.iwolfking.woldsvaults.spellcraft.ability.AbilityLookup;
 
 import javax.annotation.Nullable;
@@ -87,7 +87,7 @@ public final class LingeringBuffs {
 
     /** Notes that the damage totem {@code tile} covers {@code player} this tick; called from VH's totem tick. */
     public static void noteCover(ServerPlayer player, TotemTileEntity tile) {
-        CastTag tag = CastContext.tagOrRestore(tile);
+        CastTag tag = PlacedBlockGlyphs.tagOrRestore(tile);
         DeferredGlyphs glyphs = tag == null ? null : tag.glyphs();
         Source source = new Source(glyphs == null ? null : glyphs.modifiers().grants());
         long expires = player.getLevel().getGameTime() + COVER_TICKS;

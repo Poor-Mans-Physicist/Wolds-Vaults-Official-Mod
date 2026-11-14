@@ -40,7 +40,7 @@ import xyz.iwolfking.woldsvaults.client.spellcraft.gui.SpellcraftGui;
 import xyz.iwolfking.woldsvaults.client.spellcraft.gui.SpellcraftTooltipRow;
 import xyz.iwolfking.woldsvaults.client.spellcraft.state.ClientGlyphViews;
 import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
-import xyz.iwolfking.woldsvaults.spellcraft.gear.ConvertedEtchings;
+import xyz.iwolfking.woldsvaults.spellcraft.source.EtchingLines;
 import xyz.iwolfking.woldsvaults.spellcraft.source.GearAffixLines;
 
 import java.util.ArrayList;
@@ -72,7 +72,7 @@ public class SpellcraftTooltipEvents {
     public static void onGatherGrants(RenderTooltipEvent.GatherComponents event) {
         ItemStack stack = event.getItemStack();
         List<GearAffixLines.Grant> grants = GearAffixLines.grants(stack);
-        GlyphType etchingGlyph = ConvertedEtchings.glyphOf(stack);
+        GlyphType etchingGlyph = EtchingLines.glyphOf(stack);
         if (grants.isEmpty() && etchingGlyph == null) {
             return;
         }

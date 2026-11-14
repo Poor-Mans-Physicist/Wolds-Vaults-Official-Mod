@@ -33,12 +33,8 @@ import xyz.iwolfking.woldsvaults.spellcraft.source.GlyphLineProviders;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
@@ -66,12 +62,8 @@ public final class ConvertedAffixes {
     private static final String RADIUS = "radius";
     private static final Object LISTENER_OWNER = new Object();
     private static final Map<UUID, Map<String, GlyphGrants>> TOGGLES = new ConcurrentHashMap<>();
-    private static Index index;
 
     private ConvertedAffixes() {
-    }
-
-    private record Index(SpellcraftConfig config, Set<String> convertedKeys, Map<GlyphType, List<SpellcraftConfig.GearGlyph>> byType) {
     }
 
     /** Registers the gear glyph line provider and the toggle listener; called once from common setup. */
@@ -82,40 +74,6 @@ public final class ConvertedAffixes {
                 noteToggle(player, data.getAbility());
             }
         });
-    }
-
-    /** The table's gear glyph entries, or an empty list (logged once) when the section is missing. */
-    public static List<SpellcraftConfig.GearGlyph> entries(SpellcraftConfig config) {
-        if (config.gearGlyphs == null) {
-            WoldLogger.errorOnce("ConvertedAffixes:missing", "Spellcraft: the focus augments table has no gearGlyphs section; converted gear affixes grant no glyphs "
-                    + "and stay switched off");
-            return List.of();
-        }
-        return config.gearGlyphs;
-    }
-
-    @Nullable
-    private static Index index() {
-        SpellcraftConfig config = ModConfigs.SPELLCRAFT;
-        if (config == null) {
-            return null;
-        }
-        Index current = index;
-        if (current != null && current.config() == config) {
-            return current;
-        }
-        Set<String> keys = new HashSet<>();
-        Map<GlyphType, List<SpellcraftConfig.GearGlyph>> byType = new HashMap<>();
-        for (SpellcraftConfig.GearGlyph entry : entries(config)) {
-            keys.add(entry.attribute + "|" + entry.key);
-            GlyphType type = GlyphType.byId(entry.glyph);
-            if (type != null) {
-                byType.computeIfAbsent(type, t -> new ArrayList<>()).add(entry);
-            }
-        }
-        current = new Index(config, Collections.unmodifiableSet(keys), byType);
-        index = current;
-        return current;
     }
 
     /**
@@ -141,7 +99,7 @@ public final class ConvertedAffixes {
     /** VH's special modifications for {@code modClass}, with converted ones replaced by the granted glyphs. */
     @SuppressWarnings({"rawtypes", "unchecked"})
     public static List filterSpecial(Entity entity, Class<?> modClass, List<ConfiguredModification> found) {
-        Index current = index();
+        GearAffixLines.Index current = GearAffixLines.index();
         if (current == null) {
             return found;
         }
@@ -188,7 +146,7 @@ public final class ConvertedAffixes {
     /** VH's keyed area-of-effect attributes, with converted ones replaced by the granted glyphs. */
     @SuppressWarnings({"rawtypes", "unchecked"})
     public static List filterArea(Entity entity, List found) {
-        Index current = index();
+        GearAffixLines.Index current = GearAffixLines.index();
         if (current == null) {
             return found;
         }
@@ -202,7 +160,7 @@ public final class ConvertedAffixes {
                     result.add(new AbilityAreaOfEffectPercentAttribute(entry.key, entry.value(grant.potency())));
                     continue;
                 }
-                SpellcraftConfig.Linked linked = linked(current.config(), type, entry.linked);
+                SpellcraftConfig.Linked linked = GearAffixLines.linked(current.config(), type, entry.linked);
                 if (linked == null) {
                     WoldLogger.errorOnce("ConvertedAffixes:area_linked:" + type.id(), "Spellcraft: " + type.id() + " has no linked value " + entry.linked
                             + "; its area change is not applied");
@@ -217,12 +175,12 @@ public final class ConvertedAffixes {
     /** VH's keyed cooldown attributes without the converted ones; their glyphs act as the spell's cooldown factor. */
     @SuppressWarnings("rawtypes")
     public static List filterCooldown(List found) {
-        Index current = index();
+        GearAffixLines.Index current = GearAffixLines.index();
         return current == null ? found : withoutConverted(current, ABILITY_COOLDOWN, found);
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
-    private static List withoutConverted(Index current, String attribute, List found) {
+    private static List withoutConverted(GearAffixLines.Index current, String attribute, List found) {
         List result = new ArrayList<>();
         for (Object value : found) {
             if (!(value instanceof AbilityFloatValueAttribute keyed) || !current.convertedKeys().contains(attribute + "|" + keyed.getAbilityKey())) {
@@ -253,7 +211,7 @@ public final class ConvertedAffixes {
         if (grant == null || config == null) {
             return null;
         }
-        SpellcraftConfig.Linked radius = linked(config, GlyphType.STEEL_CORE, RADIUS);
+        SpellcraftConfig.Linked radius = GearAffixLines.linked(config, GlyphType.STEEL_CORE, RADIUS);
         if (radius == null) {
             WoldLogger.errorOnce("ConvertedAffixes:steel_core_radius", "Spellcraft: Steel Core has no linked radius value in the table; its fireballs keep their radius");
             return new SteelInfernoAttribute(1.0F, grant.potency());
@@ -268,20 +226,6 @@ public final class ConvertedAffixes {
             return GlyphGrants.NONE;
         }
         return tag.glyphs().modifiers().grants();
-    }
-
-    @Nullable
-    public static SpellcraftConfig.Linked linked(SpellcraftConfig config, GlyphType type, String name) {
-        SpellcraftConfig.GlyphDefinition glyph = config.glyph(type);
-        if (glyph == null || glyph.potency == null || glyph.potency.linked == null) {
-            return null;
-        }
-        for (SpellcraftConfig.Linked linked : glyph.potency.linked) {
-            if (name.equals(linked.name)) {
-                return linked;
-            }
-        }
-        return null;
     }
 
     private static void noteToggle(ServerPlayer player, Ability ability) {
@@ -333,6 +277,6 @@ public final class ConvertedAffixes {
     @SubscribeEvent
     public static void onServerStopped(ServerStoppedEvent event) {
         TOGGLES.clear();
-        index = null;
+        GearAffixLines.resetIndex();
     }
 }

@@ -32,7 +32,7 @@ public final class SlotManaBilling {
     /** The cost a slot trigger is checked and dumped against: the slot cost for the trigger step, {@code cost} otherwise. */
     public static float slotCost(ServerPlayer player, Skill skill, float cost) {
         CastBilling billing = CastScope.billing(player);
-        if (billing == null || billing.mode() != CastBilling.Mode.TRIGGER || !isTrigger(billing, skill)) {
+        if (billing == null || !billing.isTrigger() || !isTrigger(billing, skill)) {
             return cost;
         }
         return (cost + billing.otherAbilitiesMana()) * billing.manaFactor();
@@ -43,7 +43,7 @@ public final class SlotManaBilling {
         if (billing == null) {
             return cost;
         }
-        if (billing.mode() == CastBilling.Mode.FREE) {
+        if (!billing.isTrigger()) {
             return 0.0F;
         }
         return slotCost(player, skill, cost);
@@ -59,7 +59,7 @@ public final class SlotManaBilling {
         if (billing == null) {
             return paid;
         }
-        if (billing.mode() == CastBilling.Mode.FREE) {
+        if (!billing.isTrigger()) {
             return 0.0F;
         }
         if (!isTrigger(billing, skill)) {

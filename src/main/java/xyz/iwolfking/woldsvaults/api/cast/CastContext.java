@@ -1,12 +1,5 @@
 package xyz.iwolfking.woldsvaults.api.cast;
 
-import iskallia.vault.block.entity.LandmineBlockEntity;
-import iskallia.vault.block.entity.TotemTileEntity;
-import iskallia.vault.skill.base.Skill;
-import iskallia.vault.world.data.PlayerAbilitiesData;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
@@ -16,7 +9,6 @@ import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import xyz.iwolfking.woldsvaults.WoldsVaults;
-import xyz.iwolfking.woldsvaults.spellcraft.scope.DeferredGlyphs;
 
 import javax.annotation.Nullable;
 import java.util.ArrayDeque;
@@ -28,7 +20,6 @@ import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
-import xyz.iwolfking.woldsvaults.spellcraft.ability.AbilityLookup;
 
 /**
  * Tracks which ability cast is running. A cast pushes its {@link CastTag} for its own call; entities
@@ -41,7 +32,6 @@ import xyz.iwolfking.woldsvaults.spellcraft.ability.AbilityLookup;
  */
 @Mod.EventBusSubscriber(modid = WoldsVaults.MOD_ID)
 public final class CastContext {
-    private static final String GLYPHS_KEY = "woldsvaults:spell_glyphs";
     private static final ThreadLocal<Deque<Frame>> STACK = ThreadLocal.withInitial(ArrayDeque::new);
     private static final Map<Entity, CastTag> ENTITY_TAGS = Collections.synchronizedMap(new WeakHashMap<>());
     private static final Map<BlockEntity, CastTag> BLOCK_ENTITY_TAGS = Collections.synchronizedMap(new WeakHashMap<>());
@@ -137,58 +127,19 @@ public final class CastContext {
         return blockEntity == null ? null : BLOCK_ENTITY_TAGS.get(blockEntity);
     }
 
-    /** Gives a block entity created during a cast that cast's tag, and keeps a spell step's glyphs in its saved data. */
-    public static void tagIfCasting(BlockEntity blockEntity) {
+    @Nullable
+    public static CastTag tagIfCasting(BlockEntity blockEntity) {
         CastTag tag = current();
         if (tag != null && blockEntity != null && blockEntity.getLevel() != null && !blockEntity.getLevel().isClientSide()) {
             BLOCK_ENTITY_TAGS.put(blockEntity, tag);
-            if (tag.glyphs() != null && keepsGlyphs(blockEntity)) {
-                blockEntity.getTileData().put(GLYPHS_KEY, tag.glyphs().save());
-            }
-        }
-    }
-
-    /**
-     * The cast tag of a ticking block entity. A totem or landmine a spell step placed whose tag was lost with its chunk
-     * gets a tag back from the glyphs in its saved data once its owner is online; that tag never resolves Power Dump.
-     */
-    @Nullable
-    public static CastTag tagOrRestore(BlockEntity blockEntity) {
-        CastTag tag = tagOf(blockEntity);
-        if (tag != null || !keepsGlyphs(blockEntity) || !(blockEntity.getLevel() instanceof ServerLevel level)) {
             return tag;
         }
-        CompoundTag data = blockEntity.getTileData();
-        if (!data.contains(GLYPHS_KEY, Tag.TAG_COMPOUND)) {
-            return null;
-        }
-        DeferredGlyphs glyphs = DeferredGlyphs.load(data.getCompound(GLYPHS_KEY));
-        if (glyphs == null) {
-            data.remove(GLYPHS_KEY);
-            return null;
-        }
-        ServerPlayer owner = level.getServer().getPlayerList().getPlayer(glyphs.owner());
-        if (owner == null) {
-            return null;
-        }
-        Skill skill = AbilityLookup.child(PlayerAbilitiesData.get(level).getAbilities(owner), glyphs.spec()).orElse(null);
-        if (skill == null) {
-            WoldLogger.error("Deferred glyphs: {} at {} was placed by {} but {} has no such ability now; the glyphs are dropped.",
-                    blockEntity.getClass().getSimpleName(), blockEntity.getBlockPos(), glyphs.spec(), owner.getScoreboardName());
-            data.remove(GLYPHS_KEY);
-            return null;
-        }
-        CastTag restored = new CastTag(owner, skill);
-        restored.resolvePowerDump(false, 1.0F);
-        restored.setGlyphs(glyphs);
-        BLOCK_ENTITY_TAGS.put(blockEntity, restored);
-        return restored;
+        return null;
     }
 
-    private static boolean keepsGlyphs(BlockEntity blockEntity) {
-        return blockEntity instanceof TotemTileEntity || blockEntity instanceof LandmineBlockEntity;
+    public static void tag(BlockEntity blockEntity, CastTag tag) {
+        BLOCK_ENTITY_TAGS.put(blockEntity, tag);
     }
-
     /**
      * The cast a hit belongs to: the running cast when {@code player} owns it, otherwise the cast that
      * created the hit's direct entity. Null when the hit came from no tracked cast.

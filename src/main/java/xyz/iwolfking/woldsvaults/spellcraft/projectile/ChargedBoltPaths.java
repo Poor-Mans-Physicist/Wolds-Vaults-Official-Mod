@@ -49,7 +49,7 @@ public final class ChargedBoltPaths {
         int maxTicks = Math.max(1, Mth.ceil(ability.getDistance() / speed));
         boolean homing = config != null && modifiers.homing();
         LivingEntity preferred = homing
-                ? ProjectileSteering.cursorTarget(player, config, e -> ChargedBoltsAbilityInvoker.woldsvaults$canHit(player, e)).orElse(null)
+                ? CursorTarget.cursorTarget(player, config, e -> ChargedBoltsAbilityInvoker.woldsvaults$canHit(player, e)).orElse(null)
                 : null;
         Map<Integer, Integer> hitCounts = new HashMap<>();
         player.level.playSound(null, player, SoundEvents.TRIDENT_THUNDER, SoundSource.PLAYERS, 0.55F, 1.65F);
@@ -141,7 +141,7 @@ public final class ChargedBoltPaths {
             if (desired.lengthSqr() < 1.0E-8) {
                 return;
             }
-            this.direction = ProjectileSteering.rotateToward(this.direction, desired.normalize(), Math.toRadians(this.modifiers.homingTurn() / 20.0));
+            this.direction = HomingMotion.rotateToward(this.direction, desired.normalize(), Math.toRadians(this.modifiers.homingTurn() / 20.0));
         }
 
         private boolean inRange(LivingEntity entity, double range) {

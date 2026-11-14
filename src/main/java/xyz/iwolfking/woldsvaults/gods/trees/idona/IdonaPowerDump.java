@@ -58,7 +58,7 @@ public final class IdonaPowerDump {
     /** The Power Core scale for the running slot cast: the etching's roll when the slot was fully charged, else 1. */
     private static float powerCoreScale(ServerPlayer player) {
         CastBilling billing = CastScope.billing(player);
-        if (billing == null || billing.mode() != CastBilling.Mode.TRIGGER || !billing.fullyCharged()) {
+        if (billing == null || !billing.isTrigger() || !billing.fullyCharged()) {
             return 1.0F;
         }
         return EtchingHelper.getEtchings(player, ModEtchingGearAttributes.POWER_CORE).stream()
@@ -95,7 +95,7 @@ public final class IdonaPowerDump {
         CastTag tag = CastContext.current();
         boolean ownCast = tag != null && tag.isCastOf(player, skill) && !tag.powerDumpResolved();
         CastBilling billing = CastScope.billing(player);
-        if (billing != null && billing.mode() == CastBilling.Mode.FREE) {
+        if (billing != null && !billing.isTrigger()) {
             if (ownCast) {
                 tag.resolvePowerDump(false, 1.0F);
             }

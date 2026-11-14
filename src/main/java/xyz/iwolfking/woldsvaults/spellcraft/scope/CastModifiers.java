@@ -1,11 +1,14 @@
 package xyz.iwolfking.woldsvaults.spellcraft.scope;
 
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
 import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphStacking;
 import xyz.iwolfking.woldsvaults.spellcraft.spell.PlacedGlyph;
 import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
 import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphStats;
 
+import javax.annotation.Nullable;
 import java.util.List;
 import java.util.function.Function;
 
@@ -20,6 +23,25 @@ import java.util.function.Function;
 public record CastModifiers(float damage, float area, float speed, float scale, float intensity, float duration, float drain,
                             float healMana, float durationUpside, float homingRange, float homingTurn, float orbitSeconds, float gravityReduction,
                             float etherealSeconds, int shotgunCopies, float echoPower, float chargeBonus, GlyphGrants grants) {
+    private static final String DAMAGE = "damage";
+    private static final String AREA = "area";
+    private static final String SPEED = "speed";
+    private static final String SCALE = "scale";
+    private static final String INTENSITY = "intensity";
+    private static final String DURATION = "duration";
+    private static final String DRAIN = "drain";
+    private static final String HEAL_MANA = "heal_mana";
+    private static final String DURATION_UPSIDE = "duration_upside";
+    private static final String HOMING_RANGE = "homing_range";
+    private static final String HOMING_TURN = "homing_turn";
+    private static final String ORBIT = "orbit";
+    private static final String GRAVITY = "gravity";
+    private static final String ETHEREAL = "ethereal";
+    private static final String ECHO = "echo";
+    private static final String CHARGE = "charge";
+    private static final String GRANTS = "grants";
+    private static final String[] REQUIRED = {DAMAGE, AREA, SPEED, SCALE, INTENSITY, DURATION, DRAIN, HEAL_MANA, DURATION_UPSIDE,
+            HOMING_RANGE, HOMING_TURN, ORBIT, GRAVITY, ETHEREAL, ECHO, CHARGE};
 
     public static final CastModifiers NONE = new CastModifiers(1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, GlyphGrants.NONE);
 
@@ -90,6 +112,65 @@ public record CastModifiers(float damage, float area, float speed, float scale, 
     public CastModifiers withDamageFactor(float factor) {
         return new CastModifiers(damage * factor, area, speed, scale, intensity, duration, drain, healMana, durationUpside, homingRange, homingTurn,
                 orbitSeconds, gravityReduction, etherealSeconds, shotgunCopies, echoPower, chargeBonus, grants);
+    }
+
+    void save(CompoundTag tag) {
+        tag.putFloat(DAMAGE, this.damage);
+        tag.putFloat(AREA, this.area);
+        tag.putFloat(SPEED, this.speed);
+        tag.putFloat(SCALE, this.scale);
+        tag.putFloat(INTENSITY, this.intensity);
+        tag.putFloat(DURATION, this.duration);
+        tag.putFloat(DRAIN, this.drain);
+        tag.putFloat(HEAL_MANA, this.healMana);
+        tag.putFloat(DURATION_UPSIDE, this.durationUpside);
+        tag.putFloat(HOMING_RANGE, this.homingRange);
+        tag.putFloat(HOMING_TURN, this.homingTurn);
+        tag.putFloat(ORBIT, this.orbitSeconds);
+        tag.putFloat(GRAVITY, this.gravityReduction);
+        tag.putFloat(ETHEREAL, this.etherealSeconds);
+        tag.putFloat(ECHO, this.echoPower);
+        tag.putFloat(CHARGE, this.chargeBonus);
+        tag.putInt("shotgun_copies", this.shotgunCopies);
+        if (!this.grants.isEmpty()) {
+            tag.put(GRANTS, this.grants.write());
+        }
+    }
+
+    @Nullable
+    static String missingKey(CompoundTag tag) {
+        for (String key : REQUIRED) {
+            if (!tag.contains(key)) {
+                return key;
+            }
+        }
+        return null;
+    }
+
+    @Nullable
+    static CastModifiers load(CompoundTag tag) {
+        if (missingKey(tag) != null) {
+            return null;
+        }
+        return new CastModifiers(
+                tag.getFloat(DAMAGE),
+                tag.getFloat(AREA),
+                tag.getFloat(SPEED),
+                tag.getFloat(SCALE),
+                tag.getFloat(INTENSITY),
+                tag.getFloat(DURATION),
+                tag.getFloat(DRAIN),
+                tag.getFloat(HEAL_MANA),
+                tag.getFloat(DURATION_UPSIDE),
+                tag.getFloat(HOMING_RANGE),
+                tag.getFloat(HOMING_TURN),
+                tag.getFloat(ORBIT),
+                tag.getFloat(GRAVITY),
+                tag.getFloat(ETHEREAL),
+                tag.getInt("shotgun_copies"),
+                tag.getFloat(ECHO),
+                tag.getFloat(CHARGE),
+                tag.contains(GRANTS, Tag.TAG_COMPOUND) ? GlyphGrants.read(tag.getCompound(GRANTS)) : GlyphGrants.NONE);
     }
 
     /** Whether projectiles spawned by the cast need tags, steering or physics. */

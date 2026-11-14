@@ -40,6 +40,8 @@ import xyz.iwolfking.woldsvaults.spellcraft.scope.DeferredReach;
 import xyz.iwolfking.woldsvaults.spellcraft.buff.BuffGlyphs;
 import xyz.iwolfking.woldsvaults.spellcraft.cast.SpellScheduler;
 import xyz.iwolfking.woldsvaults.spellcraft.hit.ShotgunHits;
+import xyz.iwolfking.woldsvaults.spellcraft.hit.GlyphArea;
+import xyz.iwolfking.woldsvaults.spellcraft.hit.GlyphDamage;
 import xyz.iwolfking.woldsvaults.spellcraft.cast.SpellMessages;
 import xyz.iwolfking.woldsvaults.spellcraft.ability.AbilityLookup;
 
@@ -64,6 +66,7 @@ public final class Spellcraft {
         MinecraftForge.EVENT_BUS.register(DeferredReach.class);
         MinecraftForge.EVENT_BUS.register(BuffGlyphs.class);
         MinecraftForge.EVENT_BUS.register(ProjectileGlyphs.class);
+        MinecraftForge.EVENT_BUS.register(GlyphDamage.class);
         MinecraftForge.EVENT_BUS.register(SpellScheduler.class);
         MinecraftForge.EVENT_BUS.register(SpellCharge.class);
         MinecraftForge.EVENT_BUS.register(ShotgunHits.class);
@@ -72,7 +75,7 @@ public final class Spellcraft {
     /** Registers the VH event listeners; called once from common setup. */
     public static void init() {
         AbilityCastTracker.register();
-        ProjectileGlyphs.register();
+        GlyphArea.register();
         ConvertedAffixes.init();
         ConvertedEtchings.init();
         LingeringBuffs.init();

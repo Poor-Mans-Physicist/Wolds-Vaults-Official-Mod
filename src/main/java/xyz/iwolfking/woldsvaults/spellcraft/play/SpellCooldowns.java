@@ -49,7 +49,7 @@ public final class SpellCooldowns {
         }
         CastBilling billing = CastScope.billing(player);
         if (billing != null) {
-            if (billing.mode() == CastBilling.Mode.TRIGGER && billing.slot() != null && billing.triggerSpec() != null
+            if (billing.isTrigger() && billing.slot() != null && billing.triggerSpec() != null
                     && billing.triggerSpec().equals(specId(ability))) {
                 start(player, billing.slot(), delayTicks, true);
             }

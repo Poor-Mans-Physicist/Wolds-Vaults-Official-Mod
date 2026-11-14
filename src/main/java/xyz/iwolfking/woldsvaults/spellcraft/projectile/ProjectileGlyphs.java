@@ -1,29 +1,22 @@
 package xyz.iwolfking.woldsvaults.spellcraft.projectile;
 
-import iskallia.vault.core.event.CommonEvents;
-import iskallia.vault.core.event.common.PlayerStatEvent;
 import iskallia.vault.skill.ability.effect.ChainLightningAbility;
-import iskallia.vault.util.calc.PlayerStat;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.entity.ProjectileImpactEvent;
-import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.CastModifiers;
 import xyz.iwolfking.woldsvaults.spellcraft.ability.CastOrigin;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.CastScope;
 import xyz.iwolfking.woldsvaults.mixins.accessors.ChainLightningProjectileAccessor;
-import xyz.iwolfking.woldsvaults.spellcraft.scope.ChainScope;
 import xyz.iwolfking.woldsvaults.spellcraft.hit.OwnHits;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.DeferredReach;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.ProjectileGlyphTags;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.TickingEntity;
-
-import javax.annotation.Nullable;
 
 /**
  * Applies glyphs to what VH does during and after a cast. During a cast, Amplify Area and Strengthen's area penalty
@@ -38,49 +31,7 @@ import javax.annotation.Nullable;
  * deals hits through it.
  */
 public final class ProjectileGlyphs {
-    private static final Object LISTENER_OWNER = new Object();
-
     private ProjectileGlyphs() {
-    }
-
-    /** Registers the VH PLAYER_STAT listener; called once from common setup. */
-    public static void register() {
-        CommonEvents.PLAYER_STAT.register(LISTENER_OWNER, ProjectileGlyphs::onPlayerStat);
-    }
-
-    private static void onPlayerStat(PlayerStatEvent.Data data) {
-        Entity entity = data.getEntity();
-        if (entity == null) {
-            return;
-        }
-        if (data.getStat() == PlayerStat.AREA_OF_EFFECT) {
-            CastModifiers scope = scopeFor(entity);
-            Projectile ticking = scope == null ? tickingProjectileOf(entity) : null;
-            float factor = scope != null ? scope.area() : ticking != null ? ProjectileGlyphTags.area(ticking) : deferredArea(entity);
-            if (factor != 1.0F) {
-                data.setValue(data.getValue() * factor);
-            }
-        }
-    }
-
-    private static float deferredArea(Entity entity) {
-        DeferredReach.Reach reach = DeferredReach.current(entity);
-        if (reach == null || !OwnHits.hasSourceVia(reach.glyphs().spec(), reach.carriers())) {
-            return 1.0F;
-        }
-        return reach.glyphs().modifiers().area();
-    }
-
-    @Nullable
-    private static CastModifiers scopeFor(Entity entity) {
-        CastScope.Active scope = CastScope.forPlayer(entity);
-        return scope == null ? null : scope.modifiers();
-    }
-
-    @Nullable
-    private static Projectile tickingProjectileOf(Entity owner) {
-        return TickingEntity.current() instanceof Projectile projectile && projectile.getOwner() == owner
-                && ProjectileGlyphTags.isTagged(projectile) ? projectile : null;
     }
 
     @SubscribeEvent
@@ -154,44 +105,6 @@ public final class ProjectileGlyphs {
         Projectile projectile = event.getProjectile();
         if (!projectile.level.isClientSide() && ProjectilePhysics.ignoresBlockHit(projectile, event.getRayTraceResult())) {
             event.setCanceled(true);
-        }
-    }
-
-    @SubscribeEvent
-    public static void onLivingHurt(LivingHurtEvent event) {
-        if (ChainScope.active()) {
-            return;
-        }
-        Entity direct = event.getSource().getDirectEntity();
-        Entity attacker = event.getSource().getEntity();
-        float multiplier = 1.0F;
-        String spec = null;
-        if (direct instanceof Projectile && direct.getPersistentData().contains(ProjectileGlyphTags.DAMAGE)) {
-            multiplier = ProjectileGlyphTags.damage(direct);
-            spec = ProjectileGlyphTags.spec(direct);
-        } else if (attacker != null) {
-            CastScope.Active scope = CastScope.forPlayer(attacker);
-            if (scope != null) {
-                multiplier = scope.modifiers().damage();
-                spec = scope.spec();
-            } else {
-                Projectile ticking = tickingProjectileOf(attacker);
-                if (ticking != null) {
-                    multiplier = ProjectileGlyphTags.damage(ticking);
-                    spec = ProjectileGlyphTags.spec(ticking);
-                }
-            }
-        }
-        if (spec == null) {
-            DeferredReach.Reach reach = DeferredReach.forHit(event.getSource());
-            if (reach != null && reach.glyphs().modifiers().damage() != 1.0F
-                    && OwnHits.isOwnDeferredHit(reach.glyphs().spec(), event.getSource(), reach.carriers())) {
-                event.setAmount(event.getAmount() * reach.glyphs().modifiers().damage());
-            }
-            return;
-        }
-        if (multiplier != 1.0F && OwnHits.isOwnHit(spec, event.getSource())) {
-            event.setAmount(event.getAmount() * multiplier);
         }
     }
 }

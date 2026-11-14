@@ -1,7 +1,7 @@
 package xyz.iwolfking.woldsvaults.client.spellcraft.stats;
 
 import xyz.iwolfking.woldsvaults.spellcraft.buff.BuffGlyphs;
-import xyz.iwolfking.woldsvaults.spellcraft.hit.OwnHits;
+import xyz.iwolfking.woldsvaults.spellcraft.hit.HitSources;
 import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
 
 import javax.annotation.Nullable;
@@ -135,7 +135,7 @@ public final class GlyphRelevance {
     }
 
     private static boolean hasHits(String spec) {
-        List<OwnHits.Source> sources = OwnHits.sources(spec);
+        List<HitSources.Source> sources = HitSources.sources(spec);
         if (sources == null) {
             WoldLogger.errorOnce("GlyphRelevance:hits:" + spec, "Glyph relevance: spell hits has no entry for {}; damage is listed as applying", spec);
             return true;
