@@ -6,7 +6,7 @@ import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.saveddata.SavedData;
-import xyz.iwolfking.woldsvaults.augments.item.SpellcraftItemData;
+import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
 
 import java.util.Arrays;
 import java.util.HashMap;

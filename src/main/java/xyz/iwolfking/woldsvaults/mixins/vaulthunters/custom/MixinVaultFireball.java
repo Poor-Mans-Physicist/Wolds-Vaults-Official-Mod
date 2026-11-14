@@ -34,10 +34,10 @@ import xyz.iwolfking.woldsvaults.api.lib.VolleyFireball;
 import xyz.iwolfking.woldsvaults.api.util.AbilityHelper;
 import xyz.iwolfking.woldsvaults.api.util.ElementHelper;
 import xyz.iwolfking.woldsvaults.api.util.WoldEtchingHelper;
-import xyz.iwolfking.woldsvaults.augments.FocusAugments;
-import xyz.iwolfking.woldsvaults.augments.effect.AugmentTags;
-import xyz.iwolfking.woldsvaults.augments.effect.ProjectileSteering;
-import xyz.iwolfking.woldsvaults.config.FocusAugmentsConfig;
+import xyz.iwolfking.woldsvaults.spellcraft.Spellcraft;
+import xyz.iwolfking.woldsvaults.spellcraft.scope.ProjectileGlyphTags;
+import xyz.iwolfking.woldsvaults.spellcraft.projectile.ProjectileSteering;
+import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
 import xyz.iwolfking.woldsvaults.effect.mobeffects.PercentBurnEffect;
 import xyz.iwolfking.woldsvaults.init.ModEtchingGearAttributes;
 
@@ -187,7 +187,7 @@ public abstract class MixinVaultFireball extends AbstractArrow implements IWoldA
         ((IWoldAbilityEnhancements) ball).setTierLevel(getTierLevel());
         ((IWoldAbilityEnhancements) ball).setElementTypes(new ArrayList<>(getElementTypes()));
         ((VolleyFireball) ball).woldsvaults$makeMitosisChild();
-        AugmentTags.leaveOrbit(ball);
+        ProjectileGlyphTags.leaveOrbit(ball);
         ball.setPos(origin);
         ball.setDeltaMovement(direction.scale(WOLDSVAULTS$MITOSIS_SPEED));
         float yaw = (float) Math.toDegrees(Math.atan2(direction.x, direction.z));
@@ -201,7 +201,7 @@ public abstract class MixinVaultFireball extends AbstractArrow implements IWoldA
 
     @Unique
     private void woldsvaults$orbitBurst(HitResult result) {
-        FocusAugmentsConfig config = FocusAugments.config();
+        SpellcraftConfig config = Spellcraft.config();
         if (config == null) {
             return;
         }

@@ -3,7 +3,7 @@ package xyz.iwolfking.woldsvaults.network.packets;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkEvent;
-import xyz.iwolfking.woldsvaults.spellcraft.bar.SpellBars;
+import xyz.iwolfking.woldsvaults.spellcraft.play.SpellBars;
 
 import java.util.function.Supplier;
 

@@ -12,11 +12,11 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.damagesource.DamageSource;
 import xyz.iwolfking.woldsvaults.api.cast.CastContext;
 import xyz.iwolfking.woldsvaults.api.cast.CastTag;
-import xyz.iwolfking.woldsvaults.augments.cast.CastScope;
-import xyz.iwolfking.woldsvaults.augments.effect.SpellParticles;
+import xyz.iwolfking.woldsvaults.spellcraft.scope.CastScope;
+import xyz.iwolfking.woldsvaults.spellcraft.projectile.SpellParticles;
 import xyz.iwolfking.woldsvaults.init.ModEtchingGearAttributes;
 import xyz.iwolfking.woldsvaults.mixins.vaulthunters.gods.idona.ManaCostHelperAccessor;
-import xyz.iwolfking.woldsvaults.spellcraft.bar.SlotBilling;
+import xyz.iwolfking.woldsvaults.spellcraft.cast.SlotManaBilling;
 
 import java.util.function.BooleanSupplier;
 
@@ -123,7 +123,7 @@ public final class IdonaPowerDump {
             tag.resolvePowerDump(false, 1.0F);
             return cost;
         }
-        float due = SlotBilling.slotCost(player, skill, cost);
+        float due = SlotManaBilling.slotCost(player, skill, cost);
         if (bar < due) {
             return cost;
         }

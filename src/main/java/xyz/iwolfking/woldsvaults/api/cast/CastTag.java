@@ -2,7 +2,7 @@ package xyz.iwolfking.woldsvaults.api.cast;
 
 import iskallia.vault.skill.base.Skill;
 import net.minecraft.server.level.ServerPlayer;
-import xyz.iwolfking.woldsvaults.augments.cast.DeferredGlyphs;
+import xyz.iwolfking.woldsvaults.spellcraft.scope.DeferredGlyphs;
 
 import javax.annotation.Nullable;
 

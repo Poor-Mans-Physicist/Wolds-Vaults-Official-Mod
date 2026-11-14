@@ -11,9 +11,9 @@ import net.minecraft.server.level.ServerPlayer;
 import org.spongepowered.asm.mixin.Mixin;
 import xyz.iwolfking.woldsvaults.api.cast.CastContext;
 import xyz.iwolfking.woldsvaults.api.cast.CastTag;
-import xyz.iwolfking.woldsvaults.augments.cast.DeferredGlyphs;
-import xyz.iwolfking.woldsvaults.augments.effect.BuffGlyphs;
-import xyz.iwolfking.woldsvaults.augments.effect.DeferredReach;
+import xyz.iwolfking.woldsvaults.spellcraft.scope.DeferredGlyphs;
+import xyz.iwolfking.woldsvaults.spellcraft.buff.BuffGlyphs;
+import xyz.iwolfking.woldsvaults.spellcraft.scope.DeferredReach;
 
 /**
  * Opens a cast context for every instant ability a player casts, covering the mana check, the hits

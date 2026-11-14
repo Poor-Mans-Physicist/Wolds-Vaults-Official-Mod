@@ -113,7 +113,7 @@ import xyz.iwolfking.woldsvaults.modifiers.gear.scepter.MagibashHits;
 import xyz.iwolfking.woldsvaults.objectives.data.bosses.WoldBoss;
 import xyz.iwolfking.woldsvaults.talent.special.DebuffDamageBonusTalent;
 import xyz.iwolfking.woldsvaults.talent.special.WoldsAxeSpecializationTalent;
-import xyz.iwolfking.woldsvaults.spellcraft.chain.SpellChainDamage;
+import xyz.iwolfking.woldsvaults.spellcraft.scope.ChainScope;
 
 import java.util.List;
 import java.util.EnumSet;
@@ -179,7 +179,7 @@ public class LivingEntityEvents {
 
     @SubscribeEvent
     public static void onElementalAttack(LivingHurtEvent event) {
-        if (SpellChainDamage.active()) {
+        if (ChainScope.active()) {
             return;
         }
         if (WoldActiveFlags.IS_LIGHTNING_FIEND_ATTACKING.isSet()) {
@@ -227,7 +227,7 @@ public class LivingEntityEvents {
 
     @SubscribeEvent
     public static void onScepterHitSparkles(LivingHurtEvent event) {
-        if (SpellChainDamage.active()) {
+        if (ChainScope.active()) {
             return;
         }
         if (!(event.getSource().getEntity() instanceof ServerPlayer player)) return;
@@ -546,7 +546,7 @@ public class LivingEntityEvents {
      */
     @SubscribeEvent(priority = EventPriority.HIGH)
     public static void preMultiplierHit(LivingHurtEvent event) {
-        if (SpellChainDamage.active()) {
+        if (ChainScope.active()) {
             return;
         }
         echoingHit(event);
@@ -597,7 +597,7 @@ public class LivingEntityEvents {
 
     @SubscribeEvent
     public static void bonusDebuffDamage(LivingHurtEvent event) {
-        if (SpellChainDamage.active()) {
+        if (ChainScope.active()) {
             return;
         }
         if(event.getSource().getEntity() instanceof ServerPlayer player) {
@@ -877,7 +877,7 @@ public class LivingEntityEvents {
      */
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void onLivingHurt(LivingHurtEvent event) {
-        if (SpellChainDamage.active()) {
+        if (ChainScope.active()) {
             return;
         }
         if (!(event.getSource().getEntity() instanceof Player player)) {

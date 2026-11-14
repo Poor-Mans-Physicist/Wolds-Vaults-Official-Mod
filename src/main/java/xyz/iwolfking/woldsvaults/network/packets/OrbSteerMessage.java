@@ -8,7 +8,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.network.NetworkEvent;
-import xyz.iwolfking.woldsvaults.augments.effect.LightningOrbs;
+import xyz.iwolfking.woldsvaults.spellcraft.projectile.LightningOrbs;
 
 import java.util.function.Supplier;
 

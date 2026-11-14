@@ -4,10 +4,10 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.network.NetworkEvent;
-import xyz.iwolfking.woldsvaults.augments.AugmentType;
-import xyz.iwolfking.woldsvaults.augments.item.SpellcraftItemData;
-import xyz.iwolfking.woldsvaults.client.spellcraft.ClientGlyphViews;
-import xyz.iwolfking.woldsvaults.spellcraft.pool.GlyphCandidate;
+import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
+import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
+import xyz.iwolfking.woldsvaults.client.spellcraft.state.ClientGlyphViews;
+import xyz.iwolfking.woldsvaults.spellcraft.source.GlyphCandidate;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -64,7 +64,7 @@ public record GlyphViewSyncMessage(List<GlyphCandidate> shared, List<GlyphCandid
             int cap = buffer.readVarInt();
             String key = buffer.readUtf();
             String name = buffer.readUtf();
-            AugmentType type = AugmentType.byId(id);
+            GlyphType type = GlyphType.byId(id);
             if (type != null) {
                 candidates.add(new GlyphCandidate(new SpellcraftItemData.Line(type, potency, quality, cost, uses, transferable,
                         cap == 0 ? null : cap - 1), key, name));

@@ -6,7 +6,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.network.NetworkEvent;
-import xyz.iwolfking.woldsvaults.augments.effect.AugmentTags;
+import xyz.iwolfking.woldsvaults.spellcraft.scope.ProjectileGlyphTags;
 
 import java.util.function.Supplier;
 
@@ -32,7 +32,7 @@ public record ProjectileScaleMessage(int entityId, float scale) {
     private static void apply(ProjectileScaleMessage message) {
         Entity entity = Minecraft.getInstance().level == null ? null : Minecraft.getInstance().level.getEntity(message.entityId);
         if (entity != null) {
-            entity.getPersistentData().putFloat(AugmentTags.SCALE, message.scale);
+            entity.getPersistentData().putFloat(ProjectileGlyphTags.SCALE, message.scale);
             entity.refreshDimensions();
         }
     }

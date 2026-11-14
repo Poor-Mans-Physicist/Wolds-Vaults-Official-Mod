@@ -6,7 +6,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import org.spongepowered.asm.mixin.Mixin;
 import xyz.iwolfking.woldsvaults.api.cast.CastContext;
-import xyz.iwolfking.woldsvaults.augments.effect.SpellHits;
+import xyz.iwolfking.woldsvaults.spellcraft.hit.OwnHits;
 
 /** Runs the tick of an entity a cast created under that cast's context. */
 @Mixin(ServerLevel.class)
@@ -14,7 +14,7 @@ public class MixinServerLevelCastTag {
 
     @WrapMethod(method = "tickNonPassenger")
     private void woldsvaults$tickUnderCast(Entity entity, Operation<Void> original) {
-        CastContext.runTask(CastContext.tagOf(entity), SpellHits.Carrier.ENTITY, () -> {
+        CastContext.runTask(CastContext.tagOf(entity), OwnHits.Carrier.ENTITY, () -> {
             original.call(entity);
         });
     }

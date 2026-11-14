@@ -12,7 +12,7 @@ import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import xyz.iwolfking.woldsvaults.WoldsVaults;
-import xyz.iwolfking.woldsvaults.spellcraft.chain.SpellChainDamage;
+import xyz.iwolfking.woldsvaults.spellcraft.scope.ChainScope;
 import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
 
 /**
@@ -31,7 +31,7 @@ public final class FuryIncome {
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onHitDealt(LivingHurtEvent event) {
-        if (SpellChainDamage.active()) {
+        if (ChainScope.active()) {
             return;
         }
         if (event.getAmount() <= 0.0F) {

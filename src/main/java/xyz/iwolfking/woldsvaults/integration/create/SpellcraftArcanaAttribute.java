@@ -3,8 +3,8 @@ package xyz.iwolfking.woldsvaults.integration.create;
 import com.simibubi.create.content.logistics.filter.ItemAttribute;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
-import xyz.iwolfking.woldsvaults.augments.item.SpellcraftItemData;
-import xyz.iwolfking.woldsvaults.augments.item.SpellcraftRoller;
+import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
+import xyz.iwolfking.woldsvaults.spellcraft.roll.SpellcraftRoller;
 
 import java.util.ArrayList;
 import java.util.List;

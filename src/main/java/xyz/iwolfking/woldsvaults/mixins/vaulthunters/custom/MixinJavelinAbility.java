@@ -15,9 +15,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import xyz.iwolfking.woldsvaults.abilities.flexible.FlexibleAbility;
 import xyz.iwolfking.woldsvaults.api.cast.CastContext;
 import xyz.iwolfking.woldsvaults.api.cast.CastTag;
-import xyz.iwolfking.woldsvaults.augments.AugmentType;
-import xyz.iwolfking.woldsvaults.spellcraft.gear.GlyphGrants;
-import xyz.iwolfking.woldsvaults.spellcraft.gear.GearGlyphs;
+import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
+import xyz.iwolfking.woldsvaults.spellcraft.scope.GlyphGrants;
+import xyz.iwolfking.woldsvaults.spellcraft.gear.ConvertedAffixes;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
@@ -38,7 +38,7 @@ public abstract class MixinJavelinAbility {
     @Inject(method = "doPostHurtEffects", at = @At(value = "INVOKE", target = "Liskallia/vault/util/EntityHelper;knockbackIgnoreResist(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/entity/LivingEntity;F)V", remap = false), remap = true)
     private void implodeJavelin(LivingEntity pLiving, CallbackInfo ci) {
         Player thrower = this.getThrower();
-        GlyphGrants.Grant implosion = thrower == null ? null : GearGlyphs.carried((Entity) (Object) this, thrower).get(AugmentType.IMPLOSION);
+        GlyphGrants.Grant implosion = thrower == null ? null : ConvertedAffixes.carried((Entity) (Object) this, thrower).get(GlyphType.IMPLOSION);
         if(implosion != null) {
             float mana = ((ManaPlayer) thrower).getMana();
             CastTag tag = CastContext.current();

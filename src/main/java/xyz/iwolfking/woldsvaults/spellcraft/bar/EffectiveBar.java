@@ -3,15 +3,15 @@ package xyz.iwolfking.woldsvaults.spellcraft.bar;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
-import xyz.iwolfking.woldsvaults.augments.AugmentType;
-import xyz.iwolfking.woldsvaults.augments.FocusAugments;
-import xyz.iwolfking.woldsvaults.augments.item.SpellcraftItemData;
-import xyz.iwolfking.woldsvaults.augments.spell.SpellModel;
-import xyz.iwolfking.woldsvaults.augments.spell.SpellcraftRules;
-import xyz.iwolfking.woldsvaults.config.FocusAugmentsConfig;
-import xyz.iwolfking.woldsvaults.spellcraft.pool.GlyphSources;
-import xyz.iwolfking.woldsvaults.spellcraft.pool.GlyphView;
-import xyz.iwolfking.woldsvaults.spellcraft.pool.ViewLine;
+import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
+import xyz.iwolfking.woldsvaults.spellcraft.Spellcraft;
+import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
+import xyz.iwolfking.woldsvaults.spellcraft.spell.SpellModel;
+import xyz.iwolfking.woldsvaults.spellcraft.spell.SpellcraftRules;
+import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
+import xyz.iwolfking.woldsvaults.spellcraft.source.EquippedSources;
+import xyz.iwolfking.woldsvaults.spellcraft.source.GlyphView;
+import xyz.iwolfking.woldsvaults.spellcraft.source.GlyphViewLine;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -89,11 +89,11 @@ public final class EffectiveBar {
 
     /** The player's bar from their equipped sources (server). */
     public static EffectiveBar forPlayer(ServerPlayer player, String[] defaults, Function<String, String> specOf) {
-        FocusAugmentsConfig config = FocusAugments.config();
-        GlyphSources.Snapshot sources = GlyphSources.get(player);
+        SpellcraftConfig config = Spellcraft.config();
+        EquippedSources.Snapshot sources = EquippedSources.get(player);
         List<ArcanaItem> items = new ArrayList<>();
         if (config != null) {
-            for (GlyphSources.Equipped equipped : sources.arcanaItems()) {
+            for (EquippedSources.Equipped equipped : sources.arcanaItems()) {
                 GlyphView view = sources.view(config, equipped.stack());
                 items.add(new ArcanaItem(equipped.key(), equipped.name(), equipped.hand(), equipped.stack(),
                         SpellcraftItemData.spells(equipped.stack()), SpellcraftRules.check(config, equipped.stack(), view, specOf)));
@@ -102,7 +102,7 @@ public final class EffectiveBar {
         return resolve(config, defaults, items, config == null ? GlyphView.EMPTY : sources.autoLines(config), specOf);
     }
 
-    public static EffectiveBar resolve(@Nullable FocusAugmentsConfig config, String[] defaults, List<ArcanaItem> items, GlyphView auto,
+    public static EffectiveBar resolve(@Nullable SpellcraftConfig config, String[] defaults, List<ArcanaItem> items, GlyphView auto,
                                        Function<String, String> specOf) {
         Slot[] slots = new Slot[SpellcraftItemData.SLOTS];
         Map<Integer, List<Overlay>> bySlot = new TreeMap<>();
@@ -219,15 +219,15 @@ public final class EffectiveBar {
         return new EffectiveBar(slots, List.copyOf(items));
     }
 
-    private static Slot base(@Nullable FocusAugmentsConfig config, int index, String group, GlyphView auto, Function<String, String> specOf) {
+    private static Slot base(@Nullable SpellcraftConfig config, int index, String group, GlyphView auto, Function<String, String> specOf) {
         String key = "base:" + group;
         String spec = specOf.apply(group);
         if (config != null && spec != null && !auto.isEmpty()) {
             Set<String> traits = SpellModel.traits(config, spec);
             List<String> tokens = new ArrayList<>();
             tokens.add(group);
-            for (AugmentType type : AugmentType.values()) {
-                ViewLine line = auto.get(type);
+            for (GlyphType type : GlyphType.values()) {
+                GlyphViewLine line = auto.get(type);
                 if (line != null && type.isModifier(config) && type.fits(config, traits, spec)) {
                     tokens.add(type.id());
                 }

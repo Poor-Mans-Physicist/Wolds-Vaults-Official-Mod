@@ -2,7 +2,7 @@ package xyz.iwolfking.woldsvaults.network.packets;
 
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.network.NetworkEvent;
-import xyz.iwolfking.woldsvaults.spellcraft.haste.StatMirror;
+import xyz.iwolfking.woldsvaults.spellcraft.StatMirror;
 
 import java.util.UUID;
 import java.util.function.Supplier;

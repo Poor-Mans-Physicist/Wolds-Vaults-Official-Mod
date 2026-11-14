@@ -5,10 +5,10 @@ import net.minecraft.world.InteractionHand;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.network.NetworkEvent;
-import xyz.iwolfking.woldsvaults.augments.item.SpellcraftItemData;
-import xyz.iwolfking.woldsvaults.augments.spell.SpellModel;
-import xyz.iwolfking.woldsvaults.augments.spell.SpellcraftRules;
-import xyz.iwolfking.woldsvaults.client.spellcraft.ClientSpellBar;
+import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
+import xyz.iwolfking.woldsvaults.spellcraft.spell.SpellModel;
+import xyz.iwolfking.woldsvaults.spellcraft.spell.SpellcraftRules;
+import xyz.iwolfking.woldsvaults.client.spellcraft.state.ClientSpellBar;
 import xyz.iwolfking.woldsvaults.spellcraft.bar.EffectiveBar;
 import xyz.iwolfking.woldsvaults.spellcraft.bar.SpellBarData;
 

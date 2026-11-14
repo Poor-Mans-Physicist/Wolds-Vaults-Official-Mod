@@ -3,9 +3,9 @@ package xyz.iwolfking.woldsvaults.integration.create;
 import com.simibubi.create.content.logistics.filter.ItemAttribute;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
-import xyz.iwolfking.woldsvaults.augments.AugmentType;
-import xyz.iwolfking.woldsvaults.augments.item.SpellcraftItemData;
-import xyz.iwolfking.woldsvaults.augments.item.SpellcraftRoller;
+import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
+import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
+import xyz.iwolfking.woldsvaults.spellcraft.roll.SpellcraftRoller;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -23,14 +23,14 @@ public class SpellcraftGlyphAttribute implements ItemAttribute {
 
     private final String id;
     @Nullable
-    private final AugmentType glyph;
+    private final GlyphType glyph;
 
-    public SpellcraftGlyphAttribute(AugmentType glyph) {
+    public SpellcraftGlyphAttribute(GlyphType glyph) {
         this.id = glyph.id();
         this.glyph = glyph;
     }
 
-    private SpellcraftGlyphAttribute(String id, @Nullable AugmentType glyph) {
+    private SpellcraftGlyphAttribute(String id, @Nullable GlyphType glyph) {
         this.id = id;
         this.glyph = glyph;
     }
@@ -73,7 +73,7 @@ public class SpellcraftGlyphAttribute implements ItemAttribute {
     @Override
     public ItemAttribute readNBT(CompoundTag tag) {
         String id = tag.getString("glyph");
-        AugmentType glyph = AugmentType.byId(id);
+        GlyphType glyph = GlyphType.byId(id);
         if (glyph == null && REPORTED_UNKNOWN.add(id)) {
             WoldLogger.error("Spellcraft filter: unknown glyph id '{}' in a Create attribute filter; that entry matches nothing", id);
         }

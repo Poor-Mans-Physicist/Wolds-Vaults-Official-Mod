@@ -5,9 +5,9 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.Constant;
 import org.spongepowered.asm.mixin.injection.ModifyConstant;
-import xyz.iwolfking.woldsvaults.augments.FocusAugments;
-import xyz.iwolfking.woldsvaults.augments.item.SpellcraftRoller;
-import xyz.iwolfking.woldsvaults.config.FocusAugmentsConfig;
+import xyz.iwolfking.woldsvaults.spellcraft.Spellcraft;
+import xyz.iwolfking.woldsvaults.spellcraft.roll.SpellcraftRoller;
+import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
 import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
 
 @Mixin(LocalPlayer.class)
@@ -26,7 +26,7 @@ public abstract class MixinLocalPlayerSpellChargeSlow {
         if (!player.isUsingItem() || !SpellcraftRoller.canCarry(player.getUseItem())) {
             return slow;
         }
-        FocusAugmentsConfig config = FocusAugments.config();
+        SpellcraftConfig config = Spellcraft.config();
         if (config == null) {
             if (!woldsvaults$loggedMissingTable) {
                 woldsvaults$loggedMissingTable = true;

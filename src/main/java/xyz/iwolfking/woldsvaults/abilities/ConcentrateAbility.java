@@ -30,7 +30,7 @@ import net.minecraft.world.phys.Vec3;
 import org.apache.commons.lang3.tuple.Pair;
 import xyz.iwolfking.woldsvaults.api.util.AbilityHelper;
 import xyz.iwolfking.woldsvaults.api.util.DelayedExecutionHelper;
-import xyz.iwolfking.woldsvaults.augments.effect.BuffGlyphs;
+import xyz.iwolfking.woldsvaults.spellcraft.buff.BuffGlyphs;
 import xyz.iwolfking.woldsvaults.effect.mobeffects.lib.ComboEffect;
 import xyz.iwolfking.woldsvaults.events.HyperVaultEvents;
 import xyz.iwolfking.woldsvaults.init.ModEffects;
