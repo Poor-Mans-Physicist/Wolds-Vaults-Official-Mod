@@ -87,7 +87,7 @@ public final class GlyphRelevance {
     }
 
     /** Whether a step stat applies to an ability step casting {@code spec}. */
-    public static boolean castApplies(SpellcraftConfig config, @Nullable String spec, String stat, boolean pooled) {
+    private static boolean castApplies(SpellcraftConfig config, @Nullable String spec, String stat, boolean pooled) {
         if (spec == null) {
             WoldLogger.errorOnce("GlyphRelevance:spec:null", "Glyph relevance: an ability step has no specialization; every glyph stat is listed for it");
             return true;
@@ -111,7 +111,7 @@ public final class GlyphRelevance {
     }
 
     /** Adds every step whose glyphs hold the glyph at {@code token}: ability steps and Bundled Spells (their orbs). */
-    public static void ownersOf(List<SpellModel.Step> steps, int token, List<SpellModel.Step> owners) {
+    private static void ownersOf(List<SpellModel.Step> steps, int token, List<SpellModel.Step> owners) {
         for (SpellModel.Step step : steps) {
             if (step instanceof SpellModel.Cast cast && holds(cast.glyphs(), token)) {
                 owners.add(cast);

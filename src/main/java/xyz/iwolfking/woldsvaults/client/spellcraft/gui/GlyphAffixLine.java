@@ -46,7 +46,7 @@ public record GlyphAffixLine(Component text, GlyphType type) implements TooltipC
         public void renderImage(Font font, int x, int y, PoseStack pose, ItemRenderer itemRenderer, int blitOffset) {
             pose.pushPose();
             pose.translate(0.0, 0.0, blitOffset);
-            SpellcraftGui.rune(pose, this.line.type(), x + font.width(this.line.text()) + GAP, y - 1, RUNE, false);
+            SpellcraftDraw.rune(pose, this.line.type(), x + font.width(this.line.text()) + GAP, y - 1, RUNE, false);
             pose.popPose();
         }
     }

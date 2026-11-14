@@ -62,7 +62,7 @@ public final class SkillMenuSpellBar implements SpellBarStrip.Host {
         this.effectiveView = SpellBarView.ofSynced(tree);
         int h = this.screen.height;
         this.strip.layout(21, h - 21 - SpellBarStrip.HEIGHT, this.screen.width - 21);
-        this.strip.view();
+        this.strip.refreshView();
         showEffective = this.strip.prefersEffective();
         this.renderingTree = true;
     }
@@ -77,7 +77,7 @@ public final class SkillMenuSpellBar implements SpellBarStrip.Host {
 
     /** The bar the strip shows this frame. */
     public SpellBarView shown() {
-        return this.strip.view();
+        return this.strip.refreshView();
     }
 
     @Override

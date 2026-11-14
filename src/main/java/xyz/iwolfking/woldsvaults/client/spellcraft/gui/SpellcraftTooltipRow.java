@@ -79,47 +79,47 @@ public record SpellcraftTooltipRow(Kind kind, String text, String right, String 
                     int numX = x + w - font.width(r.right()) - 1;
                     font.drawShadow(pose, r.right(), numX, y, r.color());
                     int bx = x + font.width(r.text()) + 6;
-                    SpellcraftGui.arcanaBar(pose, bx, y, numX - 5 - bx, 7, r.used(), 0.0F, r.budget());
+                    SpellcraftDraw.arcanaBar(pose, bx, y, numX - 5 - bx, 7, r.used(), 0.0F, r.budget());
                 }
                 case RUNES -> {
                     for (int k = 0; k < r.runes().size(); k++) {
-                        SpellcraftGui.rune(pose, r.runes().get(k).type(), x + k * RUNE_PITCH, y - 1, RUNE, false);
+                        SpellcraftDraw.rune(pose, r.runes().get(k).type(), x + k * RUNE_PITCH, y - 1, RUNE, false);
                     }
-                    font.drawShadow(pose, r.text(), x + r.runes().size() * RUNE_PITCH + 6, y, SpellcraftGui.GREY);
+                    font.drawShadow(pose, r.text(), x + r.runes().size() * RUNE_PITCH + 6, y, SpellcraftPalette.GREY);
                 }
                 case GLYPH -> {
                     GlyphType type = r.runes().get(0).type();
-                    SpellcraftGui.rune(pose, type, x, y - 1, RUNE, false);
+                    SpellcraftDraw.rune(pose, type, x, y - 1, RUNE, false);
                     int tx = x + INDENT;
                     font.drawShadow(pose, r.text() + " ", tx, y, r.color());
-                    font.drawShadow(pose, r.extra(), tx + font.width(r.text() + " "), y, SpellcraftGui.GREY);
+                    font.drawShadow(pose, r.extra(), tx + font.width(r.text() + " "), y, SpellcraftPalette.GREY);
                     String cost = r.costText();
                     int cx = x + w - font.width(cost) - 1;
-                    font.drawShadow(pose, cost, cx, y, SpellcraftGui.ARCANA);
-                    GuiComponent.fill(pose, cx - 6, y + 2, cx - 2, y + 6, SpellcraftGui.ARCANA);
-                    font.drawShadow(pose, r.right(), cx - 9 - font.width(r.right()), y, SpellcraftGui.WHITE);
+                    font.drawShadow(pose, cost, cx, y, SpellcraftPalette.ARCANA);
+                    GuiComponent.fill(pose, cx - 6, y + 2, cx - 2, y + 6, SpellcraftPalette.ARCANA);
+                    font.drawShadow(pose, r.right(), cx - 9 - font.width(r.right()), y, SpellcraftPalette.WHITE);
                 }
                 case SPELL -> {
                     if (!r.icons().isEmpty()) {
-                        SpellcraftGui.ability(pose, r.icons().get(0), x, y - 1, RUNE, 1.0F);
+                        SpellcraftDraw.ability(pose, r.icons().get(0), x, y - 1, RUNE, 1.0F);
                     }
                     font.drawShadow(pose, r.text(), x + INDENT, y, r.color());
                     String cost = r.costText();
                     int cx = x + w - font.width(cost) - 1;
-                    font.drawShadow(pose, cost, cx, y, SpellcraftGui.ARCANA);
-                    GuiComponent.fill(pose, cx - 6, y + 2, cx - 2, y + 6, SpellcraftGui.ARCANA);
+                    font.drawShadow(pose, cost, cx, y, SpellcraftPalette.ARCANA);
+                    GuiComponent.fill(pose, cx - 6, y + 2, cx - 2, y + 6, SpellcraftPalette.ARCANA);
                 }
                 case SPELL_ROW -> {
                     int tx = x + INDENT;
                     for (Rune rune : r.runes()) {
-                        SpellcraftGui.rune(pose, rune.type(), tx, y - 1, RUNE, false);
+                        SpellcraftDraw.rune(pose, rune.type(), tx, y - 1, RUNE, false);
                         tx += RUNE_PITCH;
                     }
                     for (String icon : r.icons()) {
-                        SpellcraftGui.ability(pose, icon, tx, y - 1, RUNE, 1.0F);
+                        SpellcraftDraw.ability(pose, icon, tx, y - 1, RUNE, 1.0F);
                         tx += RUNE_PITCH;
                     }
-                    font.drawShadow(pose, r.text(), tx + 5, y, SpellcraftGui.GREY);
+                    font.drawShadow(pose, r.text(), tx + 5, y, SpellcraftPalette.GREY);
                 }
             }
             pose.popPose();

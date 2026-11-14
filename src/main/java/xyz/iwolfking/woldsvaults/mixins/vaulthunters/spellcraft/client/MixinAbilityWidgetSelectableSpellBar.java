@@ -14,8 +14,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import xyz.iwolfking.woldsvaults.client.spellcraft.bar.SkillMenuSpellBar;
-import xyz.iwolfking.woldsvaults.client.spellcraft.bar.SpellBarStrip;
-import xyz.iwolfking.woldsvaults.client.spellcraft.gui.SpellcraftGui;
+import xyz.iwolfking.woldsvaults.client.spellcraft.gui.SpellcraftDraw;
+import xyz.iwolfking.woldsvaults.client.spellcraft.gui.SpellcraftPalette;
 
 @Mixin(value = AbilityWidgetSelectable.class, remap = false)
 public class MixinAbilityWidgetSelectableSpellBar {
@@ -48,8 +48,8 @@ public class MixinAbilityWidgetSelectableSpellBar {
         float width = font.width(text) * TAG_SCALE;
         poseStack.pushPose();
         poseStack.translate(widget.x + widget.getWidth() / 2.0F - 2.0F, widget.y + widget.getHeight() / 2.0F - 2.0F, 3.0);
-        SpellcraftGui.smallText(poseStack, font, text, -width, -8.0F * TAG_SCALE,
-                menu.shown().isEffective() ? SpellcraftGui.ARCANE_GLOW : SpellcraftGui.GOLD, TAG_SCALE);
+        SpellcraftDraw.smallText(poseStack, font, text, -width, -8.0F * TAG_SCALE,
+                menu.shown().isEffective() ? SpellcraftPalette.ARCANE_GLOW : SpellcraftPalette.GOLD, TAG_SCALE);
         poseStack.popPose();
         RenderSystem.enableDepthTest();
     }

@@ -20,6 +20,7 @@ import xyz.iwolfking.woldsvaults.spellcraft.source.GlyphView;
 import xyz.iwolfking.woldsvaults.client.spellcraft.state.ClientSpellBar;
 import xyz.iwolfking.woldsvaults.init.ModConfigs;
 import xyz.iwolfking.woldsvaults.spellcraft.ability.AbilityLookup;
+import xyz.iwolfking.woldsvaults.spellcraft.bar.EffectiveBar;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -90,9 +91,10 @@ public final class SpellBarView {
         for (int i = 0; i < slots.length; i++) {
             SpellBarSyncMessage.Entry entry = ClientSpellBar.entry(i);
             String group = entry.group();
-            if (entry.kind() == ClientSpellBar.ABILITY) {
+            EffectiveBar.Kind kind = ClientSpellBar.kind(i);
+            if (kind == EffectiveBar.Kind.ABILITY) {
                 slots[i] = Slot.of(i, State.ABILITY, group, List.of(group), !learned(tree, group));
-            } else if (entry.kind() == ClientSpellBar.SPELL) {
+            } else if (kind == EffectiveBar.Kind.SPELL) {
                 StoredSpell spell = new StoredSpell(entry.spellId(), entry.spellName(), entry.tokens(), i, entry.prio());
                 SpellModel model = config == null ? null : model(config, tree, entry);
                 slots[i] = new Slot(i, State.SPELL, group, entry.spellName(), entry.groups().stream().anyMatch(g -> !learned(tree, g)), spell, model,

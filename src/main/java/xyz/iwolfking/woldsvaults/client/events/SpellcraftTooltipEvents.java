@@ -18,7 +18,6 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.network.chat.TextColor;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.inventory.tooltip.TooltipComponent;
@@ -36,7 +35,10 @@ import xyz.iwolfking.woldsvaults.spellcraft.item.StoredSpell;
 import xyz.iwolfking.woldsvaults.spellcraft.spell.SpellModel;
 import xyz.iwolfking.woldsvaults.spellcraft.spell.SpellcraftRules;
 import xyz.iwolfking.woldsvaults.client.spellcraft.stats.SlotCostStats;
-import xyz.iwolfking.woldsvaults.client.spellcraft.gui.SpellcraftGui;
+import xyz.iwolfking.woldsvaults.client.spellcraft.gui.GlyphText;
+import xyz.iwolfking.woldsvaults.client.spellcraft.gui.SpellcraftNames;
+import xyz.iwolfking.woldsvaults.client.spellcraft.gui.SpellcraftPalette;
+import xyz.iwolfking.woldsvaults.client.spellcraft.gui.StatText;
 import xyz.iwolfking.woldsvaults.client.spellcraft.gui.SpellcraftTooltipRow;
 import xyz.iwolfking.woldsvaults.client.spellcraft.state.ClientGlyphViews;
 import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
@@ -144,43 +146,43 @@ public class SpellcraftTooltipEvents {
         int budget = SpellcraftItemData.budget(stack);
         int depth = SpellcraftItemData.depth(stack);
         block.add(Either.left(TextComponent.EMPTY));
-        block.add(Either.right(new SpellcraftTooltipRow(SpellcraftTooltipRow.Kind.HEAD, SpellcraftGui.tr("tooltip.title"),
-                Math.round(check.arcana()) + "/" + budget, "", List.of(), List.of(), SpellcraftGui.ARCANE_GLOW, check.arcana(), budget, width)));
+        block.add(Either.right(new SpellcraftTooltipRow(SpellcraftTooltipRow.Kind.HEAD, SpellcraftNames.tr("tooltip.title"),
+                Math.round(check.arcana()) + "/" + budget, "", List.of(), List.of(), SpellcraftPalette.ARCANE_GLOW, check.arcana(), budget, width)));
         if (!Screen.hasAltDown()) {
             List<SpellcraftTooltipRow.Rune> runes = new ArrayList<>();
             for (GlyphLine line : lines) {
                 runes.add(new SpellcraftTooltipRow.Rune(line.type()));
             }
-            block.add(Either.right(new SpellcraftTooltipRow(SpellcraftTooltipRow.Kind.RUNES, SpellcraftGui.tr("tooltip.depth", depth), "", "",
-                    runes, List.of(), SpellcraftGui.GREY, 0, 0, width)));
+            block.add(Either.right(new SpellcraftTooltipRow(SpellcraftTooltipRow.Kind.RUNES, SpellcraftNames.tr("tooltip.depth", depth), "", "",
+                    runes, List.of(), SpellcraftPalette.GREY, 0, 0, width)));
             List<String> names = new ArrayList<>();
             spells.forEach(spell -> names.add(spell.name()));
-            MutableComponent spellLine = colored(SpellcraftGui.tr("tooltip.spells"), SpellcraftGui.GREY)
-                    .append(colored(names.isEmpty() ? SpellcraftGui.tr("tooltip.no_spells") : String.join(", ", names), SpellcraftGui.ARCANE_GLOW));
+            MutableComponent spellLine = SpellcraftNames.colored(SpellcraftNames.tr("tooltip.spells"), SpellcraftPalette.GREY)
+                    .append(SpellcraftNames.colored(names.isEmpty() ? SpellcraftNames.tr("tooltip.no_spells") : String.join(", ", names), SpellcraftPalette.ARCANE_GLOW));
             block.add(Either.left(spellLine));
-            block.add(Either.left(colored(SpellcraftGui.tr("tooltip.hold_alt"), SpellcraftGui.DARK)));
+            block.add(Either.left(SpellcraftNames.colored(SpellcraftNames.tr("tooltip.hold_alt"), SpellcraftPalette.DARK)));
         } else {
-            block.add(Either.left(colored(SpellcraftGui.tr("tooltip.legend", depth), SpellcraftGui.DARK)));
-            block.add(Either.left(colored(SpellcraftGui.tr("tooltip.glyphs"), SpellcraftGui.WHITE)));
+            block.add(Either.left(SpellcraftNames.colored(SpellcraftNames.tr("tooltip.legend", depth), SpellcraftPalette.DARK)));
+            block.add(Either.left(SpellcraftNames.colored(SpellcraftNames.tr("tooltip.glyphs"), SpellcraftPalette.WHITE)));
             for (GlyphLine line : lines) {
                 int left = GlyphView.ownLimit(config, line);
                 block.add(Either.right(new SpellcraftTooltipRow(SpellcraftTooltipRow.Kind.GLYPH, line.type().displayName(),
-                        "x" + left, SpellcraftGui.potency(config, line.type(), line.potency()),
-                        List.of(new SpellcraftTooltipRow.Rune(line.type())), List.of(), SpellcraftGui.categoryColor(config, line.type()),
+                        "x" + left, GlyphText.potency(config, line.type(), line.potency()),
+                        List.of(new SpellcraftTooltipRow.Rune(line.type())), List.of(), SpellcraftPalette.categoryColor(config, line.type()),
                         line.cost(), 0, width)));
-                String side = SpellcraftGui.sideEffects(config, line.type(), line.potency());
+                String side = GlyphText.sideEffects(config, line.type(), line.potency());
                 if (!side.isEmpty()) {
-                    block.add(Either.left(colored("     ", SpellcraftGui.DARK).append(SpellcraftGui.tagged(side))));
+                    block.add(Either.left(SpellcraftNames.colored("     ", SpellcraftPalette.DARK).append(GlyphText.tagged(side))));
                 }
             }
-            block.add(Either.left(colored(SpellcraftGui.tr("tooltip.spells_header"), SpellcraftGui.WHITE)));
+            block.add(Either.left(SpellcraftNames.colored(SpellcraftNames.tr("tooltip.spells_header"), SpellcraftPalette.WHITE)));
             for (StoredSpell spell : spells) {
                 SpellModel model = check.models().get(spell.id());
                 String trigger = spell.trigger();
                 String spec = specOf.apply(trigger);
-                String label = SpellcraftGui.tr("tooltip.spell", spell.name(), SpellcraftGui.groupName(tree, trigger));
+                String label = SpellcraftNames.tr("tooltip.spell", spell.name(), SpellcraftNames.groupName(tree, trigger));
                 block.add(Either.right(new SpellcraftTooltipRow(SpellcraftTooltipRow.Kind.SPELL, label, "", "", List.of(),
-                        List.of(spec != null ? spec : trigger), SpellcraftGui.ARCANE_GLOW, model == null ? 0 : model.arcana(), 0, width)));
+                        List.of(spec != null ? spec : trigger), SpellcraftPalette.ARCANE_GLOW, model == null ? 0 : model.arcana(), 0, width)));
                 List<SpellcraftTooltipRow.Rune> runes = new ArrayList<>();
                 List<String> chained = new ArrayList<>();
                 for (int i = 0; i < spell.tokens().size(); i++) {
@@ -196,11 +198,10 @@ public class SpellcraftTooltipEvents {
                 String numbers = "";
                 SlotCostStats.Numbers stats = model == null ? null : SlotCostStats.spell(config, tree, model);
                 if (stats != null) {
-                    String cooldown = SpellcraftGui.tr("fmt.seconds", SpellcraftGui.seconds(stats.cooldownAfter()));
-                    numbers = stats.hasMana() ? SpellcraftGui.tr("tooltip.numbers", Math.round(stats.manaAfter()), cooldown) : cooldown;
+                    numbers = StatText.numbers("tooltip.numbers", stats);
                 }
                 block.add(Either.right(new SpellcraftTooltipRow(SpellcraftTooltipRow.Kind.SPELL_ROW, numbers, "", "", runes, chained,
-                        SpellcraftGui.GREY, 0, 0, width)));
+                        SpellcraftPalette.GREY, 0, 0, width)));
             }
         }
         Font font = Minecraft.getInstance().font;
@@ -209,9 +210,5 @@ public class SpellcraftTooltipEvents {
             width[0] = Math.max(width[0], w);
         }
         event.getTooltipElements().addAll(block);
-    }
-
-    private static MutableComponent colored(String text, int color) {
-        return new TextComponent(text).withStyle(style -> style.withColor(TextColor.fromRgb(color & 0xFFFFFF)));
     }
 }

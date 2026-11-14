@@ -15,13 +15,10 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiComponent;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FormattedText;
-import net.minecraft.network.chat.TextColor;
 import net.minecraft.network.chat.TextComponent;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.item.ItemStack;
 import xyz.iwolfking.woldsvaults.spellcraft.ability.SpellAbilities;
 import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
@@ -48,7 +45,11 @@ import java.util.Set;
 import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
 import xyz.iwolfking.woldsvaults.client.spellcraft.bar.SpellBarStrip;
 import xyz.iwolfking.woldsvaults.client.spellcraft.bar.SpellBarView;
-import xyz.iwolfking.woldsvaults.client.spellcraft.gui.SpellcraftGui;
+import xyz.iwolfking.woldsvaults.client.spellcraft.gui.GlyphText;
+import xyz.iwolfking.woldsvaults.client.spellcraft.gui.SpellcraftDraw;
+import xyz.iwolfking.woldsvaults.client.spellcraft.gui.SpellcraftNames;
+import xyz.iwolfking.woldsvaults.client.spellcraft.gui.SpellcraftPalette;
+import xyz.iwolfking.woldsvaults.client.spellcraft.gui.StatText;
 import xyz.iwolfking.woldsvaults.client.spellcraft.keys.SpellKeysScreen;
 import xyz.iwolfking.woldsvaults.client.spellcraft.state.ClientGlyphViews;
 import xyz.iwolfking.woldsvaults.client.spellcraft.state.ClientSpellBar;
@@ -144,7 +145,7 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
     private SpellBarView defaultView;
 
     public SpellcraftScreen(@Nullable Screen parent, int inventorySlot) {
-        super(new TextComponent(SpellcraftGui.tr("screen.title")));
+        super(new TextComponent(SpellcraftNames.tr("screen.title")));
         this.parent = parent;
         this.inventorySlot = inventorySlot;
         this.strip = new SpellBarStrip(this, true);
@@ -273,7 +274,7 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
         String name = draft.name.strip();
         if (name.isEmpty()) {
             String trigger = draft.tokens.isEmpty() || GlyphType.byId(draft.tokens.get(0)) != null ? "" : draft.tokens.get(0);
-            name = trigger.isEmpty() ? SpellcraftGui.tr("screen.new_spell") : SpellcraftGui.groupName(tree(), trigger);
+            name = trigger.isEmpty() ? SpellcraftNames.tr("screen.new_spell") : SpellcraftNames.groupName(tree(), trigger);
         }
         SpellcraftConfig config = ModConfigs.SPELLCRAFT;
         return config != null && name.length() > config.rules.maxNameLength ? name.substring(0, config.rules.maxNameLength) : name;
@@ -434,10 +435,10 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
         renderPouch(pose, config, check, mouseX, mouseY);
         int rx0 = rightX0();
         int rx1 = this.width - 21;
-        SpellcraftGui.window(pose, rx0, bodyTop(), rx1, bodyBottom());
+        SpellcraftDraw.window(pose, rx0, bodyTop(), rx1, bodyBottom());
         renderTabs(pose, mouseX, mouseY);
         layoutName();
-        SpellcraftGui.insetBlack(pose, nameX(), bodyTop() + 4 + 2, rx1 - PAD, bodyTop() + 4 + TAB - 2);
+        SpellcraftDraw.insetBlack(pose, nameX(), bodyTop() + 4 + 2, rx1 - PAD, bodyTop() + 4 + TAB - 2);
         this.nameBox.render(pose, mouseX, mouseY, partialTick);
         int wy0 = weaveTop();
         renderWeave(pose, draft, model, rx0 + PAD, wy0, rx1 - PAD, wy0 + WEAVE_H, mouseX, mouseY);
@@ -472,7 +473,7 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
     private void renderTitle(PoseStack pose, SpellcraftConfig config, ItemStack stack, @Nullable SpellcraftRules.ItemCheck check, @Nullable Draft draft) {
         int x0 = 21;
         int x1 = this.width - 21;
-        SpellcraftGui.window(pose, x0, TITLE_Y, x1, TITLE_Y + TITLE_H);
+        SpellcraftDraw.window(pose, x0, TITLE_Y, x1, TITLE_Y + TITLE_H);
         this.itemRenderer.renderGuiItem(stack, x0 + 4, TITLE_Y + 3);
         int budget = SpellcraftItemData.budget(stack);
         float committed = committedArcana(check, draft);
@@ -487,27 +488,27 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
                 }
             }
         }
-        String depth = SpellcraftGui.tr("screen.depth", glyphs, depthLimit);
+        String depth = SpellcraftNames.tr("screen.depth", glyphs, depthLimit);
         int ty = TITLE_Y + 8;
         int dx = x1 - 6 - this.font.width(depth);
-        this.font.draw(pose, depth, dx, ty, glyphs > depthLimit ? SpellcraftGui.BAD_TEXT : SpellcraftGui.LABEL);
+        this.font.draw(pose, depth, dx, ty, glyphs > depthLimit ? SpellcraftPalette.BAD_TEXT : SpellcraftPalette.LABEL);
         String num = Math.round(total) + "/" + budget;
         int nx = dx - 8 - this.font.width(num);
         boolean over = Math.round(total) > budget || (check != null && check.budgetInactive() > 0);
-        this.font.draw(pose, num, nx, ty, over ? SpellcraftGui.BAD_TEXT : SpellcraftGui.ARCANA_TEXT);
+        this.font.draw(pose, num, nx, ty, over ? SpellcraftPalette.BAD_TEXT : SpellcraftPalette.ARCANA_TEXT);
         int bx = nx - 4 - ARCANA_BAR_W;
-        SpellcraftGui.arcanaBar(pose, bx, ty, ARCANA_BAR_W, 7, committed, total - committed, budget);
-        String label = SpellcraftGui.tr("screen.arcana");
+        SpellcraftDraw.arcanaBar(pose, bx, ty, ARCANA_BAR_W, 7, committed, total - committed, budget);
+        String label = SpellcraftNames.tr("screen.arcana");
         int lx = bx - 4 - this.font.width(label);
-        this.font.draw(pose, label, lx, ty, SpellcraftGui.LABEL);
-        String level = SpellcraftGui.tr("screen.level", VaultGearData.read(stack).getItemLevel());
+        this.font.draw(pose, label, lx, ty, SpellcraftPalette.LABEL);
+        String level = SpellcraftNames.tr("screen.level", VaultGearData.read(stack).getItemLevel());
         int nameX = x0 + 24;
         int room = lx - 6 - nameX - this.font.width(level) - 6;
         Component name = stack.getHoverName();
         int color = name.getStyle().getColor() == null ? TITLE_NAME_FALLBACK : 0xFF000000 | name.getStyle().getColor().getValue();
         FormattedText cut = this.font.substrByWidth(name, Math.max(0, room));
         this.font.draw(pose, Language.getInstance().getVisualOrder(cut), nameX, ty, color);
-        this.font.draw(pose, level, nameX + this.font.width(cut) + 6, ty, SpellcraftGui.DARK);
+        this.font.draw(pose, level, nameX + this.font.width(cut) + 6, ty, SpellcraftPalette.DARK);
     }
 
     private int pouchListTop() {
@@ -545,25 +546,25 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
         int x0 = 21;
         int y0 = bodyTop();
         int x1 = x0 + POUCH_W;
-        SpellcraftGui.window(pose, x0, y0, x1, bodyBottom());
+        SpellcraftDraw.window(pose, x0, y0, x1, bodyBottom());
         int tw = (POUCH_W - 2 * PAD - 2) / 2;
-        String[] labels = {SpellcraftGui.tr("screen.tab.glyphs"), SpellcraftGui.tr("screen.tab.abilities")};
+        String[] labels = {SpellcraftNames.tr("screen.tab.glyphs"), SpellcraftNames.tr("screen.tab.abilities")};
         for (int k = 0; k < 2; k++) {
             int tx = x0 + PAD + k * (tw + 2);
             boolean on = (k == 1) == this.abilitiesTab;
             if (on) {
-                SpellcraftGui.insetGrey(pose, tx, y0 + 4, tx + tw, y0 + 16);
+                SpellcraftDraw.insetGrey(pose, tx, y0 + 4, tx + tw, y0 + 16);
             } else {
-                SpellcraftGui.insetDarkGrey(pose, tx, y0 + 4, tx + tw, y0 + 16);
+                SpellcraftDraw.insetDarkGrey(pose, tx, y0 + 4, tx + tw, y0 + 16);
             }
             String label = this.font.plainSubstrByWidth(labels[k], tw - 4);
-            this.font.drawShadow(pose, label, tx + (tw - this.font.width(label)) / 2.0F, y0 + 6, on ? SpellcraftGui.WHITE : SpellcraftGui.MUTED);
+            this.font.drawShadow(pose, label, tx + (tw - this.font.width(label)) / 2.0F, y0 + 6, on ? SpellcraftPalette.WHITE : SpellcraftPalette.MUTED);
         }
         int lx0 = x0 + PAD;
         int lx1 = x1 - PAD;
         int ly0 = pouchListTop();
         int ly1 = pouchListBottom();
-        SpellcraftGui.insetBlack(pose, lx0, ly0, lx1, ly1);
+        SpellcraftDraw.insetBlack(pose, lx0, ly0, lx1, ly1);
         int fit = pouchFit();
         int size = pouchSize();
         this.pouchScroll = Math.max(0, Math.min(this.pouchScroll, size - fit));
@@ -605,8 +606,8 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
     private void renderGlyphRow(PoseStack pose, SpellcraftConfig config, GlyphViewLine line, int lx0, int y, int right) {
         int left = usesLeft(line);
         boolean spent = left <= 0;
-        SpellcraftGui.slot(pose, lx0 + 3, y + 1, false);
-        SpellcraftGui.rune(pose, line.type(), lx0 + 3, y + 1, 16, spent);
+        SpellcraftDraw.slot(pose, lx0 + 3, y + 1, false);
+        SpellcraftDraw.rune(pose, line.type(), lx0 + 3, y + 1, 16, spent);
         if (line.borrowed()) {
             GuiComponent.fill(pose, lx0 + 15, y + 1, lx0 + 19, y + 5, BORROWED_MARK);
         } else if (line.transferable()) {
@@ -616,14 +617,14 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
         int room = right - tx;
         String uses = Math.max(0, left) + "/" + line.limit();
         String name = this.font.plainSubstrByWidth(line.type().displayName(), room - this.font.width(uses) - 3);
-        this.font.drawShadow(pose, name, tx, y + 1, spent ? SpellcraftGui.DARK : SpellcraftGui.categoryColor(config, line.type()));
-        this.font.drawShadow(pose, uses, right - this.font.width(uses), y + 1, spent ? SpellcraftGui.DARK : SpellcraftGui.WHITE);
+        this.font.drawShadow(pose, name, tx, y + 1, spent ? SpellcraftPalette.DARK : SpellcraftPalette.categoryColor(config, line.type()));
+        this.font.drawShadow(pose, uses, right - this.font.width(uses), y + 1, spent ? SpellcraftPalette.DARK : SpellcraftPalette.WHITE);
         String cost = config.glyph(line.type()).isUnique() ? "0/" + config.rules.uniqueMixCost : String.valueOf(line.cost());
         int cw = this.font.width(cost);
-        String potency = this.font.plainSubstrByWidth(SpellcraftGui.potency(config, line.type(), line.potency()), room - cw - 9);
-        this.font.drawShadow(pose, potency, tx, y + 10, SpellcraftGui.GREY);
-        GuiComponent.fill(pose, right - cw - 7, y + 12, right - cw - 3, y + 16, SpellcraftGui.ARCANA);
-        this.font.drawShadow(pose, cost, right - cw, y + 10, SpellcraftGui.ARCANA);
+        String potency = this.font.plainSubstrByWidth(GlyphText.potency(config, line.type(), line.potency()), room - cw - 9);
+        this.font.drawShadow(pose, potency, tx, y + 10, SpellcraftPalette.GREY);
+        GuiComponent.fill(pose, right - cw - 7, y + 12, right - cw - 3, y + 16, SpellcraftPalette.ARCANA);
+        this.font.drawShadow(pose, cost, right - cw, y + 10, SpellcraftPalette.ARCANA);
     }
 
     private boolean spellable(SpellcraftConfig config, String spec) {
@@ -635,22 +636,22 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
         AbilityTree tree = tree();
         String spec = AbilityLookup.specOf(tree).apply(group);
         boolean usable = spec != null && spellable(config, spec) && (draft == null || !draft.tokens.contains(group));
-        SpellcraftGui.slot(pose, lx0 + 3, y + 1, false);
-        SpellcraftGui.ability(pose, spec != null ? spec : group, lx0 + 3, y + 1, 16, usable ? 1.0F : 0.4F);
+        SpellcraftDraw.slot(pose, lx0 + 3, y + 1, false);
+        SpellcraftDraw.ability(pose, spec != null ? spec : group, lx0 + 3, y + 1, 16, usable ? 1.0F : 0.4F);
         int tx = lx0 + 23;
         int room = right - tx;
         String tier = tier(tree, group);
-        String name = this.font.plainSubstrByWidth(SpellcraftGui.groupName(tree, group), room - this.font.width(tier) - 3);
-        this.font.drawShadow(pose, name, tx, y + 1, usable ? SpellcraftGui.NAME_GOLD : SpellcraftGui.DARK);
-        this.font.drawShadow(pose, tier, right - this.font.width(tier), y + 1, usable ? SpellcraftGui.WHITE : SpellcraftGui.DARK);
+        String name = this.font.plainSubstrByWidth(SpellcraftNames.groupName(tree, group), room - this.font.width(tier) - 3);
+        this.font.drawShadow(pose, name, tx, y + 1, usable ? SpellcraftPalette.NAME_GOLD : SpellcraftPalette.DARK);
+        this.font.drawShadow(pose, tier, right - this.font.width(tier), y + 1, usable ? SpellcraftPalette.WHITE : SpellcraftPalette.DARK);
         String traits = spec == null ? "" : traitText(config, spec);
-        this.font.drawShadow(pose, this.font.plainSubstrByWidth(traits, room), tx, y + 10, SpellcraftGui.GREY);
+        this.font.drawShadow(pose, this.font.plainSubstrByWidth(traits, room), tx, y + 10, SpellcraftPalette.GREY);
     }
 
     private String traitText(SpellcraftConfig config, String spec) {
         List<String> traits = config.abilityTraits.get(spec);
         if (traits == null || config.isDisabled(spec)) {
-            return SpellcraftGui.tr("screen.no_spellcraft");
+            return SpellcraftNames.tr("screen.no_spellcraft");
         }
         List<String> names = new ArrayList<>();
         traits.forEach(trait -> names.add(trait.toLowerCase(Locale.ROOT)));
@@ -676,9 +677,9 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
             int tx = tabX(i);
             boolean on = i == this.selected;
             if (on) {
-                SpellcraftGui.insetGrey(pose, tx, y, tx + TAB, y + TAB);
+                SpellcraftDraw.insetGrey(pose, tx, y, tx + TAB, y + TAB);
             } else {
-                SpellcraftGui.insetDarkGrey(pose, tx, y, tx + TAB, y + TAB);
+                SpellcraftDraw.insetDarkGrey(pose, tx, y, tx + TAB, y + TAB);
             }
             if (i >= shown) {
                 GuiComponent.fill(pose, tx + 6, y + 9, tx + 14, y + 11, TAB_PLUS);
@@ -689,15 +690,15 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
             String trigger = draft.tokens.isEmpty() || GlyphType.byId(draft.tokens.get(0)) != null ? null : draft.tokens.get(0);
             if (trigger != null) {
                 String spec = AbilityLookup.specOf(tree()).apply(trigger);
-                SpellcraftGui.ability(pose, spec != null ? spec : trigger, tx + 2, y + 2, 16, on ? 1.0F : 0.6F);
+                SpellcraftDraw.ability(pose, spec != null ? spec : trigger, tx + 2, y + 2, 16, on ? 1.0F : 0.6F);
             } else {
-                this.font.drawShadow(pose, "?", tx + (TAB - this.font.width("?")) / 2.0F, y + 6, SpellcraftGui.MUTED);
+                this.font.drawShadow(pose, "?", tx + (TAB - this.font.width("?")) / 2.0F, y + 6, SpellcraftPalette.MUTED);
             }
             if (this.deleteArmed == i) {
                 GuiComponent.fill(pose, tx + 1, y + 1, tx + TAB - 1, y + TAB - 1, DELETE_TINT);
             }
             if (on) {
-                SpellcraftGui.ring(pose, tx, y, tx + TAB, y + TAB, SpellcraftGui.ARCANE_GLOW);
+                SpellcraftDraw.ring(pose, tx, y, tx + TAB, y + TAB, SpellcraftPalette.ARCANE_GLOW);
             }
         }
     }
@@ -738,7 +739,7 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
 
     private void renderWeave(PoseStack pose, @Nullable Draft draft, @Nullable SpellModel model, int x0, int y0, int x1, int y1, int mouseX,
                              int mouseY) {
-        SpellcraftGui.starfield(pose, x0, y0, x1, y1);
+        SpellcraftDraw.starfield(pose, x0, y0, x1, y1);
         List<Cell> cells = cells(draft, x0, y0, x1);
         int size = draft == null ? 0 : draft.tokens.size();
         for (int k = 1; k < cells.size(); k++) {
@@ -748,8 +749,8 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
                 continue;
             }
             boolean toAdd = b.index() == size;
-            GuiComponent.fill(pose, a.x() + 17, a.y() + 7, b.x() - 1, a.y() + 9, toAdd ? THREAD_DIM : SpellcraftGui.ARCANE_LINE);
-            GuiComponent.fill(pose, a.x() + 17, a.y() + 7, b.x() - 1, a.y() + 8, toAdd ? THREAD_DIM : SpellcraftGui.ARCANE_GLOW);
+            GuiComponent.fill(pose, a.x() + 17, a.y() + 7, b.x() - 1, a.y() + 9, toAdd ? THREAD_DIM : SpellcraftPalette.ARCANE_LINE);
+            GuiComponent.fill(pose, a.x() + 17, a.y() + 7, b.x() - 1, a.y() + 8, toAdd ? THREAD_DIM : SpellcraftPalette.ARCANE_GLOW);
         }
         int payload = draft == null ? -1 : payloadStart(draft);
         if (payload >= 0) {
@@ -763,7 +764,7 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
                 }
                 if (cell.y() != rowY) {
                     if (rowY != Integer.MIN_VALUE) {
-                        SpellcraftGui.ring(pose, minX - 3, rowY - 3, maxX + 20, rowY + 20, PAYLOAD);
+                        SpellcraftDraw.ring(pose, minX - 3, rowY - 3, maxX + 20, rowY + 20, PAYLOAD);
                     }
                     rowY = cell.y();
                     minX = cell.x();
@@ -774,30 +775,30 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
                 maxX = cell.x();
             }
             if (rowY != Integer.MIN_VALUE) {
-                SpellcraftGui.ring(pose, minX - 3, rowY - 3, maxX + 20, rowY + 20, PAYLOAD);
+                SpellcraftDraw.ring(pose, minX - 3, rowY - 3, maxX + 20, rowY + 20, PAYLOAD);
             }
             Cell first = cells.stream().filter(cell -> cell.index() == payload).findFirst().orElse(null);
             if (first != null && first.y() == y0 + WEAVE_TOP) {
-                SpellcraftGui.smallText(pose, this.font, SpellcraftGui.tr("screen.payload"), first.x() - 1, first.y() - 10, PAYLOAD, SpellBarStrip.KEY_SCALE);
+                SpellcraftDraw.smallText(pose, this.font, SpellcraftNames.tr("screen.payload"), first.x() - 1, first.y() - 10, PAYLOAD, SpellBarStrip.KEY_SCALE);
             }
         }
         for (Cell cell : cells) {
             int x = cell.x();
             int y = cell.y();
             if (cell.index() == size) {
-                SpellcraftGui.slot(pose, x, y, true);
+                SpellcraftDraw.slot(pose, x, y, true);
                 GuiComponent.fill(pose, x + 5, y + 7, x + 11, y + 9, PLUS);
                 GuiComponent.fill(pose, x + 7, y + 5, x + 9, y + 11, PLUS);
             } else {
                 String token = draft.tokens.get(cell.index());
                 GlyphType type = GlyphType.byId(token);
-                SpellcraftGui.slot(pose, x, y, false);
+                SpellcraftDraw.slot(pose, x, y, false);
                 if (type != null) {
                     PlacedGlyph glyph = model == null ? null : model.glyphAt(cell.index());
-                    SpellcraftGui.rune(pose, type, x, y, 16, glyph != null && !glyph.active());
+                    SpellcraftDraw.rune(pose, type, x, y, 16, glyph != null && !glyph.active());
                 } else {
                     String spec = AbilityLookup.specOf(tree()).apply(token);
-                    SpellcraftGui.ability(pose, spec != null ? spec : token, x, y, 16, 1.0F);
+                    SpellcraftDraw.ability(pose, spec != null ? spec : token, x, y, 16, 1.0F);
                 }
             }
             boolean marked = this.insertAt == END ? cell.index() == size : cell.index() == this.insertAt - 1;
@@ -805,22 +806,22 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
                 RenderSystem.enableBlend();
                 ScreenTextures.INSET_SLOT_SELECT_FRAME.blit(pose, x - 3, y - 3);
             }
-            if (SpellBarStrip.inside(mouseX, mouseY, x, y, 16, 16) && !this.strip.popupOpen()) {
+            if (SpellcraftDraw.inside(mouseX, mouseY, x, y, 16, 16) && !this.strip.popupOpen()) {
                 GuiComponent.fill(pose, x, y, x + 16, y + 16, 0x80FFFFFF);
             }
         }
         int perRow = perRow(x0, x1);
         int rows = (size + 1 + perRow - 1) / perRow;
         if (rows > WEAVE_ROWS) {
-            String more = SpellcraftGui.tr("screen.weave_rows", this.weaveScroll + 1, Math.min(rows, this.weaveScroll + WEAVE_ROWS), rows);
+            String more = SpellcraftNames.tr("screen.weave_rows", this.weaveScroll + 1, Math.min(rows, this.weaveScroll + WEAVE_ROWS), rows);
             float w = this.font.width(more) * SpellBarStrip.KEY_SCALE;
-            SpellcraftGui.smallText(pose, this.font, more, x1 - 3 - w, y1 - 8, SpellcraftGui.MUTED, SpellBarStrip.KEY_SCALE);
+            SpellcraftDraw.smallText(pose, this.font, more, x1 - 3 - w, y1 - 8, SpellcraftPalette.MUTED, SpellBarStrip.KEY_SCALE);
         }
     }
 
     private void renderStats(PoseStack pose, SpellcraftConfig config, AbilityTree tree, ItemStack stack, @Nullable Draft draft,
                              @Nullable SpellcraftRules.ItemCheck check, @Nullable SpellModel model, int x0, int y0, int x1, int y1) {
-        SpellcraftGui.insetGrey(pose, x0, y0, x1, y1);
+        SpellcraftDraw.insetGrey(pose, x0, y0, x1, y1);
         int mid = (x0 + x1) / 2;
         int lw = mid - x0 - 8;
         int rw = x1 - mid - 8;
@@ -832,16 +833,16 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
         String mana = "-";
         String cooldown = "-";
         if (numbers != null) {
-            mana = numbers.hasMana() ? SpellcraftGui.tr("fmt.arrow", StepStats.compact(Math.round(numbers.manaBefore())),
-                    StepStats.compact(Math.round(numbers.manaAfter()))) : "-";
-            cooldown = SpellcraftGui.tr("fmt.arrow", SpellcraftGui.seconds(numbers.cooldownBefore()),
-                    SpellcraftGui.tr("fmt.seconds", SpellcraftGui.seconds(numbers.cooldownAfter())));
+            mana = numbers.hasMana() ? SpellcraftNames.tr("fmt.arrow", StatText.compact(Math.round(numbers.manaBefore())),
+                    StatText.compact(Math.round(numbers.manaAfter()))) : "-";
+            cooldown = SpellcraftNames.tr("fmt.arrow", StatText.seconds(numbers.cooldownBefore()),
+                    SpellcraftNames.tr("fmt.seconds", StatText.seconds(numbers.cooldownAfter())));
         }
         addStat(left, leftColors, "screen.stat.mana", mana, MANA_TEXT);
         addStat(left, leftColors, "screen.stat.cooldown", cooldown, COOLDOWN_TEXT);
-        addStat(left, leftColors, "screen.stat.casts", model == null ? "-" : String.valueOf(model.casts()), SpellcraftGui.LABEL);
+        addStat(left, leftColors, "screen.stat.casts", model == null ? "-" : String.valueOf(model.casts()), SpellcraftPalette.LABEL);
         addStat(left, leftColors, "screen.stat.arcana", model == null ? "-" : Math.round(model.arcana()) + " (x"
-                + String.format(Locale.ROOT, "%.2f", model.escalation()) + ")", SpellcraftGui.ARCANA_TEXT);
+                + String.format(Locale.ROOT, "%.2f", model.escalation()) + ")", SpellcraftPalette.ARCANA_TEXT);
         addStat(left, leftColors, "screen.stat.slot", stepper(slotText(draft)), STEPPER_TEXT);
         addStat(left, leftColors, "screen.stat.priority", stepper(prioText(config, draft)), STEPPER_TEXT);
         for (int i = 0; i < Math.min(rows, left.size()); i++) {
@@ -860,15 +861,15 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
             boolean overflow = wrapped.size() > room;
             int shown = overflow ? room - 1 : wrapped.size();
             for (int i = 0; i < shown; i++) {
-                this.font.draw(pose, wrapped.get(i), rx, y0 + 4 + i * STAT_PITCH, SpellcraftGui.BAD_TEXT);
+                this.font.draw(pose, wrapped.get(i), rx, y0 + 4 + i * STAT_PITCH, SpellcraftPalette.BAD_TEXT);
             }
             if (overflow && room > 0) {
-                this.font.draw(pose, SpellcraftGui.tr("screen.more_errors", wrapped.size() - shown), rx, y0 + 4 + shown * STAT_PITCH, SpellcraftGui.DARK);
+                this.font.draw(pose, SpellcraftNames.tr("screen.more_errors", wrapped.size() - shown), rx, y0 + 4 + shown * STAT_PITCH, SpellcraftPalette.DARK);
             }
         } else if (model != null) {
             List<String[]> steps = stepRows(config, tree, model);
             for (int i = 0; i < Math.min(status, steps.size()); i++) {
-                statRow(pose, rx + 1, y0 + 4 + i * STAT_PITCH, rw, steps.get(i)[0], steps.get(i)[1], SpellcraftGui.LABEL);
+                statRow(pose, rx + 1, y0 + 4 + i * STAT_PITCH, rw, steps.get(i)[0], steps.get(i)[1], SpellcraftPalette.LABEL);
             }
         }
         if (status >= 0 && draft != null) {
@@ -881,14 +882,14 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
     }
 
     private void addStat(List<String[]> rows, List<Integer> colors, String key, String value, int color) {
-        rows.add(new String[]{SpellcraftGui.tr(key), value});
+        rows.add(new String[]{SpellcraftNames.tr(key), value});
         colors.add(color);
     }
 
     private void statRow(PoseStack pose, int x, int y, int width, String label, String value, int valueColor) {
         int vw = this.font.width(value);
         String cutLabel = this.font.plainSubstrByWidth(label, Math.max(0, width - Math.min(vw, width / 2) - 4));
-        this.font.draw(pose, cutLabel, x, y, SpellcraftGui.LABEL);
+        this.font.draw(pose, cutLabel, x, y, SpellcraftPalette.LABEL);
         String cutValue = this.font.plainSubstrByWidth(value, width - this.font.width(cutLabel) - 4);
         this.font.draw(pose, cutValue, x + width - this.font.width(cutValue), y, valueColor);
     }
@@ -901,13 +902,13 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
         for (int i = 0; i < SpellcraftItemData.SLOTS; i++) {
             String group = ClientSpellBar.defaultSlot(i);
             if (i != own && !group.isEmpty() && model.groups().contains(group)) {
-                hidden.add(SpellcraftGui.tr("screen.slot_ref", SpellcraftGui.groupName(tree, group), i + 1));
+                hidden.add(SpellcraftNames.tr("screen.slot_ref", SpellcraftNames.groupName(tree, group), i + 1));
             }
         }
         if (hidden.isEmpty()) {
             return "-";
         }
-        return hidden.size() == 1 ? hidden.get(0) : SpellcraftGui.tr("screen.and_more", hidden.get(0), hidden.size() - 1);
+        return hidden.size() == 1 ? hidden.get(0) : SpellcraftNames.tr("screen.and_more", hidden.get(0), hidden.size() - 1);
     }
 
     @Nullable
@@ -924,7 +925,7 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
         if (stored == null) {
             return "-";
         }
-        return stored.assigned() ? String.valueOf(stored.slot() + 1) : SpellcraftGui.tr("screen.slot_none");
+        return stored.assigned() ? String.valueOf(stored.slot() + 1) : SpellcraftNames.tr("screen.slot_none");
     }
 
     private String prioText(SpellcraftConfig config, @Nullable Draft draft) {
@@ -950,7 +951,7 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
         int x0 = rightX0() + PAD;
         int mid = (x0 + this.width - 21 - PAD) / 2;
         int y = weaveTop() + WEAVE_H + 3 + 4 + row * STAT_PITCH - 1;
-        return SpellBarStrip.inside(mouseX, mouseY, x0 + 2, y, mid - x0 - 4, STAT_PITCH);
+        return SpellcraftDraw.inside(mouseX, mouseY, x0 + 2, y, mid - x0 - 4, STAT_PITCH);
     }
 
     /**
@@ -980,7 +981,7 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
             int next = Math.floorMod(prio - 1 + direction, config.rules.priorities) + 1;
             ModNetwork.sendToServer(new SpellPlaceMessage(this.inventorySlot, stored.id(), stored.slot(), next));
         }
-        click();
+        SpellcraftDraw.click();
     }
 
     /** One row per ability step and Bundled Spell orb, labelled by name, valued by {@link #stepValue}. */
@@ -992,15 +993,15 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
         }
         for (StepStats.Row row : stats.rows()) {
             if (row instanceof StepStats.Step step) {
-                rows.add(new String[]{SpellcraftGui.groupName(tree, step.group()), stepValue(step)});
+                rows.add(new String[]{SpellcraftNames.groupName(tree, step.group()), stepValue(step)});
             } else if (row instanceof StepStats.Orb orb) {
                 List<String> parts = new ArrayList<>();
                 if (orb.copies() > 1) {
-                    parts.add(SpellcraftGui.tr("screen.step.casts", orb.copies()));
+                    parts.add(SpellcraftNames.tr("screen.step.casts", orb.copies()));
                 }
-                parts.add(SpellcraftGui.tr("screen.step.velocity", StepStats.compact(orb.velocity())));
-                parts.add(SpellcraftGui.tr("fmt.seconds", SpellcraftGui.trim(orb.flightSeconds())));
-                rows.add(new String[]{SpellcraftGui.tr("screen.step.bundle"), String.join(" ", parts)});
+                parts.add(SpellcraftNames.tr("screen.step.velocity", StatText.compact(orb.velocity())));
+                parts.add(SpellcraftNames.tr("fmt.seconds", StatText.trim(orb.flightSeconds())));
+                rows.add(new String[]{SpellcraftNames.tr("screen.step.bundle"), String.join(" ", parts)});
             }
         }
         return rows;
@@ -1013,25 +1014,25 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
     private static String stepValue(StepStats.Step step) {
         List<String> parts = new ArrayList<>();
         if (step.hit() != null) {
-            parts.add(StepStats.hit(step.hit()));
+            parts.add(StatText.hit(step.hit()));
             if (step.casts() > 1) {
-                parts.add(SpellcraftGui.tr("screen.step.casts", step.casts()));
+                parts.add(SpellcraftNames.tr("screen.step.casts", step.casts()));
             }
             if (step.radius() >= 0.0F) {
-                parts.add(SpellcraftGui.tr("screen.step.radius", StepStats.compact(step.radius())));
+                parts.add(SpellcraftNames.tr("screen.step.radius", StatText.compact(step.radius())));
             }
             if (step.echoPower() > 0.0F) {
-                parts.add(SpellcraftGui.tr("screen.step.echo", Math.round(step.echoPower() * 100.0F)));
+                parts.add(SpellcraftNames.tr("screen.step.echo", Math.round(step.echoPower() * 100.0F)));
             }
         } else {
             if (step.radius() >= 0.0F) {
-                parts.add(SpellcraftGui.tr("screen.step.radius", StepStats.compact(step.radius())));
+                parts.add(SpellcraftNames.tr("screen.step.radius", StatText.compact(step.radius())));
             }
             if (step.velocity() >= 0.0F) {
-                parts.add(SpellcraftGui.tr("screen.step.velocity", StepStats.compact(step.velocity())));
+                parts.add(SpellcraftNames.tr("screen.step.velocity", StatText.compact(step.velocity())));
             }
             if (step.durationTicks() >= 0) {
-                parts.add(SpellcraftGui.tr("fmt.seconds", SpellcraftGui.seconds(step.durationTicks())));
+                parts.add(SpellcraftNames.tr("fmt.seconds", StatText.seconds(step.durationTicks())));
             }
         }
         return parts.isEmpty() ? "-" : String.join(" ", parts);
@@ -1053,21 +1054,21 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
     /** The draft's save state as shown on the stats panel's last row. */
     private Status status(Draft draft, @Nullable SpellcraftRules.ItemCheck check) {
         if (draft.tokens.isEmpty()) {
-            return new Status(SpellcraftGui.tr("screen.status.empty"), SpellcraftGui.DARK);
+            return new Status(SpellcraftNames.tr("screen.status.empty"), SpellcraftPalette.DARK);
         }
         if (draft.pendingNew) {
-            return new Status(SpellcraftGui.tr("screen.status.saving"), COOLDOWN_TEXT);
+            return new Status(SpellcraftNames.tr("screen.status.saving"), COOLDOWN_TEXT);
         }
         if (matchesStored(draft)) {
-            return new Status(SpellcraftGui.tr("screen.status.saved"), SAVED_TEXT);
+            return new Status(SpellcraftNames.tr("screen.status.saved"), SAVED_TEXT);
         }
         if (check == null || !check.isValid()) {
-            return new Status(SpellcraftGui.tr("screen.status.unsaved"), SpellcraftGui.BAD_TEXT);
+            return new Status(SpellcraftNames.tr("screen.status.unsaved"), SpellcraftPalette.BAD_TEXT);
         }
         if (!draft.dirty && draft.sentAt >= 0 && this.ticks - draft.sentAt > SERVER_WAIT) {
-            return new Status(SpellcraftGui.tr("screen.status.refused"), SpellcraftGui.BAD_TEXT);
+            return new Status(SpellcraftNames.tr("screen.status.refused"), SpellcraftPalette.BAD_TEXT);
         }
-        return new Status(SpellcraftGui.tr("screen.status.saving"), COOLDOWN_TEXT);
+        return new Status(SpellcraftNames.tr("screen.status.saving"), COOLDOWN_TEXT);
     }
 
     private List<Component> hoverTooltip(SpellcraftConfig config, ItemStack stack, @Nullable Draft draft, @Nullable SpellcraftRules.ItemCheck check,
@@ -1076,51 +1077,51 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
         int lx0 = 21 + PAD;
         int lx1 = 21 + POUCH_W - PAD;
         int ly0 = pouchListTop();
-        if (SpellBarStrip.inside(mouseX, mouseY, lx0, ly0 + 2, lx1 - lx0, pouchFit() * ROW)) {
+        if (SpellcraftDraw.inside(mouseX, mouseY, lx0, ly0 + 2, lx1 - lx0, pouchFit() * ROW)) {
             int row = (mouseY - ly0 - 2) / ROW + this.pouchScroll;
             if (this.abilitiesTab) {
                 List<String> groups = pouchAbilities();
                 if (row < groups.size()) {
                     String group = groups.get(row);
                     String spec = AbilityLookup.specOf(tree()).apply(group);
-                    lines.add(colored(SpellcraftGui.abilityName(tree(), group), SpellcraftGui.NAME_GOLD));
+                    lines.add(SpellcraftNames.colored(SpellcraftNames.abilityName(tree(), group), SpellcraftPalette.NAME_GOLD));
                     if (spec != null) {
-                        lines.add(colored(traitText(config, spec), SpellcraftGui.GREY));
+                        lines.add(SpellcraftNames.colored(traitText(config, spec), SpellcraftPalette.GREY));
                     }
-                    lines.add(new TextComponent(SpellcraftGui.tr("screen.pouch_hint")).withStyle(ChatFormatting.DARK_GRAY));
+                    lines.add(new TextComponent(SpellcraftNames.tr("screen.pouch_hint")).withStyle(ChatFormatting.DARK_GRAY));
                 }
             } else {
                 List<GlyphViewLine> all = pouchGlyphs(config);
                 if (row < all.size()) {
                     GlyphViewLine line = all.get(row);
                     glyphLines(config, line.type(), line.potency(), line.quality(), GlyphRelevance.ALL, lines);
-                    lines.add(colored(SpellcraftGui.tr("screen.uses_left", Math.max(0, usesLeft(line)), line.limit()), SpellcraftGui.WHITE));
+                    lines.add(SpellcraftNames.colored(SpellcraftNames.tr("screen.uses_left", Math.max(0, usesLeft(line)), line.limit()), SpellcraftPalette.WHITE));
                     if (config.glyph(line.type()).isUnique()) {
-                        lines.add(colored(SpellcraftGui.tr("screen.unique_cost", config.rules.uniqueMixCost), SpellcraftGui.ARCANA));
+                        lines.add(SpellcraftNames.colored(SpellcraftNames.tr("screen.unique_cost", config.rules.uniqueMixCost), SpellcraftPalette.ARCANA));
                     } else {
-                        lines.add(colored(SpellcraftGui.tr("screen.cost", line.cost()), SpellcraftGui.ARCANA));
+                        lines.add(SpellcraftNames.colored(SpellcraftNames.tr("screen.cost", line.cost()), SpellcraftPalette.ARCANA));
                     }
-                    lines.add(colored(SpellcraftGui.tr("screen.potency_from", line.ownPotency() ? SpellcraftGui.tr("screen.this_item")
-                            : line.potencySource()), line.ownPotency() ? SpellcraftGui.GREY : BORROWED_MARK));
-                    lines.add(colored(SpellcraftGui.tr("screen.uses_from", line.limit(), line.ownUses() ? SpellcraftGui.tr("screen.this_item")
-                            : line.usesSource()), line.ownUses() ? SpellcraftGui.GREY : BORROWED_MARK));
+                    lines.add(SpellcraftNames.colored(SpellcraftNames.tr("screen.potency_from", line.ownPotency() ? SpellcraftNames.tr("screen.this_item")
+                            : line.potencySource()), line.ownPotency() ? SpellcraftPalette.GREY : BORROWED_MARK));
+                    lines.add(SpellcraftNames.colored(SpellcraftNames.tr("screen.uses_from", line.limit(), line.ownUses() ? SpellcraftNames.tr("screen.this_item")
+                            : line.usesSource()), line.ownUses() ? SpellcraftPalette.GREY : BORROWED_MARK));
                     if (line.transferable()) {
-                        lines.add(colored(SpellcraftGui.tr("screen.transferable"), TRANSFER_MARK));
+                        lines.add(SpellcraftNames.colored(SpellcraftNames.tr("screen.transferable"), TRANSFER_MARK));
                     }
-                    lines.add(new TextComponent(SpellcraftGui.tr("screen.pouch_hint")).withStyle(ChatFormatting.DARK_GRAY));
+                    lines.add(new TextComponent(SpellcraftNames.tr("screen.pouch_hint")).withStyle(ChatFormatting.DARK_GRAY));
                 }
             }
             return lines;
         }
         int y = bodyTop() + 4;
         for (int i = 0; i < tabCount(); i++) {
-            if (SpellBarStrip.inside(mouseX, mouseY, tabX(i), y, TAB, TAB)) {
+            if (SpellcraftDraw.inside(mouseX, mouseY, tabX(i), y, TAB, TAB)) {
                 if (i >= Math.min(this.drafts.size(), maxTabs())) {
-                    lines.add(new TextComponent(SpellcraftGui.tr("screen.new_tab")));
+                    lines.add(new TextComponent(SpellcraftNames.tr("screen.new_tab")));
                 } else {
                     Draft tab = this.drafts.get(i);
-                    lines.add(colored(storedName(tab), SpellcraftGui.ARCANE_GLOW));
-                    lines.add(new TextComponent(SpellcraftGui.tr(this.deleteArmed == i ? "screen.delete_confirm" : "screen.tab_hint"))
+                    lines.add(SpellcraftNames.colored(storedName(tab), SpellcraftPalette.ARCANE_GLOW));
+                    lines.add(new TextComponent(SpellcraftNames.tr(this.deleteArmed == i ? "screen.delete_confirm" : "screen.tab_hint"))
                             .withStyle(ChatFormatting.DARK_GRAY));
                 }
                 return lines;
@@ -1130,11 +1131,11 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
         int rx0 = rightX0() + PAD;
         int rx1 = this.width - 21 - PAD;
         for (Cell cell : cells(draft, rx0, wy0, rx1)) {
-            if (!SpellBarStrip.inside(mouseX, mouseY, cell.x(), cell.y(), 16, 16)) {
+            if (!SpellcraftDraw.inside(mouseX, mouseY, cell.x(), cell.y(), 16, 16)) {
                 continue;
             }
             if (draft == null || cell.index() >= draft.tokens.size()) {
-                lines.add(new TextComponent(SpellcraftGui.tr("screen.add_hint")).withStyle(ChatFormatting.GRAY));
+                lines.add(new TextComponent(SpellcraftNames.tr("screen.add_hint")).withStyle(ChatFormatting.GRAY));
             } else {
                 String token = draft.tokens.get(cell.index());
                 GlyphType type = GlyphType.byId(token);
@@ -1145,51 +1146,51 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
                     GlyphRelevance.Filter relevance = model == null ? GlyphRelevance.ALL : GlyphRelevance.forToken(config, model, cell.index());
                     glyphLines(config, type, line == null ? 0.0F : line.potency(), line == null ? 0.0F : line.quality(), relevance, lines);
                     if (glyph != null && !glyph.active()) {
-                        lines.add(colored(SpellcraftGui.inactiveReason(config, glyph), SpellcraftGui.BAD));
+                        lines.add(SpellcraftNames.colored(GlyphText.inactiveReason(config, glyph), SpellcraftPalette.BAD));
                     }
                 } else {
-                    lines.add(colored(SpellcraftGui.abilityName(tree(), token), SpellcraftGui.NAME_GOLD));
+                    lines.add(SpellcraftNames.colored(SpellcraftNames.abilityName(tree(), token), SpellcraftPalette.NAME_GOLD));
                     SpellModel model = check == null ? null : check.models().get(draft.id > 0 ? draft.id : StoredSpell.UNSAVED_ID);
                     SpellModel.Cast cast = model == null ? null : castOf(model.steps(), token);
-                    String summary = cast == null ? "" : SpellcraftGui.poolSummary(model.stepPool(cast), GlyphRelevance.of(config, model, cast));
+                    String summary = cast == null ? "" : GlyphText.poolSummary(model.stepPool(cast), GlyphRelevance.of(config, model, cast));
                     if (!summary.isEmpty()) {
-                        lines.add(colored(SpellcraftGui.tr("bar.stat.glyphs"), SpellcraftGui.GREY).copy().append(SpellcraftGui.tagged(summary)));
+                        lines.add(SpellcraftNames.colored(SpellcraftNames.tr("bar.stat.glyphs"), SpellcraftPalette.GREY).copy().append(GlyphText.tagged(summary)));
                     }
                 }
                 int payload = payloadStart(draft);
                 if (payload >= 0 && cell.index() >= payload && (type == null || !config.glyph(type).spellWide())) {
-                    lines.add(colored(SpellcraftGui.tr("screen.in_payload"), PAYLOAD));
+                    lines.add(SpellcraftNames.colored(SpellcraftNames.tr("screen.in_payload"), PAYLOAD));
                 }
-                lines.add(new TextComponent(SpellcraftGui.tr("screen.cell_hint")).withStyle(ChatFormatting.DARK_GRAY));
+                lines.add(new TextComponent(SpellcraftNames.tr("screen.cell_hint")).withStyle(ChatFormatting.DARK_GRAY));
             }
             return lines;
         }
         if (overStatRow(mouseX, mouseY, "screen.stat.slot") || overStatRow(mouseX, mouseY, "screen.stat.priority")) {
             boolean slot = overStatRow(mouseX, mouseY, "screen.stat.slot");
             if (stored(draft) == null) {
-                lines.add(colored(SpellcraftGui.tr("screen.place_unsaved"), SpellcraftGui.GREY));
+                lines.add(SpellcraftNames.colored(SpellcraftNames.tr("screen.place_unsaved"), SpellcraftPalette.GREY));
             } else {
-                lines.add(colored(SpellcraftGui.tr(slot ? "screen.slot_hint" : "screen.priority_hint"), SpellcraftGui.WHITE));
+                lines.add(SpellcraftNames.colored(SpellcraftNames.tr(slot ? "screen.slot_hint" : "screen.priority_hint"), SpellcraftPalette.WHITE));
                 if (ClientSpellBar.source(SpellcraftItemData.key(stack())) == null) {
-                    lines.add(colored(SpellcraftGui.tr("screen.not_equipped"), SpellcraftGui.BAD));
+                    lines.add(SpellcraftNames.colored(SpellcraftNames.tr("screen.not_equipped"), SpellcraftPalette.BAD));
                 }
                 SpellModel model = check == null ? null : check.models().get(draft.id);
                 if (slot && model != null) {
-                    lines.add(colored(SpellcraftGui.tr("screen.stat.hides") + ": " + hides(tree(), draft, model), HIDES_TEXT));
+                    lines.add(SpellcraftNames.colored(SpellcraftNames.tr("screen.stat.hides") + ": " + hides(tree(), draft, model), HIDES_TEXT));
                 }
             }
-            lines.add(new TextComponent(SpellcraftGui.tr("screen.stepper_hint")).withStyle(ChatFormatting.DARK_GRAY));
+            lines.add(new TextComponent(SpellcraftNames.tr("screen.stepper_hint")).withStyle(ChatFormatting.DARK_GRAY));
             return lines;
         }
-        if (check != null && check.budgetInactive() > 0 && SpellBarStrip.inside(mouseX, mouseY, 21, TITLE_Y, this.width - 42, TITLE_H)) {
-            lines.add(colored(SpellcraftGui.tr("screen.over_budget", check.budgetInactive()), SpellcraftGui.BAD));
+        if (check != null && check.budgetInactive() > 0 && SpellcraftDraw.inside(mouseX, mouseY, 21, TITLE_Y, this.width - 42, TITLE_H)) {
+            lines.add(SpellcraftNames.colored(SpellcraftNames.tr("screen.over_budget", check.budgetInactive()), SpellcraftPalette.BAD));
             return lines;
         }
         int sy0 = wy0 + WEAVE_H + 3;
         int mid = (rx0 + rx1) / 2;
         List<String> errors = errors(draft, check);
-        if (!errors.isEmpty() && SpellBarStrip.inside(mouseX, mouseY, mid, sy0, rx1 - mid, bodyBottom() - PAD - sy0)) {
-            errors.forEach(error -> lines.add(colored(error, SpellcraftGui.BAD)));
+        if (!errors.isEmpty() && SpellcraftDraw.inside(mouseX, mouseY, mid, sy0, rx1 - mid, bodyBottom() - PAD - sy0)) {
+            errors.forEach(error -> lines.add(SpellcraftNames.colored(error, SpellcraftPalette.BAD)));
         }
         return lines;
     }
@@ -1197,11 +1198,11 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
     private void glyphLines(SpellcraftConfig config, GlyphType type, float potency, float quality, GlyphRelevance.Filter relevance,
                             List<Component> lines) {
         SpellcraftConfig.GlyphDefinition glyph = config.glyph(type);
-        lines.add(colored(type.displayName(), SpellcraftGui.categoryColor(config, type)));
-        lines.add(SpellcraftGui.describe(config, type, potency, quality));
-        String side = SpellcraftGui.sideEffects(config, type, potency, relevance);
+        lines.add(SpellcraftNames.colored(type.displayName(), SpellcraftPalette.categoryColor(config, type)));
+        lines.add(GlyphText.describe(config, type, potency, quality));
+        String side = GlyphText.sideEffects(config, type, potency, relevance);
         if (!side.isEmpty()) {
-            lines.add(SpellcraftGui.tagged(side));
+            lines.add(GlyphText.tagged(side));
         }
         List<String> fits = new ArrayList<>();
         if (glyph.specs != null && !glyph.specs.isEmpty()) {
@@ -1214,17 +1215,17 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
         } else {
             for (List<String> set : glyph.requires) {
                 List<String> words = new ArrayList<>();
-                set.forEach(trait -> words.add(SpellcraftGui.capitalize(trait)));
+                set.forEach(trait -> words.add(SpellcraftNames.capitalize(trait)));
                 fits.add(String.join(" + ", words));
             }
         }
         if (!fits.isEmpty()) {
-            lines.add(colored(SpellcraftGui.tr("screen.fits", String.join(", ", fits)), SpellcraftGui.GREY));
+            lines.add(SpellcraftNames.colored(SpellcraftNames.tr("screen.fits", String.join(", ", fits)), SpellcraftPalette.GREY));
         }
         if (!glyph.forbids.isEmpty()) {
             List<String> words = new ArrayList<>();
-            glyph.forbids.forEach(trait -> words.add(SpellcraftGui.capitalize(trait)));
-            lines.add(colored(SpellcraftGui.tr("screen.forbids", String.join(", ", words)), SpellcraftGui.GREY));
+            glyph.forbids.forEach(trait -> words.add(SpellcraftNames.capitalize(trait)));
+            lines.add(SpellcraftNames.colored(SpellcraftNames.tr("screen.forbids", String.join(", ", words)), SpellcraftPalette.GREY));
         }
     }
 
@@ -1244,10 +1245,6 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
         return null;
     }
 
-    private static Component colored(String text, int color) {
-        return new TextComponent(text).withStyle(style -> style.withColor(TextColor.fromRgb(color & 0xFFFFFF)));
-    }
-
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (this.strip.mouseClicked(mouseX, mouseY, button)) {
@@ -1264,17 +1261,17 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
         int y0 = bodyTop();
         int tw = (POUCH_W - 2 * PAD - 2) / 2;
         for (int k = 0; k < 2; k++) {
-            if (SpellBarStrip.inside(mouseX, mouseY, 21 + PAD + k * (tw + 2), y0 + 4, tw, 12)) {
+            if (SpellcraftDraw.inside(mouseX, mouseY, 21 + PAD + k * (tw + 2), y0 + 4, tw, 12)) {
                 this.abilitiesTab = k == 1;
                 this.pouchScroll = 0;
-                click();
+                SpellcraftDraw.click();
                 return true;
             }
         }
         int lx0 = 21 + PAD;
         int lx1 = 21 + POUCH_W - PAD;
         int ly0 = pouchListTop();
-        if (button == 0 && SpellBarStrip.inside(mouseX, mouseY, lx0, ly0 + 2, lx1 - lx0, pouchFit() * ROW)) {
+        if (button == 0 && SpellcraftDraw.inside(mouseX, mouseY, lx0, ly0 + 2, lx1 - lx0, pouchFit() * ROW)) {
             int row = (int) ((mouseY - ly0 - 2) / ROW) + this.pouchScroll;
             if (this.abilitiesTab) {
                 List<String> groups = pouchAbilities();
@@ -1310,20 +1307,20 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
         int y = bodyTop() + 4;
         int shown = Math.min(this.drafts.size(), maxTabs());
         for (int i = 0; i < tabCount(); i++) {
-            if (!SpellBarStrip.inside(mouseX, mouseY, tabX(i), y, TAB, TAB)) {
+            if (!SpellcraftDraw.inside(mouseX, mouseY, tabX(i), y, TAB, TAB)) {
                 continue;
             }
             if (i >= shown) {
                 if (button == 0) {
                     this.drafts.add(new Draft(0, "", List.of()));
                     select(this.drafts.size() - 1);
-                    click();
+                    SpellcraftDraw.click();
                 }
                 return true;
             }
             if (button == 0) {
                 select(i);
-                click();
+                SpellcraftDraw.click();
             } else if (button == 1 && hasShiftDown()) {
                 if (this.deleteArmed == i) {
                     delete(i);
@@ -1331,7 +1328,7 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
                     this.deleteArmed = i;
                     this.deleteArmedAt = this.ticks;
                 }
-                click();
+                SpellcraftDraw.click();
             }
             return true;
         }
@@ -1371,20 +1368,20 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
         int rx0 = rightX0() + PAD;
         int rx1 = this.width - 21 - PAD;
         for (Cell cell : cells(draft, rx0, wy0, rx1)) {
-            if (!SpellBarStrip.inside(mouseX, mouseY, cell.x(), cell.y(), 16, 16)) {
+            if (!SpellcraftDraw.inside(mouseX, mouseY, cell.x(), cell.y(), 16, 16)) {
                 continue;
             }
             int size = draft == null ? 0 : draft.tokens.size();
             if (button == 0) {
                 this.insertAt = cell.index() >= size ? END : cell.index() + 1;
-                click();
+                SpellcraftDraw.click();
             } else if (button == 1 && draft != null && cell.index() < size) {
                 draft.tokens.remove(cell.index());
                 if (this.insertAt != END && this.insertAt > cell.index()) {
                     this.insertAt--;
                 }
                 markDirty(draft);
-                click();
+                SpellcraftDraw.click();
             }
             return true;
         }
@@ -1405,11 +1402,11 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
             this.insertAt = at + 1;
         }
         if (ability && at == 0 && draft.name.isBlank()) {
-            draft.name = SpellcraftGui.groupName(tree(), token);
+            draft.name = SpellcraftNames.groupName(tree(), token);
             loadName();
         }
         markDirty(draft);
-        click();
+        SpellcraftDraw.click();
     }
 
     @Override
@@ -1424,14 +1421,14 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
                 return true;
             }
         }
-        if (SpellBarStrip.inside(mouseX, mouseY, 21, bodyTop(), POUCH_W, bodyBottom() - bodyTop())) {
+        if (SpellcraftDraw.inside(mouseX, mouseY, 21, bodyTop(), POUCH_W, bodyBottom() - bodyTop())) {
             this.pouchScroll = Math.max(0, Math.min(Math.max(0, pouchSize() - pouchFit()), this.pouchScroll + step));
             return true;
         }
         int wy0 = weaveTop();
         int rx0 = rightX0() + PAD;
         int rx1 = this.width - 21 - PAD;
-        if (SpellBarStrip.inside(mouseX, mouseY, rx0, wy0, rx1 - rx0, WEAVE_H)) {
+        if (SpellcraftDraw.inside(mouseX, mouseY, rx0, wy0, rx1 - rx0, WEAVE_H)) {
             Draft draft = draft();
             int perRow = perRow(rx0, rx1);
             int rows = ((draft == null ? 0 : draft.tokens.size()) + 1 + perRow - 1) / perRow;
@@ -1439,10 +1436,6 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
             return true;
         }
         return super.mouseScrolled(mouseX, mouseY, delta);
-    }
-
-    private static void click() {
-        Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
     }
 
     /** Opens the screen for the focus or wand in a player inventory slot. */

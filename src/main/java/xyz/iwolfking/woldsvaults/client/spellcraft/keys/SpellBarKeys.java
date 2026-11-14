@@ -14,14 +14,7 @@ import xyz.iwolfking.woldsvaults.WoldsVaults;
 import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
 import xyz.iwolfking.woldsvaults.init.ModNetwork;
 import xyz.iwolfking.woldsvaults.network.packets.SpellSlotKeyMessage;
-import iskallia.vault.client.data.ClientAbilityData;
-import iskallia.vault.init.ModKeybinds;
-import iskallia.vault.skill.ability.effect.spi.core.Ability;
-import iskallia.vault.skill.tree.AbilityTree;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
-import xyz.iwolfking.woldsvaults.mixins.accessors.OptionsKeyMappingsAccessor;
 import xyz.iwolfking.woldsvaults.spellcraft.play.StatMirror;
 import xyz.iwolfking.woldsvaults.client.spellcraft.state.ClientGlyphViews;
 import xyz.iwolfking.woldsvaults.client.spellcraft.state.ClientSpellBar;
@@ -35,7 +28,6 @@ import xyz.iwolfking.woldsvaults.client.spellcraft.state.ClientSpellBar;
 public final class SpellBarKeys {
     public static final KeyMapping[] KEYS = new KeyMapping[SpellcraftItemData.SLOTS];
     private static final boolean[] DOWN = new boolean[SpellcraftItemData.SLOTS];
-    private static boolean quickfireHidden;
 
     private SpellBarKeys() {
     }
@@ -73,11 +65,11 @@ public final class SpellBarKeys {
             return;
         }
         Minecraft minecraft = Minecraft.getInstance();
-        if (!quickfireHidden && minecraft.options != null) {
-            hideQuickfireKeys(minecraft);
+        if (!QuickfireKeys.retired() && minecraft.options != null) {
+            QuickfireKeys.hide(minecraft);
         }
         if (minecraft.player != null && !minecraft.isPaused()) {
-            tickClientCooldowns();
+            ClientCooldownTicker.tick();
         }
         boolean active = minecraft.player != null && minecraft.screen == null && minecraft.getConnection() != null;
         for (int i = 0; i < KEYS.length; i++) {
@@ -88,47 +80,6 @@ public final class SpellBarKeys {
                     ModNetwork.sendToServer(new SpellSlotKeyMessage(i, down));
                 }
             }
-        }
-    }
-
-    /**
-     * Counts the client's copy of ability cooldowns down every tick. VH only syncs them on casts and every half second
-     * for the selected ability, so without this the HUD sat on stale values (a 1 s cooldown stuck at "1s", or coming
-     * back after it had already ended); every server sync still overwrites the local count.
-     */
-    private static void tickClientCooldowns() {
-        AbilityTree tree = ClientAbilityData.getTree();
-        if (tree == null) {
-            return;
-        }
-        tree.iterate(Ability.class, ability -> ability.getCooldown().ifPresent(cooldown -> {
-            cooldown.decrement();
-            if (cooldown.getRemainingTicks() <= 0 && cooldown.getRemainingDelayTicks() <= 0) {
-                ability.setCooldownFromSync(0, 0, 0);
-            }
-        }));
-    }
-
-    /**
-     * Retires VH's per-ability quick-fire keys: they are unbound and taken out of the Controls list, since abilities
-     * are cast from spell slots now (the server ignores their packet too).
-     */
-    private static void hideQuickfireKeys(Minecraft minecraft) {
-        quickfireHidden = true;
-        List<KeyMapping> kept = new ArrayList<>();
-        int hidden = 0;
-        for (KeyMapping mapping : minecraft.options.keyMappings) {
-            if (ModKeybinds.QUICKFIRE_CATEGORY.equals(mapping.getCategory())) {
-                mapping.setKey(InputConstants.UNKNOWN);
-                hidden++;
-            } else {
-                kept.add(mapping);
-            }
-        }
-        if (hidden > 0) {
-            KeyMapping.resetMapping();
-            ((OptionsKeyMappingsAccessor) minecraft.options)
-                    .woldsvaults$setKeyMappings(kept.toArray(new KeyMapping[0]));
         }
     }
 

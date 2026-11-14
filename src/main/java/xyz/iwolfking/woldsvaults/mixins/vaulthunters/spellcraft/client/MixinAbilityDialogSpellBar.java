@@ -20,7 +20,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import xyz.iwolfking.woldsvaults.client.spellcraft.stats.SlotCostStats;
 import xyz.iwolfking.woldsvaults.client.spellcraft.bar.SkillMenuSpellBar;
 import xyz.iwolfking.woldsvaults.client.spellcraft.bar.SpellBarView;
-import xyz.iwolfking.woldsvaults.client.spellcraft.gui.SpellcraftGui;
+import xyz.iwolfking.woldsvaults.client.spellcraft.gui.SpellcraftNames;
+import xyz.iwolfking.woldsvaults.client.spellcraft.gui.SpellcraftPalette;
+import xyz.iwolfking.woldsvaults.client.spellcraft.gui.StatText;
 import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
 import xyz.iwolfking.woldsvaults.mixins.vaulthunters.accessors.AbstractDialogAccessor;
 import xyz.iwolfking.woldsvaults.init.ModConfigs;
@@ -60,10 +62,10 @@ public class MixinAbilityDialogSpellBar {
         Font font = Minecraft.getInstance().font;
         String head = null;
         if (slot >= 0) {
-            String key = SpellcraftGui.keyLabel(slot, font, 30);
-            head = key.isEmpty() ? SpellcraftGui.tr("dialog.slot", slot + 1) : SpellcraftGui.tr("dialog.slot_key", slot + 1, key);
+            String key = SpellcraftNames.keyLabel(slot, font, 30);
+            head = key.isEmpty() ? SpellcraftNames.tr("dialog.slot", slot + 1) : SpellcraftNames.tr("dialog.slot_key", slot + 1, key);
             if (view.slot(slot).state() == SpellBarView.State.SPELL) {
-                head = SpellcraftGui.tr("dialog.slot_spell", head, view.slot(slot).spellName());
+                head = SpellcraftNames.tr("dialog.slot_spell", head, view.slot(slot).spellName());
             }
         }
         String numbers = null;
@@ -77,8 +79,7 @@ public class MixinAbilityDialogSpellBar {
                 stats = SlotCostStats.plain(this.abilityTree, group);
             }
             if (stats != null) {
-                String cooldown = SpellcraftGui.tr("fmt.seconds", SpellcraftGui.seconds(stats.cooldownAfter()));
-                numbers = stats.hasMana() ? SpellcraftGui.tr("dialog.numbers", Math.round(stats.manaAfter()), cooldown) : cooldown;
+                numbers = StatText.numbers("dialog.numbers", stats);
             }
         }
         Rectangle bounds = ((AbstractDialogAccessor) this).woldsvaults$getBounds();
@@ -96,7 +97,7 @@ public class MixinAbilityDialogSpellBar {
             return;
         }
         this.woldsvaults$slotLine = font.plainSubstrByWidth(line, room);
-        this.woldsvaults$slotColor = slot >= 0 && view.isEffective() ? SpellcraftGui.ARCANE_GLOW : SpellcraftGui.WHITE;
+        this.woldsvaults$slotColor = slot >= 0 && view.isEffective() ? SpellcraftPalette.ARCANE_GLOW : SpellcraftPalette.WHITE;
     }
 
     /** Raises VH's name and level lines to make room for the third line. */

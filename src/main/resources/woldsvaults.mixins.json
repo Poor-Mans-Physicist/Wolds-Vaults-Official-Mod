@@ -839,7 +839,6 @@
     "vaulthunters.accessors.AbstractDialogAccessor",
     "vaulthunters.accessors.AbilityDialogAccessor",
     "vaulthunters.accessors.SplitTabContentAccessor",
-    "vaulthunters.accessors.AbstractPanRegionAccessor",
     "vaulthunters.accessors.StatLabelElementBuilderAccessor",
     "vaulthunters.accessors.ScrollableItemStackSelectorElementAccessor",
     "vaulthunters.accessors.VaultChestRendererAccessor",

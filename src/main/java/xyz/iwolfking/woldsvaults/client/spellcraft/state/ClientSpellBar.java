@@ -5,6 +5,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
 import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
 import xyz.iwolfking.woldsvaults.network.packets.SpellBarSyncMessage;
+import xyz.iwolfking.woldsvaults.spellcraft.bar.EffectiveBar;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -17,10 +18,6 @@ import java.util.List;
  * focus screen. Empty until the first sync.
  */
 public final class ClientSpellBar {
-    public static final int EMPTY = 0;
-    public static final int ABILITY = 1;
-    public static final int SPELL = 2;
-
     private static final String[] DEFAULTS = new String[SpellcraftItemData.SLOTS];
     private static final List<SpellBarSyncMessage.Entry> ENTRIES = new ArrayList<>();
     private static final List<SpellBarSyncMessage.Source> SOURCES = new ArrayList<>();
@@ -54,6 +51,10 @@ public final class ClientSpellBar {
 
     public static SpellBarSyncMessage.Entry entry(int index) {
         return ENTRIES.get(index);
+    }
+
+    public static EffectiveBar.Kind kind(int index) {
+        return EffectiveBar.Kind.values()[ENTRIES.get(index).kind()];
     }
 
     public static int selected() {
@@ -106,7 +107,7 @@ public final class ClientSpellBar {
         }
         for (int step = 1; step <= SpellcraftItemData.SLOTS; step++) {
             int next = Math.floorMod(index + step * direction, SpellcraftItemData.SLOTS);
-            if (ENTRIES.get(next).kind() != EMPTY) {
+            if (kind(next) != EffectiveBar.Kind.EMPTY) {
                 return next;
             }
         }
