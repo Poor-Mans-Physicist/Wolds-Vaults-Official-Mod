@@ -272,7 +272,7 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
 
     public static void open(@Nullable Screen parent, int inventorySlot) {
         if (ModConfigs.SPELLCRAFT == null) {
-            WoldLogger.error("Spellcraft screen: the focus augments table is not loaded on this client; the screen stays closed");
+            WoldLogger.error("Spellcraft screen: the spellcraft table is not loaded on this client; the screen stays closed");
             return;
         }
         Minecraft.getInstance().setScreen(new SpellcraftScreen(parent, inventorySlot));

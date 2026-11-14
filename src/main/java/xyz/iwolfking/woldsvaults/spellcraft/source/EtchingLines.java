@@ -54,7 +54,7 @@ public final class EtchingLines {
         Map<String, Entry> byAttribute = new HashMap<>();
         Map<GlyphType, Entry> byType = new HashMap<>();
         if (config.etchingGlyphs == null) {
-            WoldLogger.errorOnce("ConvertedEtchings:missing", "Spellcraft: the focus augments table has no etchingGlyphs section; etchings act on their own and grant no glyphs");
+            WoldLogger.errorOnce("ConvertedEtchings:missing", "Spellcraft: the spellcraft table has no etchingGlyphs section; etchings act on their own and grant no glyphs");
         } else {
             for (SpellcraftConfig.EtchingGlyph entry : config.etchingGlyphs) {
                 GlyphType type = GlyphType.byId(entry.glyph);

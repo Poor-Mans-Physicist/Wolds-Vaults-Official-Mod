@@ -50,7 +50,7 @@ public final class GlyphText {
         if (config == null) {
             if (!noConfigWarned) {
                 noConfigWarned = true;
-                WoldLogger.error("Spellcraft UI: no focus augments table; a dormant {} is described as not fitting its step", type.id());
+                WoldLogger.error("Spellcraft UI: no spellcraft table; a dormant {} is described as not fitting its step", type.id());
             }
             return false;
         }

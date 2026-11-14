@@ -101,7 +101,7 @@ public final class UniqueSetRoller implements SpellcraftRoller.UniqueSets {
         String uniqueId = key.toString();
         if (config.uniqueSets == null) {
             if (WARNED.add("missing")) {
-                WoldLogger.error("Spellcraft: the focus augments table has no uniqueSets section; unique focuses and wands roll like any carrier");
+                WoldLogger.error("Spellcraft: the spellcraft table has no uniqueSets section; unique focuses and wands roll like any carrier");
             }
             return null;
         }

@@ -63,7 +63,7 @@ public final class SpellEdits {
     public static void placeSpell(ServerPlayer player, int inventorySlot, int spellId, int barSlot, int prio) {
         SpellcraftConfig config = ModConfigs.SPELLCRAFT;
         if (config == null) {
-            WoldLogger.error("Spellcraft: no focus augments table; spell {} was not moved", spellId);
+            WoldLogger.error("Spellcraft: no spellcraft table; spell {} was not moved", spellId);
             return;
         }
         ItemStack stack = carrier(player, inventorySlot);

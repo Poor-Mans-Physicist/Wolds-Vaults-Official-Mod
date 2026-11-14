@@ -48,7 +48,7 @@ public final class GearAffixLines {
     /** The table's gear glyph entries, or an empty list (logged once) when the section is missing. */
     public static List<SpellcraftConfig.GearGlyph> entries(SpellcraftConfig config) {
         if (config.gearGlyphs == null) {
-            WoldLogger.errorOnce("ConvertedAffixes:missing", "Spellcraft: the focus augments table has no gearGlyphs section; converted gear affixes grant no glyphs "
+            WoldLogger.errorOnce("ConvertedAffixes:missing", "Spellcraft: the spellcraft table has no gearGlyphs section; converted gear affixes grant no glyphs "
                     + "and stay switched off");
             return List.of();
         }

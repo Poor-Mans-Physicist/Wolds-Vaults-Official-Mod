@@ -29,7 +29,7 @@ public abstract class MixinLocalPlayerSpellChargeSlow {
         if (config == null) {
             if (!woldsvaults$loggedMissingTable) {
                 woldsvaults$loggedMissingTable = true;
-                WoldLogger.error("Spellcraft: no focus augments table on the client; charging a spell uses the vanilla item-use slow");
+                WoldLogger.error("Spellcraft: no spellcraft table on the client; charging a spell uses the vanilla item-use slow");
             }
             return slow;
         }

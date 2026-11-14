@@ -40,7 +40,7 @@ public final class SpellAbilities {
                     traits.add(AbilityTrait.valueOf(trait.toUpperCase(Locale.ROOT)));
                 }
                 if (!traits.contains(AbilityTrait.INSTANT) && !traits.contains(AbilityTrait.TOGGLE) && !traits.contains(AbilityTrait.HOLD)) {
-                    WoldLogger.error("spellcraft.json: ability {} has no cast kind (INSTANT, TOGGLE or HOLD); recipes can't use it", entry.getKey());
+                    WoldLogger.error("spellcraft.json: ability {} has no cast kind (INSTANT, TOGGLE or HOLD); spells can't use it", entry.getKey());
                     continue;
                 }
                 built.put(entry.getKey(), new SpellAbility(entry.getKey(), traits));

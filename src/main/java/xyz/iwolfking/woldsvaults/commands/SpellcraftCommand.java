@@ -128,7 +128,7 @@ public final class SpellcraftCommand {
         ServerPlayer player = source.getPlayerOrException();
         SpellcraftConfig config = ModConfigs.SPELLCRAFT;
         if (config == null) {
-            source.sendFailure(new TextComponent("The focus augments table is not loaded"));
+            source.sendFailure(new TextComponent("The spellcraft table is not loaded"));
             return 0;
         }
         EquippedSources.Snapshot snapshot = EquippedSources.get(player);
