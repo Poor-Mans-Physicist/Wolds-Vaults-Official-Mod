@@ -53,7 +53,7 @@ public final class SpellAbilities {
 
     /** Whether a step casting {@code spec} bills its heal mana factor (Intensify on a heal costs mana, not duration). */
     public static boolean isHeal(@Nullable String spec) {
-        return HEALS.contains(spec);
+        return spec != null && HEALS.contains(spec);
     }
 
     /** The name VH's skill screen shows for an ability, or its id when VH's config doesn't know it. */
