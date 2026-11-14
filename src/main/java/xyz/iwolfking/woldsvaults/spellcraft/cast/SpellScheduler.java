@@ -6,9 +6,7 @@ import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.server.ServerStoppedEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.server.ServerLifecycleHooks;
-import xyz.iwolfking.woldsvaults.WoldsVaults;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -20,7 +18,6 @@ import java.util.function.Consumer;
  * Runs the later parts of a recipe (after Delay, a Charge wind-up, Echo) on the server tick. Pending parts are
  * dropped when the player logs out, dies, changes dimension or the server stops.
  */
-@Mod.EventBusSubscriber(modid = WoldsVaults.MOD_ID)
 public final class SpellScheduler {
     private static final List<Task> TASKS = new ArrayList<>();
 

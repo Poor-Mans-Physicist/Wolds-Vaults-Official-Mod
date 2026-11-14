@@ -12,8 +12,6 @@ import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.server.ServerStoppedEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import xyz.iwolfking.woldsvaults.WoldsVaults;
 import xyz.iwolfking.woldsvaults.spellcraft.ability.SpellAbility;
 
 import java.util.Map;
@@ -25,7 +23,6 @@ import java.util.concurrent.ConcurrentHashMap;
  * Discount on a toggle a recipe switched on: VH drains the toggle's mana every tick, so while it stays on the share
  * of that per-tick cost is refunded. Ends when the toggle goes off by any means, or the player logs out.
  */
-@Mod.EventBusSubscriber(modid = WoldsVaults.MOD_ID)
 public final class ToggleDiscounts {
     private static final Map<UUID, Map<String, Float>> ACTIVE = new ConcurrentHashMap<>();
 

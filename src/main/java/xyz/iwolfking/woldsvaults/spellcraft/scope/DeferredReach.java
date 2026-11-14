@@ -9,8 +9,6 @@ import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.server.ServerStoppedEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import xyz.iwolfking.woldsvaults.WoldsVaults;
 import xyz.iwolfking.woldsvaults.api.cast.CastContext;
 import xyz.iwolfking.woldsvaults.api.cast.CastTag;
 import xyz.iwolfking.woldsvaults.spellcraft.hit.OwnHits;
@@ -32,7 +30,6 @@ import java.util.function.Supplier;
  * opens no spell step, so it never bills mana, starts or blocks cooldowns, fires cast events or resolves Power Dump.
  * Hits count only when {@link OwnHits} lists them for the carrier that delivers them. Server thread only.
  */
-@Mod.EventBusSubscriber(modid = WoldsVaults.MOD_ID)
 public final class DeferredReach {
     private static final Map<DamageSource, CastTag> DOT_SOURCES = Collections.synchronizedMap(new WeakHashMap<>());
     private static final Map<UUID, DeferredGlyphs> MINIONS = new ConcurrentHashMap<>();

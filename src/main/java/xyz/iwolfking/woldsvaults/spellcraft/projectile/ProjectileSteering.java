@@ -29,9 +29,7 @@ import net.minecraftforge.event.entity.ProjectileImpactEvent;
 import net.minecraftforge.event.server.ServerStoppedEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.network.PacketDistributor;
-import xyz.iwolfking.woldsvaults.WoldsVaults;
 import xyz.iwolfking.woldsvaults.api.cast.CastContext;
 import xyz.iwolfking.woldsvaults.api.lib.HomingJavelin;
 import xyz.iwolfking.woldsvaults.api.lib.IWoldAbilityEnhancements;
@@ -77,7 +75,6 @@ import xyz.iwolfking.woldsvaults.spellcraft.scope.TickingEntity;
  * inside its cast's context: fireballs explode, grenades explode, ice bolts run their impact area, decoys spawn their
  * decoy, Bundled Spell orbs land their payload, and the rest are removed. Orbiting grenades explode on contact.
  */
-@Mod.EventBusSubscriber(modid = WoldsVaults.MOD_ID)
 public final class ProjectileSteering {
     private static final double GOLDEN_ANGLE = 2.39996;
     private static final double RESEND_COS = Math.cos(Math.toRadians(2.0));

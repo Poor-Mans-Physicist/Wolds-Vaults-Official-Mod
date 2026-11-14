@@ -7,8 +7,6 @@ import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.server.ServerStoppedEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import xyz.iwolfking.woldsvaults.WoldsVaults;
 import xyz.iwolfking.woldsvaults.spellcraft.projectile.SpellParticles;
 import xyz.iwolfking.woldsvaults.spellcraft.bar.EffectiveBar;
 
@@ -22,7 +20,6 @@ import java.util.UUID;
  * applies; releasing reports how full it got. The charge belongs to the slot's occupant ({@code itemId:spellId}): it
  * ends without casting when the occupant changes, and on death, logout or dimension change.
  */
-@Mod.EventBusSubscriber(modid = WoldsVaults.MOD_ID)
 public final class SpellCharge {
     private static final Map<UUID, Charging> CHARGING = new HashMap<>();
 

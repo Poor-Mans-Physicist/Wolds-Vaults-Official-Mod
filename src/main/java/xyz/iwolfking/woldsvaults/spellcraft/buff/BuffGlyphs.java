@@ -10,8 +10,6 @@ import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.server.ServerStoppedEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import xyz.iwolfking.woldsvaults.WoldsVaults;
 import xyz.iwolfking.woldsvaults.spellcraft.ability.SpellAbility;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.CastModifiers;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.CastScope;
@@ -35,7 +33,6 @@ import java.util.function.Supplier;
  * takes intensity and duration, a toggle intensity and drain (its timed parts only the duration upside), a heal
  * intensity and heal mana.
  */
-@Mod.EventBusSubscriber(modid = WoldsVaults.MOD_ID)
 public final class BuffGlyphs {
     private static final Set<String> HEALS = Set.of("Heal_Base", "Heal_Group");
     private static final Map<UUID, Map<String, Live>> BY_PLAYER = new ConcurrentHashMap<>();

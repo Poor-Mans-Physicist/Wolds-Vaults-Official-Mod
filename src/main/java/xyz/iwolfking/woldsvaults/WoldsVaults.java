@@ -141,6 +141,7 @@ public class WoldsVaults {
             LOGGER.debug("Initializing FMLCommonSetup events!");
         }
         ModNetwork.init();
+        Spellcraft.registerHandlers();
         event.enqueueWork(Spellcraft::init);
         LivingEntityEvents.init();
         event.enqueueWork(RampageListenerFix::init);

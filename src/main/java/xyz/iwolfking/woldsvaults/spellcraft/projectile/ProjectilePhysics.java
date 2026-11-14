@@ -16,8 +16,6 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.server.ServerStoppedEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import xyz.iwolfking.woldsvaults.WoldsVaults;
 
 import java.util.ArrayList;
 import java.util.Map;
@@ -34,7 +32,6 @@ import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
  * which crashes the tick). Ethereal projectiles are removed after their glyph's rolled lifetime, unless they are still
  * orbiting; the orbit's end then detonates them.
  */
-@Mod.EventBusSubscriber(modid = WoldsVaults.MOD_ID)
 public final class ProjectilePhysics {
     private static final double FIREBALL_GRAVITY = 0.025;
     private static final double VOLLEY_GRAVITY = FIREBALL_GRAVITY * 4.0;

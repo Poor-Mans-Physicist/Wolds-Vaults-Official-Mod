@@ -10,8 +10,6 @@ import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.event.server.ServerStoppedEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import xyz.iwolfking.woldsvaults.WoldsVaults;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.ProjectileGlyphTags;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.DeferredReach;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.TickingEntity;
@@ -30,7 +28,6 @@ import java.util.function.Supplier;
  * {@link #WINDOW_TICKS} ticks, its hit ignores the enemy's hurt immunity, so every copy can land on the same enemy on
  * the same tick. A member's own repeated hits on one enemy keep normal hurt immunity. Server thread only.
  */
-@Mod.EventBusSubscriber(modid = WoldsVaults.MOD_ID)
 public final class ShotgunHits {
     private static final int WINDOW_TICKS = 20;
     private static final Map<LivingEntity, Volley> HITS = new WeakHashMap<>();

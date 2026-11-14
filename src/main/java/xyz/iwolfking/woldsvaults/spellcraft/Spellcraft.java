@@ -30,6 +30,15 @@ import javax.annotation.Nullable;
 import java.util.List;
 import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
 import xyz.iwolfking.woldsvaults.spellcraft.ability.AbilityCastTracker;
+import net.minecraftforge.common.MinecraftForge;
+import xyz.iwolfking.woldsvaults.spellcraft.buff.ToggleDiscounts;
+import xyz.iwolfking.woldsvaults.spellcraft.projectile.ProjectileSteering;
+import xyz.iwolfking.woldsvaults.spellcraft.projectile.ProjectileSizing;
+import xyz.iwolfking.woldsvaults.spellcraft.projectile.ProjectilePhysics;
+import xyz.iwolfking.woldsvaults.spellcraft.scope.DeferredReach;
+import xyz.iwolfking.woldsvaults.spellcraft.buff.BuffGlyphs;
+import xyz.iwolfking.woldsvaults.spellcraft.cast.SpellScheduler;
+import xyz.iwolfking.woldsvaults.spellcraft.hit.ShotgunHits;
 
 /**
  * Spellcraft: focuses and wands roll arcana, glyph lines and depth; their owner builds augmented spells from the glyphs
@@ -38,6 +47,23 @@ import xyz.iwolfking.woldsvaults.spellcraft.ability.AbilityCastTracker;
  */
 public final class Spellcraft {
     private Spellcraft() {
+    }
+
+    /**
+     * Binds the cast-effect handlers at setup, in this order, instead of from annotated subscribers, so they run after
+     * every annotated handler of the same priority: elemental procs read a hit before glyph damage scales it.
+     */
+    public static void registerHandlers() {
+        MinecraftForge.EVENT_BUS.register(ToggleDiscounts.class);
+        MinecraftForge.EVENT_BUS.register(ProjectileSteering.class);
+        MinecraftForge.EVENT_BUS.register(ProjectileSizing.class);
+        MinecraftForge.EVENT_BUS.register(ProjectilePhysics.class);
+        MinecraftForge.EVENT_BUS.register(DeferredReach.class);
+        MinecraftForge.EVENT_BUS.register(BuffGlyphs.class);
+        MinecraftForge.EVENT_BUS.register(ProjectileGlyphs.class);
+        MinecraftForge.EVENT_BUS.register(SpellScheduler.class);
+        MinecraftForge.EVENT_BUS.register(SpellCharge.class);
+        MinecraftForge.EVENT_BUS.register(ShotgunHits.class);
     }
 
     /** Registers the VH event listeners; called once from common setup. */

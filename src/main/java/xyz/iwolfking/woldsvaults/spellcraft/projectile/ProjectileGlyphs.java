@@ -13,8 +13,6 @@ import net.minecraftforge.event.entity.ProjectileImpactEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import xyz.iwolfking.woldsvaults.WoldsVaults;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.CastModifiers;
 import xyz.iwolfking.woldsvaults.spellcraft.ability.CastOrigin;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.CastScope;
@@ -39,7 +37,6 @@ import javax.annotation.Nullable;
  * deferred scope ({@link DeferredReach}): its own hits through that carrier, and area reads there when the ability
  * deals hits through it.
  */
-@Mod.EventBusSubscriber(modid = WoldsVaults.MOD_ID)
 public final class ProjectileGlyphs {
     private static final Object LISTENER_OWNER = new Object();
 
