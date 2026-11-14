@@ -18,6 +18,7 @@ import java.util.Arrays;
 import xyz.iwolfking.woldsvaults.spellcraft.play.StatMirror;
 import xyz.iwolfking.woldsvaults.client.spellcraft.state.ClientGlyphViews;
 import xyz.iwolfking.woldsvaults.client.spellcraft.state.ClientSpellBar;
+import xyz.iwolfking.woldsvaults.client.spellcraft.bar.SkillMenuSpellBar;
 
 /**
  * The 16 spell slot keys (unbound by default, category "Spell Bar"). Each sends a press when it goes down and a
@@ -71,6 +72,7 @@ public final class SpellBarKeys {
         if (minecraft.player != null && !minecraft.isPaused()) {
             ClientCooldownTicker.tick();
         }
+        SkillMenuSpellBar.forgetClosed();
         boolean active = minecraft.player != null && minecraft.screen == null && minecraft.getConnection() != null;
         for (int i = 0; i < KEYS.length; i++) {
             boolean down = active && KEYS[i].isDown();
@@ -89,5 +91,6 @@ public final class SpellBarKeys {
         Arrays.fill(DOWN, false);
         ClientSpellBar.reset();
         ClientGlyphViews.reset();
+        SkillMenuSpellBar.reset();
     }
 }

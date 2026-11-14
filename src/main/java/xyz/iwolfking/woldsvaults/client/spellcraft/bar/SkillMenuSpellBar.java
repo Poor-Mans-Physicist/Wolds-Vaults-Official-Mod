@@ -44,6 +44,17 @@ public final class SkillMenuSpellBar implements SpellBarStrip.Host {
         return current;
     }
 
+    /** Drops the menu once its screen is no longer open, so a closed skill menu is not kept alive. */
+    public static void forgetClosed() {
+        if (current != null && Minecraft.getInstance().screen != current.screen) {
+            current = null;
+        }
+    }
+
+    public static void reset() {
+        current = null;
+    }
+
     @Nullable
     public static SkillMenuSpellBar current() {
         return current != null && Minecraft.getInstance().screen == current.screen ? current : null;

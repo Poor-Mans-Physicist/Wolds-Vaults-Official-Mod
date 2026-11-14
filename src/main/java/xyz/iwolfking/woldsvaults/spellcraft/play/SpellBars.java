@@ -168,6 +168,7 @@ public final class SpellBars {
     @SubscribeEvent
     public static void onServerStopped(ServerStoppedEvent event) {
         HeldSlots.clear();
+        StatMirror.clear();
         STATES.clear();
     }
 }

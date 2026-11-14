@@ -49,6 +49,10 @@ public final class StatMirror {
         SENT.remove(player);
     }
 
+    public static void clear() {
+        SENT.clear();
+    }
+
     /** Called on the client when a mirror arrives. */
     public static void receive(UUID player, float[] values) {
         clientPlayer = player;
