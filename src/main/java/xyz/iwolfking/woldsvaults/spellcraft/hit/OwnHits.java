@@ -105,7 +105,7 @@ public final class OwnHits {
         List<Source> sources = HitSources.sources(spec);
         if (sources == null) {
             if (UNKNOWN_WARNED.add(spec)) {
-                WoldLogger.error("Spell hits: ability {} has no hit-source entry; damage glyphs skip its hits until it is added to SpellHits.", spec);
+                WoldLogger.error("Spell hits: ability {} has no hit-source entry; damage glyphs skip its hits until it is added to HitSources.", spec);
             }
             return false;
         }
