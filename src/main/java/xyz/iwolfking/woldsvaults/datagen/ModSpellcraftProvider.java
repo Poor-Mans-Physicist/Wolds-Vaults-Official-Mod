@@ -11,6 +11,9 @@ import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphStacking;
 import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
 import xyz.iwolfking.woldsvaults.datagen.lib.AbstractWoldsTableProvider;
 import xyz.iwolfking.woldsvaults.datagen.lib.AncientGearModifiers;
+import xyz.iwolfking.woldsvaults.datagen.spellcraft.EtchingGlyphBuilder;
+import xyz.iwolfking.woldsvaults.datagen.spellcraft.FocusRarityBuilder;
+import xyz.iwolfking.woldsvaults.datagen.spellcraft.GlyphBuilder;
 import xyz.iwolfking.woldsvaults.init.ModEtchingGearAttributes;
 import xyz.iwolfking.woldsvaults.modifiers.gear.special.FireballModification;
 import xyz.iwolfking.woldsvaults.modifiers.gear.special.GlacialBlastModification;
@@ -24,13 +27,8 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Spellcraft glyphs (redesign/spellcraft/SPEC.md): each glyph's potency tiers, side effects, uses, per-spell cap and
- * arcana cost; the combo surcharges; how focuses and wands roll arcana, glyph lines and depth (glyphs per spell); the
- * spell rules and mechanics tuning; and the ability trait list that decides which glyphs fit which ability. Numbers are
- * the 2026-11-08 prototype with depth +2 and arcana x1.2 over the spec, with the round 4 changes
- * (redesign/spellcraft/BALANCE_PLAN_2026-11-10.md, GLYPH_STACKING_2026-11-10.md): common upsides x1.2 with their
- * downside and cost coefficients divided by 1.2 (written as {@code value / 1.2F}), Discount as mana efficiency, Charge
- * x1.5, Intensify, Extend and Chaining, Bundled Spell once per spell, Mythic focus depth 6 and arcana x1.3.
+ * Generates the spellcraft table: glyph definitions, combo surcharges, focus and wand rolls, spell rules and tuning,
+ * ability traits, the gear and etching glyph grants and the unique glyph sets.
  */
 public class ModSpellcraftProvider extends AbstractWoldsTableProvider {
     private static final String UP = "upside";
@@ -51,7 +49,30 @@ public class ModSpellcraftProvider extends AbstractWoldsTableProvider {
     public void registerConfigs() {
         SpellcraftConfig table = new SpellcraftConfig();
         table.worksOutsideVaults = true;
+        table.rules = rules();
+        table.tuning = tuning();
+        table.glyphs = new LinkedHashMap<>();
+        powerAndFlowGlyphs(table);
+        pathGlyphs(table);
+        formGlyphs(table);
+        chaosGlyphs(table);
+        buffGlyphs(table);
+        chainingGlyph(table);
+        combos(table);
+        table.focus = focusRolls();
+        table.wand = wandRolls();
+        table.abilityTraits = abilityTraits();
+        table.disabledAbilities = new ArrayList<>();
+        gearGlyphs(table);
+        gearAffixes(table);
+        etchingGlyphs(table);
+        uniqueSets(table);
+        checkDescriptions(table);
+        checkRoles(table);
+        table("spellcraft", table);
+    }
 
+    private static SpellcraftConfig.Rules rules() {
         SpellcraftConfig.Rules rules = new SpellcraftConfig.Rules();
         rules.escalationPerGlyph = 0.12F;
         rules.abilityStepCost = 7;
@@ -67,8 +88,10 @@ public class ModSpellcraftProvider extends AbstractWoldsTableProvider {
         rules.priorities = 5;
         rules.uniqueMixCost = 10;
         rules.costNoise = List.of(noise(-1, 25), noise(0, 50), noise(1, 25));
-        table.rules = rules;
+        return rules;
+    }
 
+    private static SpellcraftConfig.Tuning tuning() {
         SpellcraftConfig.Tuning tuning = new SpellcraftConfig.Tuning();
         tuning.echoDelaySeconds = 0.5F;
         tuning.shotgunSpreadDegrees = 12.0F;
@@ -86,227 +109,175 @@ public class ModSpellcraftProvider extends AbstractWoldsTableProvider {
         tuning.chargeSeconds = 1.0F;
         tuning.chargeMinShare = 0.25F;
         tuning.chargeMoveFactor = 0.5F;
-        table.tuning = tuning;
+        return tuning;
+    }
 
-        table.glyphs = new LinkedHashMap<>();
-        glyph(table, GlyphType.AMPLIFY_AREA, "modifier", "common", "power", 0, 10, List.of(List.of("instant", "area")), List.of(), List.of(), List.of(),
-                potency("area", "pct", List.of(tier(0, 0.12F, 0.216F), tier(35, 0.168F, 0.288F), tier(70, 0.216F, 0.36F)), List.of()),
-                List.of(k("area", UP, 1.0F), k("damage", DOWN, -0.25F / 1.2F)),
-                List.of(k("mana", COST, 0.4F / 1.2F)),
-                3, List.of(60, 30, 10), 3, 4, 8, false);
-        glyph(table, GlyphType.STRENGTHEN, "modifier", "common", "power", 15, 8, List.of(List.of("instant", "damage")), List.of(), List.of(),
-                List.of(),
-                potency("damage", "pct", List.of(tier(0, 0.096F, 0.168F), tier(35, 0.132F, 0.228F), tier(70, 0.18F, 0.3F)), List.of()),
-                List.of(k("damage", UP, 1.0F), k("area", DOWN, -0.3F / 1.2F)),
-                List.of(k("mana", COST, 0.6F / 1.2F)),
-                3, List.of(60, 30, 10), 3, 5, 11, false);
-        glyph(table, GlyphType.QUICKEN, "modifier", "common", "flow", 0, 10, List.of(List.of("instant"), List.of("toggle")), List.of(), List.of(), List.of(),
-                potency("haste", "pct", List.of(tier(0, 0.072F, 0.12F), tier(35, 0.096F, 0.168F), tier(70, 0.12F, 0.216F)), List.of()),
-                List.of(k("damage", DOWN, -0.2F / 1.2F)),
-                List.of(k("haste", UP, 1.0F), k("mana", COST, 0.8F / 1.2F)),
-                3, List.of(60, 30, 10), 3, 5, 11, false);
-        glyph(table, GlyphType.DISCOUNT, "modifier", "common", "flow", 0, 10, List.of(List.of("mana")), List.of(), List.of(), List.of(),
-                potency("mana efficiency", "pct", List.of(tier(0, 0.077F, 0.133F), tier(35, 0.104F, 0.195F), tier(70, 0.133F, 0.263F)), List.of()),
-                List.of(),
-                List.of(k("efficiency", UP, 1.0F), k("haste", DOWN, -0.2F)),
-                3, List.of(60, 30, 10), 3, 4, 8, false);
-        glyph(table, GlyphType.DELAY, "delay", "utility", "flow", 0, 6, List.of(), List.of(), List.of(), List.of(),
-                potency("pause", "seconds", List.of(tier(0, 0.25F, 1.0F)), List.of()),
-                List.of(),
-                List.of(fixed("mana", COST, 1.02F)),
-                4, List.of(40, 30, 20, 10), 4, 1, 1, true);
-        glyph(table, GlyphType.ACCELERATE, "modifier", "common", "path", 0, 10,
-                List.of(List.of("instant", "path"), List.of("instant", "projectile"), List.of("bundle")), List.of(), List.of(), List.of(),
-                potency("speed", "pct", List.of(tier(0, 0.18F, 0.3F), tier(35, 0.24F, 0.384F), tier(70, 0.3F, 0.48F)), List.of()),
-                List.of(k("speed", UP, 1.0F), k("damage", DOWN, -0.08F / 1.2F)),
-                List.of(k("mana", COST, 0.2F / 1.2F)),
-                3, List.of(60, 30, 10), 3, 2, 6, false);
-        glyph(table, GlyphType.HOMING, "modifier", "utility", "path", 20, 6,
-                List.of(List.of("instant", "path"), List.of("instant", "projectile"), List.of("bundle")), List.of(), List.of(), List.of("orbit"),
-                potency("turn rate", "deg_s", List.of(tier(20, 60.0F, 120.0F), tier(50, 80.0F, 150.0F), tier(80, 100.0F, 180.0F)), List.of()),
-                List.of(fixed("damage", DOWN, 0.9F), fixed("speed", DOWN, 0.9F)),
-                List.of(fixed("mana", COST, 1.1F)),
-                1, List.of(100), 1, 7, 12, false);
-        glyph(table, GlyphType.ORBIT, "modifier", "utility", "path", 20, 4, List.of(List.of("instant", "projectile"), List.of("bundle")), List.of(),
-                List.of(), List.of("homing"),
-                potency("duration", "seconds", List.of(tier(20, 6.0F, 12.0F)), List.of()),
-                List.of(fixed("damage", DOWN, 0.85F)),
-                List.of(fixed("mana", COST, 1.15F), fixed("cooldown", COST, 1.1F)),
-                1, List.of(100), 1, 7, 12, false);
-        glyph(table, GlyphType.LOW_GRAVITY, "modifier", "utility", "path", 0, 8, List.of(List.of("instant", "gravity"), List.of("bundle")), List.of(),
-                List.of(), List.of(),
-                potency("gravity", "neg_pct", List.of(tier(0, 0.4F, 0.7F)), List.of()),
-                List.of(fixed("speed", DOWN, 0.95F)),
-                List.of(fixed("mana", COST, 1.04F)),
-                1, List.of(100), 1, 1, 4, false);
-        glyph(table, GlyphType.ETHEREAL, "modifier", "utility", "path", 60, 2,
-                List.of(List.of("instant", "path"), List.of("instant", "projectile"), List.of("bundle")), List.of(), List.of(), List.of(),
-                potency("lifetime", "seconds", List.of(tier(60, 4.0F, 8.0F)), List.of()),
-                List.of(fixed("damage", DOWN, 0.85F)),
-                List.of(fixed("mana", COST, 1.2F)),
-                1, List.of(100), 1, 11, 16, false);
-        glyph(table, GlyphType.SIZE_UP, "modifier", "common", "form", 0, 8,
-                List.of(List.of("instant", "path"), List.of("instant", "projectile"), List.of("instant", "bolt"), List.of("bundle")), List.of(), List.of(),
-                List.of(),
-                potency("size", "pct", List.of(tier(0, 0.24F, 0.36F), tier(35, 0.3F, 0.48F), tier(70, 0.36F, 0.6F)), List.of()),
-                List.of(k("scale", UP, 1.0F), k("speed", DOWN, -0.3F / 1.2F)),
-                List.of(k("mana", COST, 0.3F / 1.2F)),
-                2, List.of(70, 30), 2, 4, 8, false);
-        glyph(table, GlyphType.SIZE_DOWN, "modifier", "common", "form", 0, 6,
-                List.of(List.of("instant", "path"), List.of("instant", "projectile"), List.of("bundle")), List.of(), List.of(), List.of(),
-                potency("size", "neg_pct", List.of(tier(0, 0.15F, 0.22F), tier(35, 0.18F, 0.26F), tier(70, 0.2F, 0.3F)), List.of()),
-                List.of(k("scale", DOWN, -1.0F), k("damage", UP, 0.72F), k("speed", UP, 0.6F)),
-                List.of(fixed("mana", COST, 1.05F)),
-                2, List.of(70, 30), 2, 4, 8, false);
-        glyph(table, GlyphType.ECHO, "modifier", "special", "chaos", 60, 2, List.of(List.of("instant", "damage")), List.of(), List.of(), List.of(),
-                potency("echo power", "pct_plain", List.of(tier(60, 0.45F, 0.65F)), List.of()),
-                List.of(),
-                List.of(fixed("mana", COST, 1.5F), fixed("cooldown", COST, 1.3F)),
-                1, List.of(100), 1, 14, 22, false);
-        glyph(table, GlyphType.SHOTGUN, "modifier", "special", "chaos", 50, 3,
-                List.of(List.of("instant", "path"), List.of("instant", "projectile"), List.of("instant", "bolt"), List.of("bundle")), List.of(), List.of(),
-                List.of(),
-                potency("copy damage", "pct_plain", List.of(tier(50, 0.7F, 0.8F), tier(70, 0.75F, 0.85F)), List.of()),
-                List.of(),
-                List.of(perUse("mana", COST, 0.3F), perUse("cooldown", COST, 0.1F)),
-                3, List.of(50, 35, 15), 3, 12, 19, false);
-        glyph(table, GlyphType.CHARGE, "modifier", "special", "chaos", 60, 2,
-                List.of(List.of("instant", "damage", "path"), List.of("instant", "damage", "projectile"), List.of("instant", "damage", "area"),
-                        List.of("instant", "damage", "bolt")), List.of("linger"), List.of(), List.of(),
-                potency("full charge", "pct", List.of(tier(60, 0.9F, 1.5F)), List.of()),
-                List.of(),
-                List.of(fixed("mana", COST, 1.35F), fixed("cooldown", COST, 1.25F)),
-                1, List.of(100), 1, 12, 18, false);
-        glyph(table, GlyphType.BUNDLED_SPELL, "bundle", "special", "chaos", 40, 3, List.of(), List.of(), List.of(), List.of(),
-                potency("flight", "seconds", List.of(tier(40, 3.0F, 6.0F)), List.of()),
-                List.of(),
-                List.of(fixed("mana", COST, 1.25F), fixed("cooldown", COST, 1.15F)),
-                1, List.of(100), 1, 12, 19, false);
-        glyph(table, GlyphType.INTENSIFY, "modifier", "common", "power", 20, 8, List.of(List.of("instant", "intensify"), List.of("toggle", "intensify")),
-                List.of(), List.of(), List.of(),
-                potency("intensity", "pct", List.of(tier(0, 0.1F, 0.14F), tier(35, 0.12F, 0.16F), tier(70, 0.14F, 0.18F)), List.of()),
-                List.of(k("intensity", UP, 1.0F), fixed("duration", DOWN, 0.85F), k("drain", DOWN, 1.5F), k("heal_mana", DOWN, 1.5F)),
-                List.of(fixed("mana", COST, 1.15F)),
-                2, List.of(70, 30), 2, 6, 10, false);
-        glyph(table, GlyphType.EXTEND, "modifier", "common", "flow", 20, 8, List.of(List.of("instant", "extend"), List.of("toggle", "extend")),
-                List.of(), List.of(), List.of(),
-                potency("duration", "pct", List.of(tier(0, 0.2F, 0.275F), tier(35, 0.25F, 0.325F), tier(70, 0.3F, 0.4F)), List.of()),
-                List.of(k("duration", UP, 1.0F), kBase("intensity", DOWN, 0.98F, -0.2F), k("drain", UP, -0.5F)),
-                List.of(fixed("mana", COST, 1.1F)),
-                2, List.of(70, 30), 2, 5, 9, false);
-        glyph(table, GlyphType.CHAINING, "modifier", "unique", "unique", 0, 0, List.of(List.of("instant", "damage", "direct")), List.of("linger"),
-                List.of(), List.of(),
-                potency("procs chaining", "none", List.of(tier(0, 0.0F, 0.0F)), List.of()),
-                List.of(),
-                List.of(),
-                1, List.of(100), 1, 10, 10, true);
-        gearGlyph(table, GlyphType.RIME, "unique", List.of("Nova_Slow"), potency("vulnerability level", "level", List.of(tier(0, 1.0F, 6.0F)), List.of()),
-                List.of(), List.of());
-        gearGlyph(table, GlyphType.WARP_HASTE, "unique", List.of("Dash_Warp"), potency("warp cooldown", "neg_pct", List.of(tier(0, 0.1F, 0.5F)), List.of()),
-                List.of(), List.of(kBase("cooldown", UP, 1.0F, -1.0F)));
-        gearGlyph(table, GlyphType.WARP_VELOCITY, "unique", List.of("Dash_Warp"), potency("warp arrow speed", "pct", List.of(tier(0, 0.1F, 0.5F)), List.of()),
-                List.of(), List.of());
-        gearGlyph(table, GlyphType.STEEL_CORE, "unique", List.of("Fireball_Base", "Fireball_Volley"),
-                potency("centre bonus", "pct", List.of(tier(0, ModVaultGearTiersProvider.STEEL_INFERNO_CENTRE_MIN, (float) AncientGearModifiers.STEEL_INFERNO_CENTRE_MAX)),
-                        List.of(linked("radius", ModVaultGearTiersProvider.STEEL_INFERNO_RADIUS_MIN, (float) AncientGearModifiers.STEEL_INFERNO_RADIUS_MAX))),
-                List.of(), List.of());
-        gearGlyph(table, GlyphType.TWINFIRE, "unique", List.of("Fireball_Base"), potency("second fireball chance", "pct_plain", List.of(tier(0, 0.65F, 0.86F)),
-                List.of()), List.of(), List.of());
-        gearGlyph(table, GlyphType.DEEP_CHILL, "unique", List.of("Ice_Bolt_Blast"), potency("hypothermia", "level", List.of(tier(0, 2.0F, 8.0F)), List.of()),
-                List.of(), List.of());
-        gearGlyph(table, GlyphType.IMPLOSION, "unique", List.of("Javelin_Base", "Javelin_Piercing", "Javelin_Scatter", "Javelin_Sight"),
-                potency("implode damage", "pct", List.of(tier(0, 0.5F, 0.9F)), List.of()), List.of(), List.of());
-        gearGlyph(table, GlyphType.ENTROPIC_BIND, "unique", List.of("Empower_Slowness_Aura"), potency("poison level", "level", List.of(tier(0, 1.0F, 16.0F)),
-                List.of()), List.of(), List.of());
-        gearGlyph(table, GlyphType.WIDE_BLAST, "unique", List.of("Fireball_Base"), potency("fireball area", "pct", List.of(tier(0, 0.1F, 0.24F)), List.of()),
-                List.of(), List.of());
-        gearGlyph(table, GlyphType.SWIFT_STORM, "unique", List.of("Storm_Arrow_Base"), potency("storm cooldown", "neg_pct", List.of(tier(0, 0.5F, 0.75F)),
-                List.of(linked("area", 0.6F, 0.8F))), List.of(), List.of(kBase("cooldown", UP, 1.0F, -1.0F)));
-        gearGlyph(table, GlyphType.STORM_TRACKING, "unique", List.of("Storm_Arrow_Base"),
-                potency("storm follow speed", "default", List.of(tier(0, ModVaultGearTiersProvider.STORM_FOLLOW_SPEED, ModVaultGearTiersProvider.STORM_FOLLOW_SPEED)), List.of()), List.of(), List.of());
-        gearGlyph(table, GlyphType.DREAD, "unique", List.of("Taunt_Repel"), potency("fear area", "pct", List.of(tier(0, 0.2F, 1.33F)), List.of()),
-                List.of(), List.of());
-        gearGlyph(table, GlyphType.QUICK_MEND, "unique", List.of("Heal_Group"), potency("group heal cooldown", "neg_pct", List.of(tier(0, 0.25F, 0.75F)),
-                List.of()), List.of(), List.of(kBase("cooldown", UP, 1.0F, -1.0F)));
-        etchingGlyphs(table);
-        spellWide(table, GlyphType.AMPLIFY_AREA, GlyphType.STRENGTHEN, GlyphType.ACCELERATE, GlyphType.SIZE_UP, GlyphType.SIZE_DOWN,
-                GlyphType.CHARGE, GlyphType.INTENSIFY, GlyphType.EXTEND);
-        describe(table, GlyphType.AMPLIFY_AREA, "<gray>Increases area by <#5FD068>%.0fpvalue% <gray>on every ability in the spell it fits");
-        describe(table, GlyphType.STRENGTHEN, "<gray>Increases damage by <#E0564A>%.0fpvalue% <gray>on every ability in the spell it fits");
-        describe(table, GlyphType.QUICKEN, "<gray>Increases spell haste by <#4AC6E0>%.0fpvalue%<gray>, offsetting cooldown penalties even at the haste cap");
-        describe(table, GlyphType.DISCOUNT, "<gray>Increases mana efficiency by <#6FA8FF>%.0fpvalue%");
-        describe(table, GlyphType.DELAY, "<gray>Pauses the spell for <yellow>%.2fvalue <gray>seconds");
-        describe(table, GlyphType.ACCELERATE, "<gray>Increases projectile speed by <yellow>%.0fpvalue% <gray>on every ability or orb in the spell it fits");
-        describe(table, GlyphType.HOMING, "<gray>Projectiles home onto targets, turning <yellow>%.0fvalue<gray> degrees per second");
-        describe(table, GlyphType.ORBIT, "<gray>Projectiles orbit you for <yellow>%.1fvalue <gray>seconds");
-        describe(table, GlyphType.LOW_GRAVITY, "<gray>Projectiles fall <yellow>%.0fpvalue% <gray>slower");
-        describe(table, GlyphType.ETHEREAL, "<gray>Projectiles pass through walls for <yellow>%.1fvalue <gray>seconds");
-        describe(table, GlyphType.SIZE_UP, "<gray>Increases projectile size by <yellow>%.0fpvalue% <gray>on every ability or orb in the spell it fits");
-        describe(table, GlyphType.SIZE_DOWN, "<gray>Reduces projectile size by <yellow>%.0fpvalue% <gray>on every ability or orb in the spell it fits, hitting harder and flying faster");
-        describe(table, GlyphType.ECHO, "<gray>Recasts the ability after a short delay at <#E0564A>%.0fpvalue% <gray>power");
-        describe(table, GlyphType.SHOTGUN, "<gray>Fires an extra copy dealing <#E0564A>%.0fpvalue% <gray>damage");
-        describe(table, GlyphType.CHARGE, "<gray>Hold the key to charge; a full charge deals <#E0564A>%.0fpvalue% <gray>more damage with every ability in the spell it fits");
-        describe(table, GlyphType.BUNDLED_SPELL, "<gray>Throws the rest of the spell as an orb that flies for <yellow>%.1fvalue <gray>seconds");
-        describe(table, GlyphType.INTENSIFY, "<gray>Increases buff strength by <gold>%.0fpvalue% <gray>on every ability in the spell it fits");
-        describe(table, GlyphType.EXTEND, "<gray>Increases buff duration by <yellow>%.0fpvalue% <gray>on every ability in the spell it fits");
-        describe(table, GlyphType.CHAINING, "<gray>Direct hits now proc <yellow>Chaining <gray>to nearby mobs");
-        describe(table, GlyphType.RIME, "<gray>Frost Nova applies level <yellow>%.0fvalue <gray>Vulnerability");
-        describe(table, GlyphType.WARP_HASTE, "<gray>Reduces Warp's cooldown by <#4AC6E0>%.0fpvalue%");
-        describe(table, GlyphType.WARP_VELOCITY, "<gray>Increases Warp's arrow speed by <yellow>%.0fpvalue%");
-        describe(table, GlyphType.STEEL_CORE, "<gray>Fireball's explosion is tighter, dealing up to <#E0564A>%.2fvalue<gray>x damage at its centre");
-        describe(table, GlyphType.TWINFIRE, "<gray>Fireball has a <yellow>%.0fpvalue% <gray>chance to fire a second fireball");
-        describe(table, GlyphType.DEEP_CHILL, "<gray>Glacial Blast applies level <yellow>%.0fvalue <#2FE1FA>Hypothermia");
-        describe(table, GlyphType.IMPLOSION, "<gray>Javelins implode on impact, dealing <#E0564A>%.0fpvalue% <gray>of their damage");
-        describe(table, GlyphType.ENTROPIC_BIND, "<gray>Slowness Aura poisons mobs at level <yellow>%.0fvalue");
-        describe(table, GlyphType.WIDE_BLAST, "<gray>Increases Fireball's explosion area by <#5FD068>%.0fpvalue%");
-        describe(table, GlyphType.SWIFT_STORM, "<gray>Reduces Storm Arrow's cooldown by <#4AC6E0>%.0fpvalue% <gray>and its area by <#5FD068>{area}%");
-        describe(table, GlyphType.STORM_TRACKING, "<gray>Storm Arrow's storm locks onto a mob and follows it at <yellow>%.0fvalue <gray>blocks per second");
-        describe(table, GlyphType.DREAD, "<gray>Increases Repel's fear area by <#5FD068>%.0fpvalue%");
-        describe(table, GlyphType.QUICK_MEND, "<gray>Reduces Group Heal's cooldown by <#4AC6E0>%.0fpvalue%");
-        checkDescriptions(table);
-        checkRoles(table);
+    private static void powerAndFlowGlyphs(SpellcraftConfig table) {
+        glyph(GlyphType.AMPLIFY_AREA).glyphClass("common").category("power").weight(10)
+                .requires(List.of("instant", "area"))
+                .potency(potency("area", "pct", List.of(tier(0, 0.12F, 0.216F), tier(35, 0.168F, 0.288F), tier(70, 0.216F, 0.36F)), List.of()))
+                .step(k("area", UP, 1.0F), k("damage", DOWN, -0.25F / 1.2F))
+                .spell(k("mana", COST, 0.4F / 1.2F))
+                .uses(3, List.of(60, 30, 10)).cap(3).cost(4, 8).spellWide()
+                .description("<gray>Increases area by <#5FD068>%.0fpvalue% <gray>on every ability in the spell it fits")
+                .register(table);
+        glyph(GlyphType.STRENGTHEN).glyphClass("common").category("power").minLevel(15).weight(8)
+                .requires(List.of("instant", "damage"))
+                .potency(potency("damage", "pct", List.of(tier(0, 0.096F, 0.168F), tier(35, 0.132F, 0.228F), tier(70, 0.18F, 0.3F)), List.of()))
+                .step(k("damage", UP, 1.0F), k("area", DOWN, -0.3F / 1.2F))
+                .spell(k("mana", COST, 0.6F / 1.2F))
+                .uses(3, List.of(60, 30, 10)).cap(3).cost(5, 11).spellWide()
+                .description("<gray>Increases damage by <#E0564A>%.0fpvalue% <gray>on every ability in the spell it fits")
+                .register(table);
+        glyph(GlyphType.QUICKEN).glyphClass("common").category("flow").weight(10)
+                .requires(List.of("instant"), List.of("toggle"))
+                .potency(potency("haste", "pct", List.of(tier(0, 0.072F, 0.12F), tier(35, 0.096F, 0.168F), tier(70, 0.12F, 0.216F)), List.of()))
+                .step(k("damage", DOWN, -0.2F / 1.2F))
+                .spell(k("haste", UP, 1.0F), k("mana", COST, 0.8F / 1.2F))
+                .uses(3, List.of(60, 30, 10)).cap(3).cost(5, 11)
+                .description("<gray>Increases spell haste by <#4AC6E0>%.0fpvalue%<gray>, offsetting cooldown penalties even at the haste cap")
+                .register(table);
+        glyph(GlyphType.DISCOUNT).glyphClass("common").category("flow").weight(10)
+                .requires(List.of("mana"))
+                .potency(potency("mana efficiency", "pct", List.of(tier(0, 0.077F, 0.133F), tier(35, 0.104F, 0.195F), tier(70, 0.133F, 0.263F)), List.of()))
+                .spell(k("efficiency", UP, 1.0F), k("haste", DOWN, -0.2F))
+                .uses(3, List.of(60, 30, 10)).cap(3).cost(4, 8)
+                .description("<gray>Increases mana efficiency by <#6FA8FF>%.0fpvalue%")
+                .register(table);
+        glyph(GlyphType.DELAY).kind("delay").glyphClass("utility").category("flow").weight(6)
+                .potency(potency("pause", "seconds", List.of(tier(0, 0.25F, 1.0F)), List.of()))
+                .spell(fixed("mana", COST, 1.02F))
+                .uses(4, List.of(40, 30, 20, 10)).cap(4).cost(1, 1).noEscalation()
+                .description("<gray>Pauses the spell for <yellow>%.2fvalue <gray>seconds")
+                .register(table);
+    }
 
-        String special = ModGearAttributes.ABILITY_SPECIAL_MODIFICATION.getRegistryName().toString();
-        String area = ModGearAttributes.ABILITY_AREA_OF_EFFECT_PERCENT.getRegistryName().toString();
-        String cooldown = ModGearAttributes.ABILITY_COOLDOWN_PERCENT.getRegistryName().toString();
-        table.gearGlyphs = new ArrayList<>();
-        gearAffix(table, special, FrostNovaVulnerabilityModification.ID.toString(), GlyphType.RIME, 1.0F, HIGHER);
-        gearAffix(table, cooldown, "Dash_Warp", GlyphType.WARP_HASTE, 1.0F, LOWER);
-        gearAffix(table, ModGearAttributes.WARP_PROJECTILE_SPEED.getRegistryName().toString(), null, GlyphType.WARP_VELOCITY, 1.0F, HIGHER);
-        gearAffix(table, xyz.iwolfking.woldsvaults.init.ModGearAttributes.STEEL_INFERNO.getRegistryName().toString(), null, GlyphType.STEEL_CORE,
-                1.0F, HIGHER);
-        gearAffix(table, special, FireballModification.ID.toString(), GlyphType.TWINFIRE, 1.0F, HIGHER);
-        gearAffix(table, special, GlacialBlastModification.ID.toString(), GlyphType.DEEP_CHILL, 1.0F, HIGHER);
-        gearAffix(table, special, ImplodingJavelinModification.ID.toString(), GlyphType.IMPLOSION, 1.0F, HIGHER);
-        gearAffix(table, xyz.iwolfking.woldsvaults.init.ModGearAttributes.IMPLODING_JAVELIN.getRegistryName().toString(), null, GlyphType.IMPLOSION,
-                0.0F, HIGHER);
-        gearAffix(table, special, EntropyPoisonModification.ID.toString(), GlyphType.ENTROPIC_BIND, 1.0F, HIGHER);
-        gearAffix(table, area, "Fireball_Base", GlyphType.WIDE_BLAST, 1.0F, HIGHER);
-        gearAffix(table, cooldown, "Storm_Arrow_Base", GlyphType.SWIFT_STORM, 1.0F, LOWER);
-        linkedAffix(table, area, "Storm_Arrow_Base", GlyphType.SWIFT_STORM, "area", LOWER);
-        gearAffix(table, xyz.iwolfking.woldsvaults.init.ModGearAttributes.STORM_TRACKING.getRegistryName().toString(), "Storm_Arrow_Base",
-                GlyphType.STORM_TRACKING, 1.0F, HIGHER);
-        gearAffix(table, area, "Taunt_Repel", GlyphType.DREAD, 1.0F, HIGHER);
-        gearAffix(table, cooldown, "Heal_Group", GlyphType.QUICK_MEND, 1.0F, LOWER);
+    private static void pathGlyphs(SpellcraftConfig table) {
+        glyph(GlyphType.ACCELERATE).glyphClass("common").category("path").weight(10)
+                .requires(List.of("instant", "path"), List.of("instant", "projectile"), List.of("bundle"))
+                .potency(potency("speed", "pct", List.of(tier(0, 0.18F, 0.3F), tier(35, 0.24F, 0.384F), tier(70, 0.3F, 0.48F)), List.of()))
+                .step(k("speed", UP, 1.0F), k("damage", DOWN, -0.08F / 1.2F))
+                .spell(k("mana", COST, 0.2F / 1.2F))
+                .uses(3, List.of(60, 30, 10)).cap(3).cost(2, 6).spellWide()
+                .description("<gray>Increases projectile speed by <yellow>%.0fpvalue% <gray>on every ability or orb in the spell it fits")
+                .register(table);
+        glyph(GlyphType.HOMING).glyphClass("utility").category("path").minLevel(20).weight(6)
+                .requires(List.of("instant", "path"), List.of("instant", "projectile"), List.of("bundle"))
+                .excludes("orbit")
+                .potency(potency("turn rate", "deg_s", List.of(tier(20, 60.0F, 120.0F), tier(50, 80.0F, 150.0F), tier(80, 100.0F, 180.0F)), List.of()))
+                .step(fixed("damage", DOWN, 0.9F), fixed("speed", DOWN, 0.9F))
+                .spell(fixed("mana", COST, 1.1F))
+                .uses(1, List.of(100)).cap(1).cost(7, 12)
+                .description("<gray>Projectiles home onto targets, turning <yellow>%.0fvalue<gray> degrees per second")
+                .register(table);
+        glyph(GlyphType.ORBIT).glyphClass("utility").category("path").minLevel(20).weight(4)
+                .requires(List.of("instant", "projectile"), List.of("bundle"))
+                .excludes("homing")
+                .potency(potency("duration", "seconds", List.of(tier(20, 6.0F, 12.0F)), List.of()))
+                .step(fixed("damage", DOWN, 0.85F))
+                .spell(fixed("mana", COST, 1.15F), fixed("cooldown", COST, 1.1F))
+                .uses(1, List.of(100)).cap(1).cost(7, 12)
+                .description("<gray>Projectiles orbit you for <yellow>%.1fvalue <gray>seconds")
+                .register(table);
+        glyph(GlyphType.LOW_GRAVITY).glyphClass("utility").category("path").weight(8)
+                .requires(List.of("instant", "gravity"), List.of("bundle"))
+                .potency(potency("gravity", "neg_pct", List.of(tier(0, 0.4F, 0.7F)), List.of()))
+                .step(fixed("speed", DOWN, 0.95F))
+                .spell(fixed("mana", COST, 1.04F))
+                .uses(1, List.of(100)).cap(1).cost(1, 4)
+                .description("<gray>Projectiles fall <yellow>%.0fpvalue% <gray>slower")
+                .register(table);
+        glyph(GlyphType.ETHEREAL).glyphClass("utility").category("path").minLevel(60).weight(2)
+                .requires(List.of("instant", "path"), List.of("instant", "projectile"), List.of("bundle"))
+                .potency(potency("lifetime", "seconds", List.of(tier(60, 4.0F, 8.0F)), List.of()))
+                .step(fixed("damage", DOWN, 0.85F))
+                .spell(fixed("mana", COST, 1.2F))
+                .uses(1, List.of(100)).cap(1).cost(11, 16)
+                .description("<gray>Projectiles pass through walls for <yellow>%.1fvalue <gray>seconds")
+                .register(table);
+    }
 
-        table.uniqueSets = new LinkedHashMap<>();
-        uniqueSet(table, "the_vault:inferno_reach", List.of(always(GlyphType.STEEL_CORE)),
-                List.of(GlyphType.STRENGTHEN, GlyphType.SHOTGUN, GlyphType.INTENSIFY, GlyphType.SIZE_DOWN, GlyphType.ACCELERATE), 3, 5);
-        uniqueSet(table, "the_vault:frozen_orb", List.of(always(GlyphType.RIME)),
-                List.of(GlyphType.DELAY, GlyphType.ECHO, GlyphType.BUNDLED_SPELL, GlyphType.SIZE_UP, GlyphType.AMPLIFY_AREA), 3, 5);
-        uniqueSet(table, "the_vault:ender_rings", List.of(always(GlyphType.WARP_HASTE), always(GlyphType.WARP_VELOCITY)),
-                List.of(GlyphType.ECHO, GlyphType.QUICKEN, GlyphType.INTENSIFY, GlyphType.EXTEND), 2, 4);
-        uniqueSet(table, "the_vault:echoflare", List.of(),
-                List.of(GlyphType.SHOTGUN, GlyphType.BUNDLED_SPELL, GlyphType.ECHO, GlyphType.HOMING, GlyphType.ORBIT, GlyphType.ACCELERATE,
-                        GlyphType.LOW_GRAVITY), 5, 7);
-        uniqueSet(table, "woldsvaults:chroma_brew", List.of(),
-                List.of(GlyphType.SIZE_UP, GlyphType.AMPLIFY_AREA, GlyphType.SIZE_DOWN, GlyphType.INTENSIFY, GlyphType.CHARGE,
-                        GlyphType.BUNDLED_SPELL), 4, 6);
-        uniqueSet(table, "the_vault:chainlash", List.of(always(GlyphType.CHAINING)),
-                List.of(GlyphType.STRENGTHEN, GlyphType.ECHO, GlyphType.HOMING, GlyphType.ACCELERATE, GlyphType.BUNDLED_SPELL), 3, 5);
-        uniqueSet(table, "the_vault:baguette", List.of(always(GlyphType.INTENSIFY, 4, 4)),
-                List.of(GlyphType.EXTEND, GlyphType.ORBIT, GlyphType.CHARGE, GlyphType.BUNDLED_SPELL), 2, 4);
+    private static void formGlyphs(SpellcraftConfig table) {
+        glyph(GlyphType.SIZE_UP).glyphClass("common").category("form").weight(8)
+                .requires(List.of("instant", "path"), List.of("instant", "projectile"), List.of("instant", "bolt"), List.of("bundle"))
+                .potency(potency("size", "pct", List.of(tier(0, 0.24F, 0.36F), tier(35, 0.3F, 0.48F), tier(70, 0.36F, 0.6F)), List.of()))
+                .step(k("scale", UP, 1.0F), k("speed", DOWN, -0.3F / 1.2F))
+                .spell(k("mana", COST, 0.3F / 1.2F))
+                .uses(2, List.of(70, 30)).cap(2).cost(4, 8).spellWide()
+                .description("<gray>Increases projectile size by <yellow>%.0fpvalue% <gray>on every ability or orb in the spell it fits")
+                .register(table);
+        glyph(GlyphType.SIZE_DOWN).glyphClass("common").category("form").weight(6)
+                .requires(List.of("instant", "path"), List.of("instant", "projectile"), List.of("bundle"))
+                .potency(potency("size", "neg_pct", List.of(tier(0, 0.15F, 0.22F), tier(35, 0.18F, 0.26F), tier(70, 0.2F, 0.3F)), List.of()))
+                .step(k("scale", DOWN, -1.0F), k("damage", UP, 0.72F), k("speed", UP, 0.6F))
+                .spell(fixed("mana", COST, 1.05F))
+                .uses(2, List.of(70, 30)).cap(2).cost(4, 8).spellWide()
+                .description("<gray>Reduces projectile size by <yellow>%.0fpvalue% <gray>on every ability or orb in the spell it fits, hitting harder and flying faster")
+                .register(table);
+    }
 
+    private static void chaosGlyphs(SpellcraftConfig table) {
+        glyph(GlyphType.ECHO).glyphClass("special").category("chaos").minLevel(60).weight(2)
+                .requires(List.of("instant", "damage"))
+                .potency(potency("echo power", "pct_plain", List.of(tier(60, 0.45F, 0.65F)), List.of()))
+                .spell(fixed("mana", COST, 1.5F), fixed("cooldown", COST, 1.3F))
+                .uses(1, List.of(100)).cap(1).cost(14, 22)
+                .description("<gray>Recasts the ability after a short delay at <#E0564A>%.0fpvalue% <gray>power")
+                .register(table);
+        glyph(GlyphType.SHOTGUN).glyphClass("special").category("chaos").minLevel(50).weight(3)
+                .requires(List.of("instant", "path"), List.of("instant", "projectile"), List.of("instant", "bolt"), List.of("bundle"))
+                .potency(potency("copy damage", "pct_plain", List.of(tier(50, 0.7F, 0.8F), tier(70, 0.75F, 0.85F)), List.of()))
+                .spell(perUse("mana", COST, 0.3F), perUse("cooldown", COST, 0.1F))
+                .uses(3, List.of(50, 35, 15)).cap(3).cost(12, 19)
+                .description("<gray>Fires an extra copy dealing <#E0564A>%.0fpvalue% <gray>damage")
+                .register(table);
+        glyph(GlyphType.CHARGE).glyphClass("special").category("chaos").minLevel(60).weight(2)
+                .requires(List.of("instant", "damage", "path"), List.of("instant", "damage", "projectile"), List.of("instant", "damage", "area"),
+                        List.of("instant", "damage", "bolt"))
+                .forbids("linger")
+                .potency(potency("full charge", "pct", List.of(tier(60, 0.9F, 1.5F)), List.of()))
+                .spell(fixed("mana", COST, 1.35F), fixed("cooldown", COST, 1.25F))
+                .uses(1, List.of(100)).cap(1).cost(12, 18).spellWide()
+                .description("<gray>Hold the key to charge; a full charge deals <#E0564A>%.0fpvalue% <gray>more damage with every ability in the spell it fits")
+                .register(table);
+        glyph(GlyphType.BUNDLED_SPELL).kind("bundle").glyphClass("special").category("chaos").minLevel(40).weight(3)
+                .potency(potency("flight", "seconds", List.of(tier(40, 3.0F, 6.0F)), List.of()))
+                .spell(fixed("mana", COST, 1.25F), fixed("cooldown", COST, 1.15F))
+                .uses(1, List.of(100)).cap(1).cost(12, 19)
+                .description("<gray>Throws the rest of the spell as an orb that flies for <yellow>%.1fvalue <gray>seconds")
+                .register(table);
+    }
+
+    private static void buffGlyphs(SpellcraftConfig table) {
+        glyph(GlyphType.INTENSIFY).glyphClass("common").category("power").minLevel(20).weight(8)
+                .requires(List.of("instant", "intensify"), List.of("toggle", "intensify"))
+                .potency(potency("intensity", "pct", List.of(tier(0, 0.1F, 0.14F), tier(35, 0.12F, 0.16F), tier(70, 0.14F, 0.18F)), List.of()))
+                .step(k("intensity", UP, 1.0F), fixed("duration", DOWN, 0.85F), k("drain", DOWN, 1.5F), k("heal_mana", DOWN, 1.5F))
+                .spell(fixed("mana", COST, 1.15F))
+                .uses(2, List.of(70, 30)).cap(2).cost(6, 10).spellWide()
+                .description("<gray>Increases buff strength by <gold>%.0fpvalue% <gray>on every ability in the spell it fits")
+                .register(table);
+        glyph(GlyphType.EXTEND).glyphClass("common").category("flow").minLevel(20).weight(8)
+                .requires(List.of("instant", "extend"), List.of("toggle", "extend"))
+                .potency(potency("duration", "pct", List.of(tier(0, 0.2F, 0.275F), tier(35, 0.25F, 0.325F), tier(70, 0.3F, 0.4F)), List.of()))
+                .step(k("duration", UP, 1.0F), kBase("intensity", DOWN, 0.98F, -0.2F), k("drain", UP, -0.5F))
+                .spell(fixed("mana", COST, 1.1F))
+                .uses(2, List.of(70, 30)).cap(2).cost(5, 9).spellWide()
+                .description("<gray>Increases buff duration by <yellow>%.0fpvalue% <gray>on every ability in the spell it fits")
+                .register(table);
+    }
+
+    private static void chainingGlyph(SpellcraftConfig table) {
+        glyph(GlyphType.CHAINING).glyphClass("unique").category("unique").weight(0)
+                .requires(List.of("instant", "damage", "direct"))
+                .forbids("linger")
+                .potency(potency("procs chaining", "none", List.of(tier(0, 0.0F, 0.0F)), List.of()))
+                .uses(1, List.of(100)).cap(1).cost(10, 10).noEscalation()
+                .description("<gray>Direct hits now proc <yellow>Chaining <gray>to nearby mobs")
+                .register(table);
+    }
+
+    private static void combos(SpellcraftConfig table) {
         table.combos = new ArrayList<>();
         combo(table, "shotgun", "echo", 10, "every copy echoes");
         combo(table, "shotgun", "homing", 5, "every copy finds a target");
@@ -315,35 +286,41 @@ public class ModSpellcraftProvider extends AbstractWoldsTableProvider {
         combo(table, "ethereal", "homing", 5, "seeks through walls");
         combo(table, "ethereal", "bundled_spell", 7, "payloads land behind walls");
         combo(table, "echo", "bundled_spell", 7, "an Echo inside a payload repeats at every landing");
+    }
 
+    private static SpellcraftConfig.FocusRolls focusRolls() {
         SpellcraftConfig.FocusRolls focus = new SpellcraftConfig.FocusRolls();
         focus.budgetBase = 14.4F;
         focus.budgetPerLevel = 0.72F;
         focus.budgetRollMin = 0.9F;
         focus.budgetRollMax = 1.1F;
         focus.rarities = new LinkedHashMap<>();
-        rarity(focus, "SCRAPPY", 0.6F, null, 2, 3, null, null);
-        rarity(focus, "COMMON", 0.8F, null, 3, 4, null, null);
-        rarity(focus, "RARE", 1.0F, null, 4, 5, null, null);
-        rarity(focus, "EPIC", 1.15F, null, 5, 6, null, null);
-        rarity(focus, "UNIQUE", 1.15F, null, 5, 6, null, null);
-        rarity(focus, "SPECIAL", 1.15F, null, 5, 6, null, null);
-        rarity(focus, "OMEGA", 1.3F, null, 6, 7, null, null);
-        rarity(focus, "MYTHIC", 1.5F, 1.3F, 8, 9, null, null);
-        rarity(focus, "CHAOTIC", 1.3F, null, 4, 8, 0.75F, 1.25F);
+        rarity("SCRAPPY", 0.6F).lines(2, 3).register(focus);
+        rarity("COMMON", 0.8F).lines(3, 4).register(focus);
+        rarity("RARE", 1.0F).lines(4, 5).register(focus);
+        rarity("EPIC", 1.15F).lines(5, 6).register(focus);
+        rarity("UNIQUE", 1.15F).lines(5, 6).register(focus);
+        rarity("SPECIAL", 1.15F).lines(5, 6).register(focus);
+        rarity("OMEGA", 1.3F).lines(6, 7).register(focus);
+        rarity("MYTHIC", 1.5F).focusBudgetMult(1.3F).lines(8, 9).register(focus);
+        rarity("CHAOTIC", 1.3F).lines(4, 8).budgetRoll(0.75F, 1.25F).register(focus);
         focus.depth = List.of(depth(0, 3, 3), depth(40, 3, 4), depth(70, 4, 4));
         focus.depthBonus = new LinkedHashMap<>();
         focus.depthBonus.put("OMEGA", depth(70, 4, 5));
         focus.depthBonus.put("MYTHIC", depth(70, 6, 6));
-        table.focus = focus;
+        return focus;
+    }
 
+    private static SpellcraftConfig.WandRolls wandRolls() {
         SpellcraftConfig.WandRolls wand = new SpellcraftConfig.WandRolls();
         wand.budgetFactor = 0.6F;
         wand.linesDelta = -2;
         wand.minLines = 1;
         wand.maxDepth = 4;
-        table.wand = wand;
+        return wand;
+    }
 
+    private static Map<String, List<String>> abilityTraits() {
         Map<String, List<String>> traits = new LinkedHashMap<>();
         traits.put("UltimateShield_Base", List.of("TOGGLE", "INTENSIFY", "EXTEND"));
         traits.put("Fangs_Base", List.of("INSTANT", "AREA", "MANA", "DAMAGE"));
@@ -452,58 +429,348 @@ public class ModSpellcraftProvider extends AbstractWoldsTableProvider {
         traits.put("Bullet_Time", List.of("INSTANT", "MANA"));
         traits.put("Life_Block_Base", List.of("INSTANT", "MANA", "EXTEND"));
         traits.put("Mana_Block", List.of("INSTANT", "MANA", "EXTEND"));
-        table.abilityTraits = traits;
-        table.disabledAbilities = new ArrayList<>();
-
-        table("spellcraft", table);
+        return traits;
     }
 
-    private static void glyph(SpellcraftConfig table, GlyphType type, String kind, String glyphClass, String category, int minLevel,
-                              int weight, List<List<String>> requires, List<String> forbids, List<String> specs, List<String> excludes,
-                              SpellcraftConfig.Potency potency, List<SpellcraftConfig.Effect> step, List<SpellcraftConfig.Effect> spell,
-                              int maxUses, List<Integer> useWeights, int capPerSpell, int costMin, int costMax, boolean noEscalation) {
-        SpellcraftConfig.GlyphDefinition glyph = new SpellcraftConfig.GlyphDefinition();
-        glyph.kind = kind;
-        glyph.glyphClass = glyphClass;
-        glyph.category = category;
-        glyph.minLevel = minLevel;
-        glyph.weight = weight;
-        glyph.requires = requires;
-        glyph.forbids = forbids;
-        glyph.specs = specs;
-        glyph.excludes = excludes;
-        glyph.potency = potency;
-        glyph.step = step;
-        glyph.spell = spell;
-        glyph.maxUses = maxUses;
-        glyph.useWeights = useWeights;
-        glyph.capPerSpell = capPerSpell;
-        glyph.costMin = costMin;
-        glyph.costMax = costMax;
-        glyph.noEscalation = noEscalation;
-        glyph.scope = SpellcraftConfig.GlyphDefinition.SCOPE_STEP;
-        table.glyphs.put(type.id(), glyph);
+    private static void gearGlyphs(SpellcraftConfig table) {
+        gearGlyph(GlyphType.RIME, List.of("Nova_Slow"))
+                .potency(potency("vulnerability level", "level", List.of(tier(0, 1.0F, 6.0F)), List.of()))
+                .description("<gray>Frost Nova applies level <yellow>%.0fvalue <gray>Vulnerability")
+                .register(table);
+        gearGlyph(GlyphType.WARP_HASTE, List.of("Dash_Warp"))
+                .potency(potency("warp cooldown", "neg_pct", List.of(tier(0, 0.1F, 0.5F)), List.of()))
+                .spell(kBase("cooldown", UP, 1.0F, -1.0F))
+                .description("<gray>Reduces Warp's cooldown by <#4AC6E0>%.0fpvalue%")
+                .register(table);
+        gearGlyph(GlyphType.WARP_VELOCITY, List.of("Dash_Warp"))
+                .potency(potency("warp arrow speed", "pct", List.of(tier(0, 0.1F, 0.5F)), List.of()))
+                .description("<gray>Increases Warp's arrow speed by <yellow>%.0fpvalue%")
+                .register(table);
+        gearGlyph(GlyphType.STEEL_CORE, List.of("Fireball_Base", "Fireball_Volley"))
+                .potency(potency("centre bonus", "pct",
+                        List.of(tier(0, ModVaultGearTiersProvider.STEEL_INFERNO_CENTRE_MIN, (float) AncientGearModifiers.STEEL_INFERNO_CENTRE_MAX)),
+                        List.of(linked("radius", ModVaultGearTiersProvider.STEEL_INFERNO_RADIUS_MIN, (float) AncientGearModifiers.STEEL_INFERNO_RADIUS_MAX))))
+                .description("<gray>Fireball's explosion is tighter, dealing up to <#E0564A>%.2fvalue<gray>x damage at its centre")
+                .register(table);
+        gearGlyph(GlyphType.TWINFIRE, List.of("Fireball_Base"))
+                .potency(potency("second fireball chance", "pct_plain", List.of(tier(0, 0.65F, 0.86F)), List.of()))
+                .description("<gray>Fireball has a <yellow>%.0fpvalue% <gray>chance to fire a second fireball")
+                .register(table);
+        gearGlyph(GlyphType.DEEP_CHILL, List.of("Ice_Bolt_Blast"))
+                .potency(potency("hypothermia", "level", List.of(tier(0, 2.0F, 8.0F)), List.of()))
+                .description("<gray>Glacial Blast applies level <yellow>%.0fvalue <#2FE1FA>Hypothermia")
+                .register(table);
+        gearGlyph(GlyphType.IMPLOSION, List.of("Javelin_Base", "Javelin_Piercing", "Javelin_Scatter", "Javelin_Sight"))
+                .potency(potency("implode damage", "pct", List.of(tier(0, 0.5F, 0.9F)), List.of()))
+                .description("<gray>Javelins implode on impact, dealing <#E0564A>%.0fpvalue% <gray>of their damage")
+                .register(table);
+        gearGlyph(GlyphType.ENTROPIC_BIND, List.of("Empower_Slowness_Aura"))
+                .potency(potency("poison level", "level", List.of(tier(0, 1.0F, 16.0F)), List.of()))
+                .description("<gray>Slowness Aura poisons mobs at level <yellow>%.0fvalue")
+                .register(table);
+        gearGlyph(GlyphType.WIDE_BLAST, List.of("Fireball_Base"))
+                .potency(potency("fireball area", "pct", List.of(tier(0, 0.1F, 0.24F)), List.of()))
+                .description("<gray>Increases Fireball's explosion area by <#5FD068>%.0fpvalue%")
+                .register(table);
+        gearGlyph(GlyphType.SWIFT_STORM, List.of("Storm_Arrow_Base"))
+                .potency(potency("storm cooldown", "neg_pct", List.of(tier(0, 0.5F, 0.75F)), List.of(linked("area", 0.6F, 0.8F))))
+                .spell(kBase("cooldown", UP, 1.0F, -1.0F))
+                .description("<gray>Reduces Storm Arrow's cooldown by <#4AC6E0>%.0fpvalue% <gray>and its area by <#5FD068>{area}%")
+                .register(table);
+        gearGlyph(GlyphType.STORM_TRACKING, List.of("Storm_Arrow_Base"))
+                .potency(potency("storm follow speed", "default",
+                        List.of(tier(0, ModVaultGearTiersProvider.STORM_FOLLOW_SPEED, ModVaultGearTiersProvider.STORM_FOLLOW_SPEED)), List.of()))
+                .description("<gray>Storm Arrow's storm locks onto a mob and follows it at <yellow>%.0fvalue <gray>blocks per second")
+                .register(table);
+        gearGlyph(GlyphType.DREAD, List.of("Taunt_Repel"))
+                .potency(potency("fear area", "pct", List.of(tier(0, 0.2F, 1.33F)), List.of()))
+                .description("<gray>Increases Repel's fear area by <#5FD068>%.0fpvalue%")
+                .register(table);
+        gearGlyph(GlyphType.QUICK_MEND, List.of("Heal_Group"))
+                .potency(potency("group heal cooldown", "neg_pct", List.of(tier(0, 0.25F, 0.75F)), List.of()))
+                .spell(kBase("cooldown", UP, 1.0F, -1.0F))
+                .description("<gray>Reduces Group Heal's cooldown by <#4AC6E0>%.0fpvalue%")
+                .register(table);
+    }
+
+    private static void gearAffixes(SpellcraftConfig table) {
+        String special = ModGearAttributes.ABILITY_SPECIAL_MODIFICATION.getRegistryName().toString();
+        String area = ModGearAttributes.ABILITY_AREA_OF_EFFECT_PERCENT.getRegistryName().toString();
+        String cooldown = ModGearAttributes.ABILITY_COOLDOWN_PERCENT.getRegistryName().toString();
+        table.gearGlyphs = new ArrayList<>();
+        gearAffix(table, special, FrostNovaVulnerabilityModification.ID.toString(), GlyphType.RIME, 1.0F, HIGHER);
+        gearAffix(table, cooldown, "Dash_Warp", GlyphType.WARP_HASTE, 1.0F, LOWER);
+        gearAffix(table, ModGearAttributes.WARP_PROJECTILE_SPEED.getRegistryName().toString(), null, GlyphType.WARP_VELOCITY, 1.0F, HIGHER);
+        gearAffix(table, xyz.iwolfking.woldsvaults.init.ModGearAttributes.STEEL_INFERNO.getRegistryName().toString(), null, GlyphType.STEEL_CORE,
+                1.0F, HIGHER);
+        gearAffix(table, special, FireballModification.ID.toString(), GlyphType.TWINFIRE, 1.0F, HIGHER);
+        gearAffix(table, special, GlacialBlastModification.ID.toString(), GlyphType.DEEP_CHILL, 1.0F, HIGHER);
+        gearAffix(table, special, ImplodingJavelinModification.ID.toString(), GlyphType.IMPLOSION, 1.0F, HIGHER);
+        gearAffix(table, xyz.iwolfking.woldsvaults.init.ModGearAttributes.IMPLODING_JAVELIN.getRegistryName().toString(), null, GlyphType.IMPLOSION,
+                0.0F, HIGHER);
+        gearAffix(table, special, EntropyPoisonModification.ID.toString(), GlyphType.ENTROPIC_BIND, 1.0F, HIGHER);
+        gearAffix(table, area, "Fireball_Base", GlyphType.WIDE_BLAST, 1.0F, HIGHER);
+        gearAffix(table, cooldown, "Storm_Arrow_Base", GlyphType.SWIFT_STORM, 1.0F, LOWER);
+        linkedAffix(table, area, "Storm_Arrow_Base", GlyphType.SWIFT_STORM, "area", LOWER);
+        gearAffix(table, xyz.iwolfking.woldsvaults.init.ModGearAttributes.STORM_TRACKING.getRegistryName().toString(), "Storm_Arrow_Base",
+                GlyphType.STORM_TRACKING, 1.0F, HIGHER);
+        gearAffix(table, area, "Taunt_Repel", GlyphType.DREAD, 1.0F, HIGHER);
+        gearAffix(table, cooldown, "Heal_Group", GlyphType.QUICK_MEND, 1.0F, LOWER);
     }
 
     /**
-     * Marks the pure stat glyphs spell-wide (user ruling 2026-11-11): their step effects reach every live step of the
-     * spell they fit, wherever they sit.
+     * The etchings that grant unique glyphs: each glyph is locked to the specs its etching acts on, and its entry reads
+     * the etching's value into the glyph's potency (and quality, for a second number or a choice). Delays given in
+     * ticks show as seconds. Lucky Bolt is removed: existing copies grant nothing and do nothing.
      */
-    private static void spellWide(SpellcraftConfig table, GlyphType... types) {
-        for (GlyphType type : types) {
-            table.glyph(type).scope = SpellcraftConfig.GlyphDefinition.SCOPE_SPELL;
-        }
+    private static void etchingGlyphs(SpellcraftConfig table) {
+        table.etchingGlyphs = new ArrayList<>();
+        List<String> novas = List.of("Nova_Base", "Nova_Slow", "Nova_Dot");
+        List<String> iceBolts = List.of("Ice_Bolt_Base", "Ice_Bolt_Blast");
+        List<String> blizzards = List.of("Shard_Blizzard", "Storm_Arrow_Blizzard");
+        List<String> smites = List.of("Smite_Base", "Smite_Archon", "Smite_Thunderstorm");
+        List<String> orbs = List.of("Chain_Lightning_Orbs");
+        List<String> quakes = List.of("Earthquake_Base", "Earthquake_Singularity", "Earthquake_Tremor");
+        List<String> novaChoices = List.of("Nova_Slow", "Nova_Base", "Nova_Dot");
+        etching(GlyphType.GLACIAL_NOVA, List.of("Nova_Slow"), EtchingGearAttributes.FROST_NOVA_FREEZE)
+                .potency(potency("freeze chance", "pct_plain", List.of(tier(0, 0.1F, 0.75F)), List.of()))
+                .parts(part("potency", "float"))
+                .register(table);
+        etching(GlyphType.NOVA_RECAST, novas, EtchingGearAttributes.NOVA_RECAST)
+                .potency(potency("recast after", "seconds", List.of(tier(0, 1.0F, 5.0F)), List.of()))
+                .scale(TICK)
+                .parts(part("potency", "int"))
+                .register(table);
+        etching(GlyphType.LOW_MANA_NOVA, List.of("Nova_Base"), EtchingGearAttributes.NOVA_LOW_MANA_DAMAGE)
+                .potency(potency("damage below half mana", "pct", List.of(tier(0, 0.4F, 1.2F)), List.of(linked("threshold", 0.5F, 0.5F))))
+                .parts(part("potency", "float"), linkedPart("threshold", "float"))
+                .register(table);
+        etching(GlyphType.GLACIAL_DAMAGE, List.of("Ice_Bolt_Blast"), EtchingGearAttributes.ICE_BOLT_CHUNK_DAMAGE)
+                .potency(potency("attack damage on the blast", "pct_plain", List.of(tier(0, 0.1F, 1.0F)), List.of()))
+                .parts(part("potency", "float"))
+                .register(table);
+        etching(GlyphType.SHATTERING_BOLT, iceBolts, EtchingGearAttributes.ICE_BOLT_EFFECT_ETCHING)
+                .potency(potency("glacial shatter chance", "pct_plain", List.of(tier(0, 0.2F, 0.9F)), List.of(linked("duration", 2.0F, 5.0F))))
+                .choices(List.of("the_vault:glacial_shatter"))
+                .parts(part("choice", null), part("potency", "float"), linkedPart("duration", "int"))
+                .register(table);
+        etching(GlyphType.FROZEN_BARRAGE, iceBolts, EtchingGearAttributes.ICE_BOLT_MULTICAST)
+                .potency(potency("extra casts", "default", List.of(tier(0, 4.0F, 10.0F)), List.of()))
+                .parts(part("potency", "int"))
+                .register(table);
+        etching(GlyphType.PIERCING_BOLT, List.of("Ice_Bolt_Base", "Ice_Bolt_Blast", "Shard_Blizzard", "Storm_Arrow_Blizzard"),
+                EtchingGearAttributes.ICE_BOLT_PIERCE)
+                .potency(potency("pierce", "default", List.of(tier(0, 4.0F, 15.0F)), List.of()))
+                .parts(part("potency", "int"))
+                .register(table);
+        etching(GlyphType.BLIZZARD_DAMAGE, blizzards, EtchingGearAttributes.STORM_ARROW_BLIZZARD_DAMAGE)
+                .potency(potency("ability power per hit", "pct_plain", List.of(tier(0, 0.1F, 0.6F)), List.of()))
+                .parts(part("potency", "float"))
+                .register(table);
+        etching(GlyphType.BLIZZARD_VULNERABILITY, blizzards, EtchingGearAttributes.STORM_ARROW_BLIZZARD_EFFECT)
+                .potency(potency("vulnerable stacks", "level", List.of(tier(0, 1.0F, 10.0F)), List.of(linked("duration", 20.0F, 120.0F))))
+                .choices(List.of("the_vault:vulnerable"))
+                .parts(part("choice", null), linkedPart("duration", "int"), part("potency", "int"))
+                .register(table);
+        etching(GlyphType.STUNNING_SMITE, smites, EtchingGearAttributes.SMITE_SUN)
+                .potency(potency("stun chance", "pct_plain", List.of(tier(0, 0.5F, 1.0F)), List.of()))
+                .parts(part("potency", "float"))
+                .register(table);
+        etching(GlyphType.ECHOING_SMITE, smites, EtchingGearAttributes.SMITE_ECHO)
+                .potency(potency("echo bolt damage", "pct_plain", List.of(tier(0, 0.2F, 1.2F)), List.of()))
+                .parts(part("potency", "float"))
+                .register(table);
+        etching(GlyphType.SECOND_STRIKE, List.of("Smite_Base", "Smite_Archon", "Smite_Thunderstorm", "Chain_Lightning_Base"),
+                EtchingGearAttributes.LIGHTNING_STRIKE_DELAY)
+                .potency(potency("strikes again after", "seconds", List.of(tier(0, 1.0F, 4.0F)), List.of()))
+                .scale(TICK)
+                .parts(part("potency", "float"))
+                .register(table);
+        etching(GlyphType.GRAND_ORB, orbs, EtchingGearAttributes.LIGHTNING_ORB_SIZE)
+                .potency(potency("orb size", "pct", List.of(tier(0, 0.5F, 2.5F)), List.of()))
+                .parts(part("potency", "float"))
+                .register(table);
+        etching(GlyphType.ORB_REFUND, orbs, EtchingGearAttributes.LIGHTNING_ORB_KILL_COOLDOWN)
+                .potency(potency("cooldown refunded per kill", "pct_plain", List.of(tier(0, 0.2F, 1.0F)), List.of()))
+                .parts(part("potency", "float"))
+                .register(table);
+        etching(GlyphType.TRISTORM_ORBS, orbs, EtchingGearAttributes.LIGHTNING_ORB_TRIPLE_DAMAGE)
+                .potency(potency("damage per orb (3 orbs)", "pct_plain", List.of(tier(0, 0.4F, 0.8F)), List.of()))
+                .scale(-1.0F).offset(1.0F)
+                .parts(part("potency", "float"))
+                .register(table);
+        etching(GlyphType.ARCANE_PIERCE, List.of("Arcane_Base"), EtchingGearAttributes.ARCANE_PIERCE)
+                .potency(potency("pierce", "default", List.of(tier(0, 2.0F, 5.0F)), List.of()))
+                .parts(part("potency", "int"))
+                .register(table);
+        etching(GlyphType.RAIL_PIERCE, List.of("Arcane_Rail"), EtchingGearAttributes.RAIL_PIERCE)
+                .potency(potency("pierce", "default", List.of(tier(0, 10.0F, 25.0F)), List.of()))
+                .parts(part("potency", "int"))
+                .register(table);
+        etching(GlyphType.WIDE_RAIL, List.of("Arcane_Rail"), EtchingGearAttributes.ARCANE_RAIL_SIZE)
+                .potency(potency("hit width (blocks)", "default", List.of(tier(0, RAIL_SIZE_MIN, 5.0F)), List.of()))
+                .parts(part("potency", "float"))
+                .register(table);
+        etching(GlyphType.PRISM_ANCHOR, List.of("Arcane_Prism"), EtchingGearAttributes.PRISM_ANCHOR)
+                .potency(potency("anchors to blocks on a miss", "none", List.of(tier(0, 1.0F, 1.0F)), List.of()))
+                .parts(part("flag", null))
+                .register(table);
+        etching(GlyphType.PRISM_SPLIT, List.of("Arcane_Prism"), EtchingGearAttributes.PRISM_SPLIT)
+                .potency(potency("also fires the other pattern", "none", List.of(tier(0, 1.0F, 1.0F)), List.of()))
+                .parts(part("flag", null))
+                .register(table);
+        etching(GlyphType.SCATTER_PIERCE, List.of("Javelin_Piercing"), EtchingGearAttributes.EXTRA_PIERCING_JAVELIN)
+                .potency(potency("side javelin damage", "pct_plain", List.of(tier(0, 0.3F, 1.2F)), List.of()))
+                .parts(part("potency", "float"))
+                .register(table);
+        etching(GlyphType.PIERCING_RICOCHET, List.of("Javelin_Piercing"), EtchingGearAttributes.PIERCING_JAVELIN_RICOCHET)
+                .potency(potency("ricochet damage", "pct_plain", List.of(tier(0, 0.3F, 0.8F)), List.of()))
+                .scale(-1.0F).offset(1.0F)
+                .parts(part("potency", "float"))
+                .register(table);
+        etching(GlyphType.SCATTER_MANA, List.of("Javelin_Scatter"), EtchingGearAttributes.SCATTER_MANA)
+                .potency(potency("mana per hit", "default", List.of(tier(0, 1.0F, 8.0F)), List.of()))
+                .parts(part("potency", "int"))
+                .register(table);
+        etching(GlyphType.AFTERSHOCK, quakes, EtchingGearAttributes.EARTHQUAKE_RECAST_DELAY)
+                .potency(potency("quakes again after", "seconds", List.of(tier(0, 1.0F, 3.5F)), List.of()))
+                .scale(TICK)
+                .parts(part("potency", "int"))
+                .register(table);
+        etching(GlyphType.ARCANE_WRATH, List.of("Totem_Player_Damage"), EtchingGearAttributes.TOTEM_PLAYER_DAMAGE_AP)
+                .potency(potency("buff also raises ability power", "none", List.of(tier(0, 1.0F, 1.0F)), List.of()))
+                .lingering(SpellcraftConfig.EtchingGlyph.LINGERING_TOTEM)
+                .parts(part("flag", null))
+                .register(table);
+        etching(GlyphType.VULNERABLE_TOTEM, List.of("Totem_Player_Damage"), EtchingGearAttributes.TOTEM_PLAYER_DAMAGE_EFFECT)
+                .potency(potency("vulnerable stacks", "level", List.of(tier(0, 1.0F, 10.0F)), List.of(linked("duration", 20.0F, 120.0F))))
+                .choices(List.of("the_vault:vulnerable")).lingering(SpellcraftConfig.EtchingGlyph.LINGERING_TOTEM)
+                .parts(part("choice", null), linkedPart("duration", "float"), part("potency", "int"))
+                .register(table);
+        etching(GlyphType.SHOCKWAVE, List.of("Stonefall_Base"), EtchingGearAttributes.STONE_FALL_STUN)
+                .potency(potency("stun chance", "pct_plain", List.of(tier(0, 0.2F, 1.0F)), List.of(linked("duration", 40.0F, 120.0F))))
+                .choices(List.of("the_vault:noai"))
+                .parts(part("potency", "float"), linkedPart("duration", "int"), part("choice", null))
+                .register(table);
+        etching(GlyphType.BASH_FORCE, List.of("Shield_Bash"), EtchingGearAttributes.SHIELD_BASH_DAMAGE)
+                .potency(potency("attack damage", "pct_plain", List.of(tier(0, 0.1F, 0.5F)), List.of()))
+                .parts(part("potency", "float"))
+                .register(table);
+        etching(GlyphType.HEAL_CLEANSE, List.of("Heal_Base"), EtchingGearAttributes.HEAL_CLEANSE)
+                .potency(potency("cleanse level", "level", List.of(tier(0, 1.0F, 10.0F)), List.of()))
+                .parts(part("potency", "int"))
+                .register(table);
+        etching(GlyphType.RAMPAGING_LUCK, List.of("Rampage_Base"), EtchingGearAttributes.RAMPAGE_LUCKY_HIT)
+                .potency(potency("lucky hit", "pct", List.of(tier(0, 0.02F, 0.12F)), List.of()))
+                .lingering(SpellcraftConfig.EtchingGlyph.LINGERING_CAST)
+                .parts(part("potency", "float"))
+                .register(table);
+        etching(GlyphType.TAP_DAMAGE, List.of("Implode_Life_Tap"), EtchingGearAttributes.LIFE_TAP_EXTRA_DAMAGE)
+                .potency(potency("damage per health drained", "default", List.of(tier(0, 1.0F, 8.0F)), List.of()))
+                .parts(part("potency", "int"))
+                .register(table);
+        etching(GlyphType.LUCKY_TAP, List.of("Implode_Life_Tap"), EtchingGearAttributes.LIFE_TAP_LUCKY_HIT)
+                .potency(potency("% lucky hit per kill", "default", List.of(tier(0, 0.5F, 2.5F)), List.of(linked("duration", 160.0F, 220.0F))))
+                .scale(100.0F)
+                .parts(part("potency", "float"), linkedPart("duration", "int"))
+                .register(table);
+        etching(GlyphType.IMPLODING_REVERSAL, List.of("Mana_Shield_Implode"), EtchingGearAttributes.IMPLODE_MANA_REGEN)
+                .potency(potency("mana regen per kill", "pct", List.of(tier(0, 0.01F, 0.06F)), List.of()))
+                .parts(part("potency", "float"))
+                .register(table);
+        etching(GlyphType.NOVA_SHIELD, List.of("Mana_Shield_Base"), EtchingGearAttributes.MANA_SHIELD_NOVA)
+                .potency(potency("nova level", "level", List.of(tier(0, 2.0F, 20.0F)), List.of()))
+                .choices(novaChoices).lingering(SpellcraftConfig.EtchingGlyph.LINGERING_CAST)
+                .parts(part("choice", null), part("potency", "int"))
+                .register(table);
+        etching(GlyphType.NOVA_DASH, List.of("Dash_Warp"), EtchingGearAttributes.DASH_WARP_NOVA)
+                .potency(potency("nova level", "level", List.of(tier(0, 2.0F, 20.0F)), List.of()))
+                .choices(novaChoices)
+                .parts(part("choice", null), part("potency", "int"))
+                .register(table);
+        etching(GlyphType.SPIRIT_NOVA, List.of("Ghost_Walk_Spirit"), EtchingGearAttributes.SPIRIT_WALK_ABILITY)
+                .potency(potency("frost nova level", "level", List.of(tier(0, 1.0F, 10.0F)), List.of()))
+                .choices(List.of("Nova_Slow")).lingering(SpellcraftConfig.EtchingGlyph.LINGERING_CAST)
+                .parts(part("choice", null), part("potency", "int"))
+                .register(table);
+        etching(GlyphType.CONCENTRATED_DRAIN, List.of("Concentrate_Base"), ModEtchingGearAttributes.CONCENTRATE_DRAIN)
+                .potency(potency("current health drained per effect", "pct_plain", List.of(tier(0, 0.02F, 0.1F)), List.of()))
+                .parts(part("potency", "float"))
+                .register(table);
+        etching(GlyphType.GREEDBALL, List.of("Fireball_Base"), ModEtchingGearAttributes.FIREBALL_GREEDBALL)
+                .potency(potency("of quantity, rarity and copiously as damage, minimum radius", "pct_plain", List.of(tier(0, 0.1F, 0.4F)), List.of()))
+                .parts(part("potency", "float"))
+                .register(table);
+        etching(GlyphType.VOLLEY_MITOSIS, List.of("Fireball_Volley"), ModEtchingGearAttributes.FIREBALL_VOLLEY_MITOSIS)
+                .potency(potency("fireballs on first bounce", "default", List.of(tier(0, 1.0F, 3.0F)), List.of()))
+                .parts(part("potency", "int"))
+                .register(table);
+        etching(GlyphType.COLOSSUS_TITAN, List.of("Colossus_Base"), ModEtchingGearAttributes.COLOSSUS_TITAN_RESISTANCE)
+                .potency(potency("resistance cap", "pct", List.of(tier(0, 0.04F, 0.08F)), List.of()))
+                .lingering(SpellcraftConfig.EtchingGlyph.LINGERING_CAST)
+                .parts(part("potency", "float"))
+                .register(table);
+        etching(GlyphType.NINJA_GETAWAY, List.of("Sneaky_Getaway"), ModEtchingGearAttributes.SNEAKY_GETAWAY_NINJA)
+                .potency(potency("dodge", "pct", List.of(tier(0, 0.25F, 0.4F)), List.of()))
+                .lingering(SpellcraftConfig.EtchingGlyph.LINGERING_CAST)
+                .parts(part("potency", "float"))
+                .register(table);
+        etching(GlyphType.CHEMICAL_BARRAGE, List.of("Expunge_Base"), ModEtchingGearAttributes.DIFFUSE_CHEMICAL_BOMB)
+                .potency(potency("chaos grenades", "default", List.of(tier(0, 3.0F, 9.0F)), List.of()))
+                .parts(part("potency", "int"))
+                .register(table);
+        etching(GlyphType.IMPLODING_BARRIER, List.of("UltimateShield_Base"), ModEtchingGearAttributes.IMPLODING_BARRIER)
+                .potency(potency("chance to implode when hit", "pct_plain", List.of(tier(0, 0.03F, 0.15F)), List.of()))
+                .lingering(SpellcraftConfig.EtchingGlyph.LINGERING_CAST)
+                .parts(part("potency", "float"))
+                .register(table);
+        etching(GlyphType.RAVENOUS_FANGS, List.of("Fangs_Base"), ModEtchingGearAttributes.RAVENOUS_FANGS)
+                .potency(potency("75% less damage, double execute threshold", "none", List.of(tier(0, 1.0F, 1.0F)), List.of()))
+                .parts(part("flag", null))
+                .register(table);
+
+        table.removedEtchings = new ArrayList<>(List.of(EtchingGearAttributes.ICE_BOLT_LUCKY.getRegistryName().toString()));
+    }
+
+    private static void uniqueSets(SpellcraftConfig table) {
+        table.uniqueSets = new LinkedHashMap<>();
+        uniqueSet(table, "the_vault:inferno_reach", List.of(always(GlyphType.STEEL_CORE)),
+                List.of(GlyphType.STRENGTHEN, GlyphType.SHOTGUN, GlyphType.INTENSIFY, GlyphType.SIZE_DOWN, GlyphType.ACCELERATE), 3, 5);
+        uniqueSet(table, "the_vault:frozen_orb", List.of(always(GlyphType.RIME)),
+                List.of(GlyphType.DELAY, GlyphType.ECHO, GlyphType.BUNDLED_SPELL, GlyphType.SIZE_UP, GlyphType.AMPLIFY_AREA), 3, 5);
+        uniqueSet(table, "the_vault:ender_rings", List.of(always(GlyphType.WARP_HASTE), always(GlyphType.WARP_VELOCITY)),
+                List.of(GlyphType.ECHO, GlyphType.QUICKEN, GlyphType.INTENSIFY, GlyphType.EXTEND), 2, 4);
+        uniqueSet(table, "the_vault:echoflare", List.of(),
+                List.of(GlyphType.SHOTGUN, GlyphType.BUNDLED_SPELL, GlyphType.ECHO, GlyphType.HOMING, GlyphType.ORBIT, GlyphType.ACCELERATE,
+                        GlyphType.LOW_GRAVITY), 5, 7);
+        uniqueSet(table, "woldsvaults:chroma_brew", List.of(),
+                List.of(GlyphType.SIZE_UP, GlyphType.AMPLIFY_AREA, GlyphType.SIZE_DOWN, GlyphType.INTENSIFY, GlyphType.CHARGE,
+                        GlyphType.BUNDLED_SPELL), 4, 6);
+        uniqueSet(table, "the_vault:chainlash", List.of(always(GlyphType.CHAINING)),
+                List.of(GlyphType.STRENGTHEN, GlyphType.ECHO, GlyphType.HOMING, GlyphType.ACCELERATE, GlyphType.BUNDLED_SPELL), 3, 5);
+        uniqueSet(table, "the_vault:baguette", List.of(always(GlyphType.INTENSIFY, 4, 4)),
+                List.of(GlyphType.EXTEND, GlyphType.ORBIT, GlyphType.CHARGE, GlyphType.BUNDLED_SPELL), 2, 4);
+    }
+
+    private static GlyphBuilder glyph(GlyphType type) {
+        return new GlyphBuilder(type).kind("modifier");
     }
 
     /**
      * A gear glyph: a unique glyph locked to the specs its affix acts on, fitting any of them, weight 0 (it never rolls
      * as a random line), one copy per spell, free on its own (the unique glyph rule) and never escalating.
      */
-    private static void gearGlyph(SpellcraftConfig table, GlyphType type, String category, List<String> specs,
-                                  SpellcraftConfig.Potency potency, List<SpellcraftConfig.Effect> step,
-                                  List<SpellcraftConfig.Effect> spell) {
-        glyph(table, type, "modifier", "unique", category, 0, 0, List.of(List.of()), List.of(), specs, List.of(), potency, step, spell,
-                1, List.of(100), 1, 10, 10, true);
+    private static GlyphBuilder gearGlyph(GlyphType type, List<String> specs) {
+        return glyph(type).glyphClass("unique").category("unique").weight(0).requires(List.of()).specs(specs)
+                .uses(1, List.of(100)).cap(1).cost(10, 10).noEscalation();
+    }
+
+    private static EtchingGlyphBuilder etching(GlyphType type, List<String> specs, VaultGearAttribute<?> attribute) {
+        return new EtchingGlyphBuilder(gearGlyph(type, specs), attribute);
+    }
+
+    private static FocusRarityBuilder rarity(String rarity, float budget) {
+        return new FocusRarityBuilder(rarity, budget);
     }
 
     private static void gearAffix(SpellcraftConfig table, String attribute, String key, GlyphType glyph, float scale, String orientation) {
@@ -608,15 +875,6 @@ public class ModSpellcraftProvider extends AbstractWoldsTableProvider {
         return effect;
     }
 
-    /**
-     * Refuses an effect whose direction contradicts its role: an upside must move its stat in the player's favour
-     * (a positive k on damage, a negative k on mana), a downside or cost against it. For k effects the sign of k
-     * decides; fixed and per-use effects are checked by their factor.
-     */
-    private static void describe(SpellcraftConfig table, GlyphType type, String description) {
-        table.glyph(type).description = description;
-    }
-
     /** Every glyph that is not an etching glyph needs a description template (etching glyphs show their etching's text). */
     private static void checkDescriptions(SpellcraftConfig table) {
         Set<String> etchings = new HashSet<>();
@@ -629,6 +887,11 @@ public class ModSpellcraftProvider extends AbstractWoldsTableProvider {
         }
     }
 
+    /**
+     * Refuses an effect whose direction contradicts its role: an upside must move its stat in the player's favour
+     * (a positive k on damage, a negative k on mana), a downside or cost against it. For k effects the sign of k
+     * decides; fixed and per-use effects are checked by their factor.
+     */
     private static void checkRoles(SpellcraftConfig table) {
         for (Map.Entry<String, SpellcraftConfig.GlyphDefinition> entry : table.glyphs.entrySet()) {
             List<SpellcraftConfig.Effect> effects = new ArrayList<>(entry.getValue().step);
@@ -660,183 +923,12 @@ public class ModSpellcraftProvider extends AbstractWoldsTableProvider {
         return noise;
     }
 
-    private static void rarity(SpellcraftConfig.FocusRolls focus, String rarity, float budget, Float focusBudgetMult, int linesMin,
-                               int linesMax, Float budgetRollMin, Float budgetRollMax) {
-        SpellcraftConfig.RarityRolls rolls = new SpellcraftConfig.RarityRolls();
-        rolls.budget = budget;
-        rolls.focusBudgetMult = focusBudgetMult;
-        rolls.linesMin = linesMin;
-        rolls.linesMax = linesMax;
-        rolls.budgetRollMin = budgetRollMin;
-        rolls.budgetRollMax = budgetRollMax;
-        focus.rarities.put(rarity, rolls);
-    }
-
     private static SpellcraftConfig.DepthTier depth(int minLevel, int min, int max) {
         SpellcraftConfig.DepthTier tier = new SpellcraftConfig.DepthTier();
         tier.minLevel = minLevel;
         tier.min = min;
         tier.max = max;
         return tier;
-    }
-
-    /**
-     * The etchings that grant unique glyphs: each glyph is locked to the specs its etching acts on, and its entry reads
-     * the etching's value into the glyph's potency (and quality, for a second number or a choice). Delays given in
-     * ticks show as seconds. Lucky Bolt is removed: existing copies grant nothing and do nothing.
-     */
-    private static void etchingGlyphs(SpellcraftConfig table) {
-        table.etchingGlyphs = new ArrayList<>();
-        List<String> novas = List.of("Nova_Base", "Nova_Slow", "Nova_Dot");
-        List<String> iceBolts = List.of("Ice_Bolt_Base", "Ice_Bolt_Blast");
-        List<String> blizzards = List.of("Shard_Blizzard", "Storm_Arrow_Blizzard");
-        List<String> smites = List.of("Smite_Base", "Smite_Archon", "Smite_Thunderstorm");
-        List<String> orbs = List.of("Chain_Lightning_Orbs");
-        List<String> quakes = List.of("Earthquake_Base", "Earthquake_Singularity", "Earthquake_Tremor");
-        List<String> novaChoices = List.of("Nova_Slow", "Nova_Base", "Nova_Dot");
-
-        etching(table, GlyphType.GLACIAL_NOVA, "unique", List.of("Nova_Slow"), potency("freeze chance", "pct_plain", List.of(tier(0, 0.1F, 0.75F)), List.of()),
-                EtchingGearAttributes.FROST_NOVA_FREEZE, 1.0F, 0.0F, List.of(), part("potency", "float"));
-        etching(table, GlyphType.NOVA_RECAST, "unique", novas, potency("recast after", "seconds", List.of(tier(0, 1.0F, 5.0F)), List.of()),
-                EtchingGearAttributes.NOVA_RECAST, TICK, 0.0F, List.of(), part("potency", "int"));
-        etching(table, GlyphType.LOW_MANA_NOVA, "unique", List.of("Nova_Base"),
-                potency("damage below half mana", "pct", List.of(tier(0, 0.4F, 1.2F)), List.of(linked("threshold", 0.5F, 0.5F))),
-                EtchingGearAttributes.NOVA_LOW_MANA_DAMAGE, 1.0F, 0.0F, List.of(), part("potency", "float"), linkedPart("threshold", "float"));
-        etching(table, GlyphType.GLACIAL_DAMAGE, "unique", List.of("Ice_Bolt_Blast"),
-                potency("attack damage on the blast", "pct_plain", List.of(tier(0, 0.1F, 1.0F)), List.of()),
-                EtchingGearAttributes.ICE_BOLT_CHUNK_DAMAGE, 1.0F, 0.0F, List.of(), part("potency", "float"));
-        etching(table, GlyphType.SHATTERING_BOLT, "unique", iceBolts,
-                potency("glacial shatter chance", "pct_plain", List.of(tier(0, 0.2F, 0.9F)), List.of(linked("duration", 2.0F, 5.0F))),
-                EtchingGearAttributes.ICE_BOLT_EFFECT_ETCHING, 1.0F, 0.0F, List.of("the_vault:glacial_shatter"),
-                part("choice", null), part("potency", "float"), linkedPart("duration", "int"));
-        etching(table, GlyphType.FROZEN_BARRAGE, "unique", iceBolts, potency("extra casts", "default", List.of(tier(0, 4.0F, 10.0F)), List.of()),
-                EtchingGearAttributes.ICE_BOLT_MULTICAST, 1.0F, 0.0F, List.of(), part("potency", "int"));
-        etching(table, GlyphType.PIERCING_BOLT, "unique", List.of("Ice_Bolt_Base", "Ice_Bolt_Blast", "Shard_Blizzard", "Storm_Arrow_Blizzard"),
-                potency("pierce", "default", List.of(tier(0, 4.0F, 15.0F)), List.of()),
-                EtchingGearAttributes.ICE_BOLT_PIERCE, 1.0F, 0.0F, List.of(), part("potency", "int"));
-        etching(table, GlyphType.BLIZZARD_DAMAGE, "unique", blizzards, potency("ability power per hit", "pct_plain", List.of(tier(0, 0.1F, 0.6F)), List.of()),
-                EtchingGearAttributes.STORM_ARROW_BLIZZARD_DAMAGE, 1.0F, 0.0F, List.of(), part("potency", "float"));
-        etching(table, GlyphType.BLIZZARD_VULNERABILITY, "unique", blizzards,
-                potency("vulnerable stacks", "level", List.of(tier(0, 1.0F, 10.0F)), List.of(linked("duration", 20.0F, 120.0F))),
-                EtchingGearAttributes.STORM_ARROW_BLIZZARD_EFFECT, 1.0F, 0.0F, List.of("the_vault:vulnerable"),
-                part("choice", null), linkedPart("duration", "int"), part("potency", "int"));
-        etching(table, GlyphType.STUNNING_SMITE, "unique", smites, potency("stun chance", "pct_plain", List.of(tier(0, 0.5F, 1.0F)), List.of()),
-                EtchingGearAttributes.SMITE_SUN, 1.0F, 0.0F, List.of(), part("potency", "float"));
-        etching(table, GlyphType.ECHOING_SMITE, "unique", smites, potency("echo bolt damage", "pct_plain", List.of(tier(0, 0.2F, 1.2F)), List.of()),
-                EtchingGearAttributes.SMITE_ECHO, 1.0F, 0.0F, List.of(), part("potency", "float"));
-        etching(table, GlyphType.SECOND_STRIKE, "unique", List.of("Smite_Base", "Smite_Archon", "Smite_Thunderstorm", "Chain_Lightning_Base"),
-                potency("strikes again after", "seconds", List.of(tier(0, 1.0F, 4.0F)), List.of()),
-                EtchingGearAttributes.LIGHTNING_STRIKE_DELAY, TICK, 0.0F, List.of(), part("potency", "float"));
-        etching(table, GlyphType.GRAND_ORB, "unique", orbs, potency("orb size", "pct", List.of(tier(0, 0.5F, 2.5F)), List.of()),
-                EtchingGearAttributes.LIGHTNING_ORB_SIZE, 1.0F, 0.0F, List.of(), part("potency", "float"));
-        etching(table, GlyphType.ORB_REFUND, "unique", orbs, potency("cooldown refunded per kill", "pct_plain", List.of(tier(0, 0.2F, 1.0F)), List.of()),
-                EtchingGearAttributes.LIGHTNING_ORB_KILL_COOLDOWN, 1.0F, 0.0F, List.of(), part("potency", "float"));
-        etching(table, GlyphType.TRISTORM_ORBS, "unique", orbs, potency("damage per orb (3 orbs)", "pct_plain", List.of(tier(0, 0.4F, 0.8F)), List.of()),
-                EtchingGearAttributes.LIGHTNING_ORB_TRIPLE_DAMAGE, -1.0F, 1.0F, List.of(), part("potency", "float"));
-        etching(table, GlyphType.ARCANE_PIERCE, "unique", List.of("Arcane_Base"), potency("pierce", "default", List.of(tier(0, 2.0F, 5.0F)), List.of()),
-                EtchingGearAttributes.ARCANE_PIERCE, 1.0F, 0.0F, List.of(), part("potency", "int"));
-        etching(table, GlyphType.RAIL_PIERCE, "unique", List.of("Arcane_Rail"), potency("pierce", "default", List.of(tier(0, 10.0F, 25.0F)), List.of()),
-                EtchingGearAttributes.RAIL_PIERCE, 1.0F, 0.0F, List.of(), part("potency", "int"));
-        etching(table, GlyphType.WIDE_RAIL, "unique", List.of("Arcane_Rail"),
-                potency("hit width (blocks)", "default", List.of(tier(0, RAIL_SIZE_MIN, 5.0F)), List.of()),
-                EtchingGearAttributes.ARCANE_RAIL_SIZE, 1.0F, 0.0F, List.of(), part("potency", "float"));
-        etching(table, GlyphType.PRISM_ANCHOR, "unique", List.of("Arcane_Prism"), potency("anchors to blocks on a miss", "none", List.of(tier(0, 1.0F, 1.0F)), List.of()),
-                EtchingGearAttributes.PRISM_ANCHOR, 1.0F, 0.0F, List.of(), part("flag", null));
-        etching(table, GlyphType.PRISM_SPLIT, "unique", List.of("Arcane_Prism"), potency("also fires the other pattern", "none", List.of(tier(0, 1.0F, 1.0F)), List.of()),
-                EtchingGearAttributes.PRISM_SPLIT, 1.0F, 0.0F, List.of(), part("flag", null));
-        etching(table, GlyphType.SCATTER_PIERCE, "unique", List.of("Javelin_Piercing"),
-                potency("side javelin damage", "pct_plain", List.of(tier(0, 0.3F, 1.2F)), List.of()),
-                EtchingGearAttributes.EXTRA_PIERCING_JAVELIN, 1.0F, 0.0F, List.of(), part("potency", "float"));
-        etching(table, GlyphType.PIERCING_RICOCHET, "unique", List.of("Javelin_Piercing"), potency("ricochet damage", "pct_plain", List.of(tier(0, 0.3F, 0.8F)), List.of()),
-                EtchingGearAttributes.PIERCING_JAVELIN_RICOCHET, -1.0F, 1.0F, List.of(), part("potency", "float"));
-        etching(table, GlyphType.SCATTER_MANA, "unique", List.of("Javelin_Scatter"), potency("mana per hit", "default", List.of(tier(0, 1.0F, 8.0F)), List.of()),
-                EtchingGearAttributes.SCATTER_MANA, 1.0F, 0.0F, List.of(), part("potency", "int"));
-        etching(table, GlyphType.AFTERSHOCK, "unique", quakes, potency("quakes again after", "seconds", List.of(tier(0, 1.0F, 3.5F)), List.of()),
-                EtchingGearAttributes.EARTHQUAKE_RECAST_DELAY, TICK, 0.0F, List.of(), part("potency", "int"));
-        etching(table, GlyphType.ARCANE_WRATH, "unique", List.of("Totem_Player_Damage"),
-                potency("buff also raises ability power", "none", List.of(tier(0, 1.0F, 1.0F)), List.of()),
-                EtchingGearAttributes.TOTEM_PLAYER_DAMAGE_AP, 1.0F, 0.0F, List.of(), part("flag", null));
-        etching(table, GlyphType.VULNERABLE_TOTEM, "unique", List.of("Totem_Player_Damage"),
-                potency("vulnerable stacks", "level", List.of(tier(0, 1.0F, 10.0F)), List.of(linked("duration", 20.0F, 120.0F))),
-                EtchingGearAttributes.TOTEM_PLAYER_DAMAGE_EFFECT, 1.0F, 0.0F, List.of("the_vault:vulnerable"),
-                part("choice", null), linkedPart("duration", "float"), part("potency", "int"));
-        etching(table, GlyphType.SHOCKWAVE, "unique", List.of("Stonefall_Base"),
-                potency("stun chance", "pct_plain", List.of(tier(0, 0.2F, 1.0F)), List.of(linked("duration", 40.0F, 120.0F))),
-                EtchingGearAttributes.STONE_FALL_STUN, 1.0F, 0.0F, List.of("the_vault:noai"),
-                part("potency", "float"), linkedPart("duration", "int"), part("choice", null));
-        etching(table, GlyphType.BASH_FORCE, "unique", List.of("Shield_Bash"), potency("attack damage", "pct_plain", List.of(tier(0, 0.1F, 0.5F)), List.of()),
-                EtchingGearAttributes.SHIELD_BASH_DAMAGE, 1.0F, 0.0F, List.of(), part("potency", "float"));
-        etching(table, GlyphType.HEAL_CLEANSE, "unique", List.of("Heal_Base"), potency("cleanse level", "level", List.of(tier(0, 1.0F, 10.0F)), List.of()),
-                EtchingGearAttributes.HEAL_CLEANSE, 1.0F, 0.0F, List.of(), part("potency", "int"));
-        etching(table, GlyphType.RAMPAGING_LUCK, "unique", List.of("Rampage_Base"), potency("lucky hit", "pct", List.of(tier(0, 0.02F, 0.12F)), List.of()),
-                EtchingGearAttributes.RAMPAGE_LUCKY_HIT, 1.0F, 0.0F, List.of(), part("potency", "float"));
-        etching(table, GlyphType.TAP_DAMAGE, "unique", List.of("Implode_Life_Tap"),
-                potency("damage per health drained", "default", List.of(tier(0, 1.0F, 8.0F)), List.of()),
-                EtchingGearAttributes.LIFE_TAP_EXTRA_DAMAGE, 1.0F, 0.0F, List.of(), part("potency", "int"));
-        etching(table, GlyphType.LUCKY_TAP, "unique", List.of("Implode_Life_Tap"),
-                potency("% lucky hit per kill", "default", List.of(tier(0, 0.5F, 2.5F)), List.of(linked("duration", 160.0F, 220.0F))),
-                EtchingGearAttributes.LIFE_TAP_LUCKY_HIT, 100.0F, 0.0F, List.of(), part("potency", "float"), linkedPart("duration", "int"));
-        etching(table, GlyphType.IMPLODING_REVERSAL, "unique", List.of("Mana_Shield_Implode"),
-                potency("mana regen per kill", "pct", List.of(tier(0, 0.01F, 0.06F)), List.of()),
-                EtchingGearAttributes.IMPLODE_MANA_REGEN, 1.0F, 0.0F, List.of(), part("potency", "float"));
-        etching(table, GlyphType.NOVA_SHIELD, "unique", List.of("Mana_Shield_Base"), potency("nova level", "level", List.of(tier(0, 2.0F, 20.0F)), List.of()),
-                EtchingGearAttributes.MANA_SHIELD_NOVA, 1.0F, 0.0F, novaChoices, part("choice", null), part("potency", "int"));
-        etching(table, GlyphType.NOVA_DASH, "unique", List.of("Dash_Warp"), potency("nova level", "level", List.of(tier(0, 2.0F, 20.0F)), List.of()),
-                EtchingGearAttributes.DASH_WARP_NOVA, 1.0F, 0.0F, novaChoices, part("choice", null), part("potency", "int"));
-        etching(table, GlyphType.SPIRIT_NOVA, "unique", List.of("Ghost_Walk_Spirit"),
-                potency("frost nova level", "level", List.of(tier(0, 1.0F, 10.0F)), List.of()),
-                EtchingGearAttributes.SPIRIT_WALK_ABILITY, 1.0F, 0.0F, List.of("Nova_Slow"), part("choice", null), part("potency", "int"));
-        etching(table, GlyphType.CONCENTRATED_DRAIN, "unique", List.of("Concentrate_Base"),
-                potency("current health drained per effect", "pct_plain", List.of(tier(0, 0.02F, 0.1F)), List.of()),
-                ModEtchingGearAttributes.CONCENTRATE_DRAIN, 1.0F, 0.0F, List.of(), part("potency", "float"));
-        etching(table, GlyphType.GREEDBALL, "unique", List.of("Fireball_Base"),
-                potency("of quantity, rarity and copiously as damage, minimum radius", "pct_plain", List.of(tier(0, 0.1F, 0.4F)), List.of()),
-                ModEtchingGearAttributes.FIREBALL_GREEDBALL, 1.0F, 0.0F, List.of(), part("potency", "float"));
-        etching(table, GlyphType.VOLLEY_MITOSIS, "unique", List.of("Fireball_Volley"),
-                potency("fireballs on first bounce", "default", List.of(tier(0, 1.0F, 3.0F)), List.of()),
-                ModEtchingGearAttributes.FIREBALL_VOLLEY_MITOSIS, 1.0F, 0.0F, List.of(), part("potency", "int"));
-        etching(table, GlyphType.COLOSSUS_TITAN, "unique", List.of("Colossus_Base"), potency("resistance cap", "pct", List.of(tier(0, 0.04F, 0.08F)), List.of()),
-                ModEtchingGearAttributes.COLOSSUS_TITAN_RESISTANCE, 1.0F, 0.0F, List.of(), part("potency", "float"));
-        etching(table, GlyphType.NINJA_GETAWAY, "unique", List.of("Sneaky_Getaway"), potency("dodge", "pct", List.of(tier(0, 0.25F, 0.4F)), List.of()),
-                ModEtchingGearAttributes.SNEAKY_GETAWAY_NINJA, 1.0F, 0.0F, List.of(), part("potency", "float"));
-        etching(table, GlyphType.CHEMICAL_BARRAGE, "unique", List.of("Expunge_Base"), potency("chaos grenades", "default", List.of(tier(0, 3.0F, 9.0F)), List.of()),
-                ModEtchingGearAttributes.DIFFUSE_CHEMICAL_BOMB, 1.0F, 0.0F, List.of(), part("potency", "int"));
-        etching(table, GlyphType.IMPLODING_BARRIER, "unique", List.of("UltimateShield_Base"),
-                potency("chance to implode when hit", "pct_plain", List.of(tier(0, 0.03F, 0.15F)), List.of()),
-                ModEtchingGearAttributes.IMPLODING_BARRIER, 1.0F, 0.0F, List.of(), part("potency", "float"));
-        etching(table, GlyphType.RAVENOUS_FANGS, "unique", List.of("Fangs_Base"),
-                potency("75% less damage, double execute threshold", "none", List.of(tier(0, 1.0F, 1.0F)), List.of()),
-                ModEtchingGearAttributes.RAVENOUS_FANGS, 1.0F, 0.0F, List.of(), part("flag", null));
-
-        table.removedEtchings = new ArrayList<>(List.of(EtchingGearAttributes.ICE_BOLT_LUCKY.getRegistryName().toString()));
-    }
-
-    /**
-     * Etching glyphs read by a buff that outlasts its cast, with where the read takes its glyph from: the note the
-     * ability's cast left, or the totem covering the player. Every other etching glyph is read during its own cast.
-     */
-    private static final Map<GlyphType, String> LINGERING = Map.of(
-            GlyphType.ARCANE_WRATH, SpellcraftConfig.EtchingGlyph.LINGERING_TOTEM,
-            GlyphType.VULNERABLE_TOTEM, SpellcraftConfig.EtchingGlyph.LINGERING_TOTEM,
-            GlyphType.RAMPAGING_LUCK, SpellcraftConfig.EtchingGlyph.LINGERING_CAST,
-            GlyphType.NOVA_SHIELD, SpellcraftConfig.EtchingGlyph.LINGERING_CAST,
-            GlyphType.IMPLODING_BARRIER, SpellcraftConfig.EtchingGlyph.LINGERING_CAST,
-            GlyphType.SPIRIT_NOVA, SpellcraftConfig.EtchingGlyph.LINGERING_CAST,
-            GlyphType.COLOSSUS_TITAN, SpellcraftConfig.EtchingGlyph.LINGERING_CAST,
-            GlyphType.NINJA_GETAWAY, SpellcraftConfig.EtchingGlyph.LINGERING_CAST);
-
-    private static void etching(SpellcraftConfig table, GlyphType type, String category, List<String> specs, SpellcraftConfig.Potency potency,
-                                VaultGearAttribute<?> attribute, float scale, float offset, List<String> choices, SpellcraftConfig.EtchingPart... parts) {
-        gearGlyph(table, type, category, specs, potency, List.of(), List.of());
-        SpellcraftConfig.EtchingGlyph entry = new SpellcraftConfig.EtchingGlyph();
-        entry.attribute = attribute.getRegistryName().toString();
-        entry.glyph = type.id();
-        entry.scale = scale;
-        entry.offset = offset;
-        entry.parts = List.of(parts);
-        entry.choices = choices;
-        entry.lingering = LINGERING.get(type);
-        table.etchingGlyphs.add(entry);
     }
 
     private static SpellcraftConfig.EtchingPart part(String role, String type) {
