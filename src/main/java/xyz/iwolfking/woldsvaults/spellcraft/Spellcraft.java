@@ -9,6 +9,7 @@ import xyz.iwolfking.woldsvaults.spellcraft.gear.ConvertedAffixes;
 import xyz.iwolfking.woldsvaults.spellcraft.roll.UniqueSetRoller;
 import xyz.iwolfking.woldsvaults.spellcraft.ability.AbilityCastTracker;
 import net.minecraftforge.common.MinecraftForge;
+import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
 import xyz.iwolfking.woldsvaults.spellcraft.buff.ToggleDiscounts;
 import xyz.iwolfking.woldsvaults.spellcraft.projectile.ProjectileSteering;
 import xyz.iwolfking.woldsvaults.spellcraft.projectile.ProjectileSizing;
@@ -49,11 +50,17 @@ public final class Spellcraft {
 
     /** Registers the VH event listeners; called once from common setup. */
     public static void init() {
-        AbilityCastTracker.register();
-        GlyphArea.register();
-        ConvertedAffixes.init();
-        ConvertedEtchings.init();
-        LingeringBuffs.init();
-        SpellcraftRoller.setUniqueSets(new UniqueSetRoller());
+        try {
+            AbilityCastTracker.register();
+            GlyphArea.register();
+            ConvertedAffixes.init();
+            ConvertedEtchings.init();
+            LingeringBuffs.init();
+            SpellcraftRoller.setUniqueSets(new UniqueSetRoller());
+        } catch (RuntimeException e) {
+            WoldLogger.error("Spellcraft setup failed; any of its VH hooks after the failing one may be missing (cast tracking, glyph areas, "
+                    + "converted affixes, converted etchings, lingering buffs, unique set rolls).", e);
+            throw e;
+        }
     }
 }
