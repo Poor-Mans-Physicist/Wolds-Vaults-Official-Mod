@@ -10,7 +10,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import xyz.iwolfking.woldsvaults.api.cast.CastContext;
 import xyz.iwolfking.woldsvaults.api.cast.CastTag;
-import xyz.iwolfking.woldsvaults.spellcraft.hit.OwnHits;
+import xyz.iwolfking.woldsvaults.api.cast.CastCarrier;
 
 /**
  * Retribution retaliates on the skill tick its charge timer runs out. A cast as a spell step keeps its cast tag while
@@ -42,6 +42,6 @@ public class MixinRetributionGlyphWindow {
             original.call(context);
             return;
         }
-        CastContext.runTask(window, OwnHits.Carrier.EVENT, () -> original.call(context));
+        CastContext.runTask(window, CastCarrier.EVENT, () -> original.call(context));
     }
 }

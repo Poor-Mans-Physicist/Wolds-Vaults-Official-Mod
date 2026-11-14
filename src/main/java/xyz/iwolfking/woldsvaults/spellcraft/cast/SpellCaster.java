@@ -24,10 +24,12 @@ import xyz.iwolfking.woldsvaults.spellcraft.bar.EffectiveBar;
 import xyz.iwolfking.woldsvaults.spellcraft.play.SpellCooldowns;
 import xyz.iwolfking.woldsvaults.spellcraft.ability.CastOrigin;
 import xyz.iwolfking.woldsvaults.spellcraft.hit.ShotgunHits;
+import xyz.iwolfking.woldsvaults.spellcraft.scope.ShotgunShot;
 import xyz.iwolfking.woldsvaults.spellcraft.projectile.ShotgunPattern;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.AimOverride;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.CastModifiers;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.CastScope;
+import xyz.iwolfking.woldsvaults.spellcraft.scope.CastBilling;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -63,7 +65,7 @@ public final class SpellCaster {
                 otherMana += ManaCostHelper.adjustManaCost(player, mana, mana.getManaCost());
             }
         }
-        CastScope.Billing billing = CastScope.Billing.trigger(trigger.spec(), otherMana, model.manaFactor(),
+        CastBilling billing = CastBilling.trigger(trigger.spec(), otherMana, model.manaFactor(),
                 slot, chargeShare >= 1.0F);
         Ability triggerAbility = SpellCooldowns.ability(tree, trigger.group());
         if (triggerAbility != null && !triggerAbility.isActive() && !SlotManaBilling.canPayUnbilledTrigger(player, triggerAbility, billing)) {
@@ -79,12 +81,12 @@ public final class SpellCaster {
     }
 
     private static void run(ServerPlayer player, List<SpellModel.Step> steps, int from, @Nullable CastOrigin origin, float damageFactor,
-                            @Nullable CastScope.Billing trigger, float chargeShare, @Nullable SpellModel model) {
+                            @Nullable CastBilling trigger, float chargeShare, @Nullable SpellModel model) {
         SpellcraftConfig config = Spellcraft.config();
         if (config == null) {
             return;
         }
-        CastScope.Billing billing = trigger;
+        CastBilling billing = trigger;
         for (int i = from; i < steps.size(); i++) {
             SpellModel.Step step = steps.get(i);
             if (step instanceof SpellModel.Pause pause && !pause.glyph().active()) {
@@ -115,7 +117,7 @@ public final class SpellCaster {
     }
 
     private static CastResult castStep(SpellcraftConfig config, ServerPlayer player, SpellModel.Cast cast, @Nullable CastOrigin origin,
-                                       float damageFactor, @Nullable CastScope.Billing trigger, float chargeShare, @Nullable SpellModel model) {
+                                       float damageFactor, @Nullable CastBilling trigger, float chargeShare, @Nullable SpellModel model) {
         SpellAbility ability = cast.spec() == null ? null : SpellAbilities.get(config, cast.spec());
         if (ability == null) {
             showMessage(player, cast.group().replace('_', ' ') + " can't be cast by a spell");
@@ -130,13 +132,13 @@ public final class SpellCaster {
         List<Vec3> aims = ShotgunPattern.fan(baseDirection(player, origin), modifiers.shotgunCopies(), config.tuning.shotgunSpreadDegrees);
         CastModifiers applied = modifiers;
         long volley = aims.size() > 1 ? ShotgunHits.newGroup() : 0L;
-        ShotgunHits.Shot nativeShot = volley > 0 ? new ShotgunHits.Shot(volley, 0) : null;
+        ShotgunShot nativeShot = volley > 0 ? new ShotgunShot(volley, 0) : null;
         CastResult result;
         if (trigger != null) {
             result = scoped(player, applied, aimedOrigin(origin, aims.get(0)), trigger, ability.id(), nativeShot, aims.get(0),
                     () -> ability.cast(player, aimedOrigin(origin, aims.get(0))));
         } else {
-            result = scoped(player, applied, aimedOrigin(origin, aims.get(0)), CastScope.Billing.free(false), ability.id(), nativeShot,
+            result = scoped(player, applied, aimedOrigin(origin, aims.get(0)), CastBilling.free(false), ability.id(), nativeShot,
                     aims.get(0), () -> ability.castExtra(player, aimedOrigin(origin, aims.get(0))));
         }
         afterRail(config, player, ability, applied, aims.get(0), result, nativeShot);
@@ -161,8 +163,8 @@ public final class SpellCaster {
                 }
                 List<Vec3> echoAims = ShotgunPattern.fan(baseDirection(later, origin), echoed.shotgunCopies(), current.tuning.shotgunSpreadDegrees);
                 long echoVolley = echoAims.size() > 1 ? ShotgunHits.newGroup() : 0L;
-                ShotgunHits.Shot echoShot = echoVolley > 0 ? new ShotgunHits.Shot(echoVolley, 0) : null;
-                CastResult echo = scoped(later, echoed, aimedOrigin(origin, echoAims.get(0)), CastScope.Billing.free(false), ability.id(),
+                ShotgunShot echoShot = echoVolley > 0 ? new ShotgunShot(echoVolley, 0) : null;
+                CastResult echo = scoped(later, echoed, aimedOrigin(origin, echoAims.get(0)), CastBilling.free(false), ability.id(),
                         echoShot, echoAims.get(0), () -> ability.castExtra(later, aimedOrigin(origin, echoAims.get(0))));
                 afterRail(current, later, ability, echoed, echoAims.get(0), echo, echoShot);
                 if (echo == CastResult.SUCCESS) {
@@ -182,15 +184,15 @@ public final class SpellCaster {
                                    @Nullable CastOrigin origin, List<Vec3> aims, long volley) {
         for (int i = 1; i < aims.size(); i++) {
             Vec3 aim = aims.get(i);
-            ShotgunHits.Shot shot = new ShotgunHits.Shot(volley, i);
-            CastResult copy = scoped(player, modifiers, aimedOrigin(origin, aim), CastScope.Billing.free(true), ability.id(), shot, aim,
+            ShotgunShot shot = new ShotgunShot(volley, i);
+            CastResult copy = scoped(player, modifiers, aimedOrigin(origin, aim), CastBilling.free(true), ability.id(), shot, aim,
                     () -> ability.castExtra(player, aimedOrigin(origin, aim)));
             afterRail(config, player, ability, modifiers, aim, copy, shot);
         }
     }
 
-    private static CastResult scoped(ServerPlayer player, CastModifiers modifiers, @Nullable CastOrigin origin, CastScope.Billing billing,
-                                     String spec, @Nullable ShotgunHits.Shot shot, Vec3 aim, Supplier<CastResult> action) {
+    private static CastResult scoped(ServerPlayer player, CastModifiers modifiers, @Nullable CastOrigin origin, CastBilling billing,
+                                     String spec, @Nullable ShotgunShot shot, Vec3 aim, Supplier<CastResult> action) {
         return AimOverride.call(player, aim, () -> CastScope.call(player, modifiers, origin, billing, spec, shot, action));
     }
 
@@ -199,7 +201,7 @@ public final class SpellCaster {
     }
 
     private static void afterRail(SpellcraftConfig config, ServerPlayer player, SpellAbility ability, CastModifiers modifiers,
-                                  Vec3 aim, CastResult result, @Nullable ShotgunHits.Shot shot) {
+                                  Vec3 aim, CastResult result, @Nullable ShotgunShot shot) {
         if (result != CastResult.SUCCESS || !ability.has(AbilityTrait.BOLT)) {
             return;
         }

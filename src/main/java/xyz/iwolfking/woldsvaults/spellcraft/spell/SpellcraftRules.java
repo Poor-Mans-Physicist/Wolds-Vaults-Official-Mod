@@ -6,6 +6,7 @@ import iskallia.vault.skill.tree.AbilityTree;
 import net.minecraft.world.item.ItemStack;
 import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
 import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
+import xyz.iwolfking.woldsvaults.spellcraft.item.StoredSpell;
 import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
 import xyz.iwolfking.woldsvaults.spellcraft.source.GlyphView;
 
@@ -53,39 +54,39 @@ public final class SpellcraftRules {
     }
 
     /** A spell's priority, with 0 read as the table's default. */
-    public static int priority(SpellcraftConfig config, SpellcraftItemData.Spell spell) {
+    public static int priority(SpellcraftConfig config, StoredSpell spell) {
         return spell.prio() <= 0 ? config.rules.defaultPriority : Math.min(spell.prio(), config.rules.priorities);
     }
 
     /** Reads the item's stored spells for casting and display. */
     public static ItemCheck check(SpellcraftConfig config, ItemStack stack, GlyphView view, Function<String, String> specOf) {
         return check(config, SpellcraftItemData.budget(stack), SpellcraftItemData.depth(stack), view, SpellcraftItemData.spells(stack), specOf,
-                SpellModel.Mode.LENIENT, Map.of());
+                ReadMode.LENIENT, Map.of());
     }
 
     /**
      * Checks spells against an item's budget, depth and view. {@code saved} gives, per spell id, the glyph copies the
-     * stored spell already holds (used by {@link SpellModel.Mode#STRICT_NEW}). In the lenient mode only spell structure
+     * stored spell already holds (used by {@link ReadMode#STRICT_NEW}). In the lenient mode only spell structure
      * is an error; the editing modes add the item's limits.
      */
-    public static ItemCheck check(SpellcraftConfig config, int budget, int depth, GlyphView view, List<SpellcraftItemData.Spell> spells,
-                                  Function<String, String> specOf, SpellModel.Mode mode, Map<Integer, Map<GlyphType, Integer>> saved) {
+    public static ItemCheck check(SpellcraftConfig config, int budget, int depth, GlyphView view, List<StoredSpell> spells,
+                                  Function<String, String> specOf, ReadMode mode, Map<Integer, Map<GlyphType, Integer>> saved) {
         List<String> errors = new ArrayList<>();
-        Map<Integer, Map<Integer, SpellModel.State>> grey = new HashMap<>();
+        Map<Integer, Map<Integer, GlyphState>> grey = new HashMap<>();
         Map<Integer, SpellModel> models = new LinkedHashMap<>();
-        for (SpellcraftItemData.Spell spell : spells) {
+        for (StoredSpell spell : spells) {
             models.put(spell.id(), build(config, view, depth, spell, specOf, mode, grey, saved));
         }
-        List<SpellcraftItemData.Spell> newestFirst = new ArrayList<>(spells);
-        newestFirst.sort(Comparator.comparingInt(SpellcraftItemData.Spell::id).reversed());
+        List<StoredSpell> newestFirst = new ArrayList<>(spells);
+        newestFirst.sort(Comparator.comparingInt(StoredSpell::id).reversed());
         int greyed = 0;
         while (Math.round(total(models)) > budget) {
             boolean stepped = false;
-            for (SpellcraftItemData.Spell spell : newestFirst) {
+            for (StoredSpell spell : newestFirst) {
                 SpellModel model = models.get(spell.id());
                 int last = lastActive(model, spell.tokens().size());
                 if (last >= 0) {
-                    grey.computeIfAbsent(spell.id(), id -> new HashMap<>()).put(last, SpellModel.State.INACTIVE_BUDGET);
+                    grey.computeIfAbsent(spell.id(), id -> new HashMap<>()).put(last, GlyphState.INACTIVE_BUDGET);
                     models.put(spell.id(), build(config, view, depth, spell, specOf, mode, grey, saved));
                     greyed++;
                     stepped = true;
@@ -97,25 +98,25 @@ public final class SpellcraftRules {
             }
         }
         Map<GlyphType, Integer> uses = new EnumMap<>(GlyphType.class);
-        for (SpellcraftItemData.Spell spell : spells) {
+        for (StoredSpell spell : spells) {
             SpellModel model = models.get(spell.id());
             model.uses().forEach((type, count) -> uses.merge(type, count, Integer::sum));
             for (String error : model.errors()) {
                 errors.add(spell.name() + ": " + error);
             }
         }
-        if (mode != SpellModel.Mode.LENIENT) {
+        if (mode != ReadMode.LENIENT) {
             editingErrors(config, spells, errors);
         }
         return new ItemCheck(errors, total(models), uses, models, greyed, budget);
     }
 
-    private static void editingErrors(SpellcraftConfig config, List<SpellcraftItemData.Spell> spells, List<String> errors) {
+    private static void editingErrors(SpellcraftConfig config, List<StoredSpell> spells, List<String> errors) {
         if (spells.size() > config.rules.maxSpellsPerItem) {
             errors.add("an item holds at most " + config.rules.maxSpellsPerItem + " spells");
         }
         Map<Integer, String> slots = new HashMap<>();
-        for (SpellcraftItemData.Spell spell : spells) {
+        for (StoredSpell spell : spells) {
             if (spell.name().length() > config.rules.maxNameLength) {
                 errors.add(spell.name() + ": the name is longer than " + config.rules.maxNameLength + " characters");
             }
@@ -131,8 +132,8 @@ public final class SpellcraftRules {
         }
     }
 
-    private static SpellModel build(SpellcraftConfig config, GlyphView view, int depth, SpellcraftItemData.Spell spell,
-                                    Function<String, String> specOf, SpellModel.Mode mode, Map<Integer, Map<Integer, SpellModel.State>> grey,
+    private static SpellModel build(SpellcraftConfig config, GlyphView view, int depth, StoredSpell spell,
+                                    Function<String, String> specOf, ReadMode mode, Map<Integer, Map<Integer, GlyphState>> grey,
                                     Map<Integer, Map<GlyphType, Integer>> saved) {
         return SpellModel.build(config, view, depth, spell.tokens(), specOf, mode, grey.getOrDefault(spell.id(), Map.of()),
                 saved.getOrDefault(spell.id(), Map.of()));
@@ -148,7 +149,7 @@ public final class SpellcraftRules {
 
     private static int lastActive(SpellModel model, int tokens) {
         for (int i = tokens - 1; i >= 0; i--) {
-            SpellModel.Glyph glyph = model.glyphAt(i);
+            PlacedGlyph glyph = model.glyphAt(i);
             if (glyph != null && glyph.active()) {
                 return i;
             }
@@ -157,9 +158,9 @@ public final class SpellcraftRules {
     }
 
     /** The glyph copies of each type a stored spell holds, by spell id. */
-    public static Map<Integer, Map<GlyphType, Integer>> savedCounts(List<SpellcraftItemData.Spell> spells) {
+    public static Map<Integer, Map<GlyphType, Integer>> savedCounts(List<StoredSpell> spells) {
         Map<Integer, Map<GlyphType, Integer>> saved = new HashMap<>();
-        for (SpellcraftItemData.Spell spell : spells) {
+        for (StoredSpell spell : spells) {
             Map<GlyphType, Integer> counts = new EnumMap<>(GlyphType.class);
             for (String token : spell.tokens()) {
                 GlyphType type = GlyphType.byId(token);
@@ -174,16 +175,16 @@ public final class SpellcraftRules {
 
     /**
      * Checks an edit of the item's spells (a spell replaced, added or removed, or a slot or priority changed) the way
-     * the editor and the server must: {@link SpellModel.Mode#STRICT_NEW} against the stored spells, plus a refusal when
+     * the editor and the server must: {@link ReadMode#STRICT_NEW} against the stored spells, plus a refusal when
      * the edit makes the budget pass grey more glyphs than the stored spells do.
      */
-    public static ItemCheck checkEdit(SpellcraftConfig config, ItemStack stack, GlyphView view, List<SpellcraftItemData.Spell> edited,
+    public static ItemCheck checkEdit(SpellcraftConfig config, ItemStack stack, GlyphView view, List<StoredSpell> edited,
                                       Function<String, String> specOf) {
-        List<SpellcraftItemData.Spell> stored = SpellcraftItemData.spells(stack);
+        List<StoredSpell> stored = SpellcraftItemData.spells(stack);
         int budget = SpellcraftItemData.budget(stack);
         int depth = SpellcraftItemData.depth(stack);
-        ItemCheck before = check(config, budget, depth, view, stored, specOf, SpellModel.Mode.LENIENT, Map.of());
-        ItemCheck after = check(config, budget, depth, view, edited, specOf, SpellModel.Mode.STRICT_NEW, savedCounts(stored));
+        ItemCheck before = check(config, budget, depth, view, stored, specOf, ReadMode.LENIENT, Map.of());
+        ItemCheck after = check(config, budget, depth, view, edited, specOf, ReadMode.STRICT_NEW, savedCounts(stored));
         if (after.budgetInactive() > before.budgetInactive()) {
             List<String> errors = new ArrayList<>(after.errors());
             errors.add("over the item's arcana budget of " + budget + ": this would switch off "
@@ -194,10 +195,10 @@ public final class SpellcraftRules {
     }
 
     /** The item's spells with one spell replaced or added ({@code edited}), or removed ({@code edited} null). */
-    public static List<SpellcraftItemData.Spell> withEdit(ItemStack stack, int spellId, @Nullable SpellcraftItemData.Spell edited) {
-        List<SpellcraftItemData.Spell> spells = new ArrayList<>();
+    public static List<StoredSpell> withEdit(ItemStack stack, int spellId, @Nullable StoredSpell edited) {
+        List<StoredSpell> spells = new ArrayList<>();
         boolean replaced = false;
-        for (SpellcraftItemData.Spell spell : SpellcraftItemData.spells(stack)) {
+        for (StoredSpell spell : SpellcraftItemData.spells(stack)) {
             if (spell.id() == spellId) {
                 replaced = true;
                 if (edited != null) {

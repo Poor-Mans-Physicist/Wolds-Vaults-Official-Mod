@@ -92,7 +92,7 @@ public final class SpellBars {
         String[] keys = new String[SpellcraftItemData.SLOTS];
         Map<Integer, Integer> held = HELD.get(player.getUUID());
         for (int i = 0; i < keys.length; i++) {
-            keys[i] = bar.slot(i).key();
+            keys[i] = bar.slot(i).occupantKey();
             if (state.keys != null && held != null && !keys[i].equals(state.keys[i])) {
                 held.remove(i);
             }

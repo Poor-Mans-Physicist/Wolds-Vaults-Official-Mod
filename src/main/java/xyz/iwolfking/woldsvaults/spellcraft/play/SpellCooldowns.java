@@ -14,6 +14,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
 import xyz.iwolfking.woldsvaults.spellcraft.Spellcraft;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.CastScope;
+import xyz.iwolfking.woldsvaults.spellcraft.scope.CastBilling;
 import xyz.iwolfking.woldsvaults.spellcraft.spell.SpellModel;
 import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
 import xyz.iwolfking.woldsvaults.mixins.vaulthunters.accessors.AbilityCooldownInvoker;
@@ -48,9 +49,9 @@ public final class SpellCooldowns {
         if (player == null) {
             return false;
         }
-        CastScope.Billing billing = CastScope.billing(player);
+        CastBilling billing = CastScope.billing(player);
         if (billing != null) {
-            if (billing.mode() == CastScope.Mode.TRIGGER && billing.slot() != null && billing.triggerSpec() != null
+            if (billing.mode() == CastBilling.Mode.TRIGGER && billing.slot() != null && billing.triggerSpec() != null
                     && billing.triggerSpec().equals(specId(ability))) {
                 start(player, billing.slot(), delayTicks, true);
             }

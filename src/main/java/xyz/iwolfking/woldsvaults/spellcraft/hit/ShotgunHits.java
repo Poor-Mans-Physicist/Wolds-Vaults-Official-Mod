@@ -14,6 +14,8 @@ import xyz.iwolfking.woldsvaults.spellcraft.scope.ProjectileGlyphTags;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.DeferredReach;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.TickingEntity;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.CastScope;
+import xyz.iwolfking.woldsvaults.spellcraft.scope.ShotgunShot;
+import xyz.iwolfking.woldsvaults.api.cast.CastCarrier;
 
 import javax.annotation.Nullable;
 import java.util.BitSet;
@@ -37,12 +39,8 @@ public final class ShotgunHits {
     private ShotgunHits() {
     }
 
-    /** One member of a Shotgun volley: {@code member} 0 is the native cast, 1 and up the copies. */
-    public record Shot(long group, int member) {
-    }
-
-    private record Member(String spec, Shot shot, @Nullable Set<OwnHits.Carrier> carriers) {
-        Member(String spec, Shot shot) {
+    private record Member(String spec, ShotgunShot shot, @Nullable Set<CastCarrier> carriers) {
+        Member(String spec, ShotgunShot shot) {
             this(spec, shot, null);
         }
     }
@@ -62,7 +60,7 @@ public final class ShotgunHits {
     }
 
     /** Runs hits dealt outside any cast scope (the Size Up rail sweep) as {@code spec}'s hits by {@code shot}. */
-    public static <T> T runAs(String spec, @Nullable Shot shot, Supplier<T> action) {
+    public static <T> T runAs(String spec, @Nullable ShotgunShot shot, Supplier<T> action) {
         Member outer = explicit;
         explicit = shot == null ? null : new Member(spec, shot);
         try {
@@ -73,7 +71,7 @@ public final class ShotgunHits {
     }
 
     /** Whether {@code shot}'s own member already hit {@code target} within the window. */
-    public static boolean memberHit(LivingEntity target, Shot shot) {
+    public static boolean memberHit(LivingEntity target, ShotgunShot shot) {
         Volley volley = HITS.get(target);
         return volley != null && volley.group == shot.group() && target.level.getGameTime() - volley.lastTick <= WINDOW_TICKS
                 && volley.members.get(shot.member());
@@ -81,7 +79,7 @@ public final class ShotgunHits {
 
     /** The volley member an own hit of a Shotgun cast belongs to; null for any other hit, procs included. */
     /** Whether a member of {@code shot}'s volley other than {@code shot}'s own hit {@code target} within the window. */
-    public static boolean volleyHit(LivingEntity target, Shot shot) {
+    public static boolean volleyHit(LivingEntity target, ShotgunShot shot) {
         Volley volley = HITS.get(target);
         if (volley == null || volley.group != shot.group() || target.level.getGameTime() - volley.lastTick > WINDOW_TICKS) {
             return false;
@@ -92,7 +90,7 @@ public final class ShotgunHits {
     }
 
     @Nullable
-    private static Shot of(ServerPlayer player, DamageSource source) {
+    private static ShotgunShot of(ServerPlayer player, DamageSource source) {
         Member member = memberOf(player, source);
         if (member == null || member.shot() == null) {
             return null;
@@ -132,7 +130,7 @@ public final class ShotgunHits {
         if (target.level.isClientSide() || !(event.getSource().getEntity() instanceof ServerPlayer player)) {
             return;
         }
-        Shot shot = of(player, event.getSource());
+        ShotgunShot shot = of(player, event.getSource());
         if (shot == null) {
             return;
         }
@@ -148,7 +146,7 @@ public final class ShotgunHits {
         if (target.level.isClientSide() || !(event.getSource().getEntity() instanceof ServerPlayer player)) {
             return;
         }
-        Shot shot = of(player, event.getSource());
+        ShotgunShot shot = of(player, event.getSource());
         if (shot == null) {
             return;
         }

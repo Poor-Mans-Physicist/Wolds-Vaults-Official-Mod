@@ -22,7 +22,7 @@ public class SpellcraftConfig extends Config implements WoldsTable {
     @Expose public boolean worksOutsideVaults;
     @Expose public Rules rules;
     @Expose public Tuning tuning;
-    @Expose public Map<String, Glyph> glyphs;
+    @Expose public Map<String, GlyphDefinition> glyphs;
     @Expose public List<Combo> combos;
     @Expose public FocusRolls focus;
     @Expose public WandRolls wand;
@@ -86,7 +86,7 @@ public class SpellcraftConfig extends Config implements WoldsTable {
      * steps take the step effects: {@code step}, the ability or orb the glyph follows; {@code spell}, every live
      * ability step and orb of the spell it fits, wherever it sits.
      */
-    public static class Glyph {
+    public static class GlyphDefinition {
         public static final String SCOPE_STEP = "step";
         public static final String SCOPE_SPELL = "spell";
 
@@ -315,7 +315,7 @@ public class SpellcraftConfig extends Config implements WoldsTable {
     protected void reset() {
     }
 
-    public Glyph glyph(GlyphType type) {
+    public GlyphDefinition glyph(GlyphType type) {
         return this.glyphs.get(type.id());
     }
 
@@ -325,7 +325,7 @@ public class SpellcraftConfig extends Config implements WoldsTable {
 
     /** The potency tier for an item level: the highest tier whose minimum level the item reaches. */
     @Nullable
-    public static PotencyTier potencyTier(Glyph glyph, int itemLevel) {
+    public static PotencyTier potencyTier(GlyphDefinition glyph, int itemLevel) {
         PotencyTier best = null;
         for (PotencyTier tier : glyph.potency.tiers) {
             if (tier.minLevel <= itemLevel && (best == null || tier.minLevel > best.minLevel)) {
@@ -372,7 +372,7 @@ public class SpellcraftConfig extends Config implements WoldsTable {
             return "a tuning value is out of range";
         }
         for (GlyphType type : GlyphType.values()) {
-            Glyph glyph = this.glyphs.get(type.id());
+            GlyphDefinition glyph = this.glyphs.get(type.id());
             if (glyph == null) {
                 return "glyph " + type.id() + " has no entry";
             }
@@ -451,7 +451,7 @@ public class SpellcraftConfig extends Config implements WoldsTable {
                 return "gear glyph " + entry.attribute + " has an invalid scale or orientation";
             }
             if (entry.linked != null) {
-                Glyph glyph = this.glyphs.get(type.id());
+                GlyphDefinition glyph = this.glyphs.get(type.id());
                 boolean found = glyph.potency != null && glyph.potency.linked != null
                         && glyph.potency.linked.stream().anyMatch(linked -> entry.linked.equals(linked.name));
                 if (!found) {
@@ -473,7 +473,7 @@ public class SpellcraftConfig extends Config implements WoldsTable {
             if (entry.attribute == null || type == null || entry.parts == null || entry.parts.isEmpty() || entry.parts.size() > 3) {
                 return name + " names no attribute, an unknown glyph " + entry.glyph + " or no value parts";
             }
-            Glyph glyph = this.glyphs.get(type.id());
+            GlyphDefinition glyph = this.glyphs.get(type.id());
             if (!"unique".equals(glyph.glyphClass)) {
                 return name + " grants " + type.id() + ", which is not a unique glyph";
             }
@@ -558,7 +558,7 @@ public class SpellcraftConfig extends Config implements WoldsTable {
     }
 
     @Nullable
-    private static String validateGlyph(GlyphType type, Glyph glyph) {
+    private static String validateGlyph(GlyphType type, GlyphDefinition glyph) {
         if (glyph.kind == null || !List.of("modifier", "delay", "bundle").contains(glyph.kind)) {
             return "has an unknown kind";
         }
@@ -614,7 +614,7 @@ public class SpellcraftConfig extends Config implements WoldsTable {
                 return "excludes an unknown glyph " + other;
             }
         }
-        if (!Glyph.SCOPE_STEP.equals(glyph.scope) && !Glyph.SCOPE_SPELL.equals(glyph.scope)) {
+        if (!GlyphDefinition.SCOPE_STEP.equals(glyph.scope) && !GlyphDefinition.SCOPE_SPELL.equals(glyph.scope)) {
             return "has an unknown scope " + glyph.scope;
         }
         if (glyph.spellWide() && (!"modifier".equals(glyph.kind) || !glyph.excludes.isEmpty())) {
@@ -624,7 +624,7 @@ public class SpellcraftConfig extends Config implements WoldsTable {
     }
 
     @Nullable
-    private static String validateEffect(Glyph glyph, Effect effect) {
+    private static String validateEffect(GlyphDefinition glyph, Effect effect) {
         if (effect.role == null || !GlyphStacking.ROLES.contains(effect.role)) {
             return "has an effect on " + effect.stat + " with an unknown role";
         }

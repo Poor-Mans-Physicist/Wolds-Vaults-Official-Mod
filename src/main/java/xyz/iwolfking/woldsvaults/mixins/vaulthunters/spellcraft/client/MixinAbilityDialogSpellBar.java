@@ -96,7 +96,7 @@ public class MixinAbilityDialogSpellBar {
             return;
         }
         this.woldsvaults$slotLine = font.plainSubstrByWidth(line, room);
-        this.woldsvaults$slotColor = slot >= 0 && view.isItem() ? SpellcraftGui.ARCANE_GLOW : SpellcraftGui.WHITE;
+        this.woldsvaults$slotColor = slot >= 0 && view.isEffective() ? SpellcraftGui.ARCANE_GLOW : SpellcraftGui.WHITE;
     }
 
     /** Raises VH's name and level lines to make room for the third line. */

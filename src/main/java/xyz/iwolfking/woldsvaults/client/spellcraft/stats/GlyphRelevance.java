@@ -12,6 +12,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
 import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphStacking;
 import xyz.iwolfking.woldsvaults.spellcraft.spell.SpellModel;
+import xyz.iwolfking.woldsvaults.spellcraft.spell.PlacedGlyph;
 
 /**
  * Which glyph stats do anything on a given step, so tooltips list only the side effects that apply
@@ -124,8 +125,8 @@ public final class GlyphRelevance {
         }
     }
 
-    private static boolean holds(List<SpellModel.Glyph> glyphs, int token) {
-        for (SpellModel.Glyph glyph : glyphs) {
+    private static boolean holds(List<PlacedGlyph> glyphs, int token) {
+        for (PlacedGlyph glyph : glyphs) {
             if (glyph.token() == token) {
                 return true;
             }

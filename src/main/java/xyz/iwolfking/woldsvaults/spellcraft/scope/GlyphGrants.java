@@ -2,7 +2,7 @@ package xyz.iwolfking.woldsvaults.spellcraft.scope;
 
 import net.minecraft.nbt.CompoundTag;
 import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
-import xyz.iwolfking.woldsvaults.spellcraft.spell.SpellModel;
+import xyz.iwolfking.woldsvaults.spellcraft.spell.PlacedGlyph;
 import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
 
 import javax.annotation.Nullable;
@@ -32,11 +32,11 @@ public final class GlyphGrants {
     }
 
     /** The active unique glyphs among a step's glyphs; the strongest copy wins when a type appears twice. */
-    public static GlyphGrants of(Function<GlyphType, SpellcraftConfig.Glyph> specs, List<SpellModel.Glyph> glyphs) {
+    public static GlyphGrants of(Function<GlyphType, SpellcraftConfig.GlyphDefinition> definitions, List<PlacedGlyph> glyphs) {
         Map<GlyphType, Grant> grants = null;
-        for (SpellModel.Glyph glyph : glyphs) {
-            SpellcraftConfig.Glyph spec = specs.apply(glyph.type());
-            if (!glyph.active() || spec == null || !"unique".equals(spec.glyphClass)) {
+        for (PlacedGlyph glyph : glyphs) {
+            SpellcraftConfig.GlyphDefinition definition = definitions.apply(glyph.type());
+            if (!glyph.active() || definition == null || !"unique".equals(definition.glyphClass)) {
                 continue;
             }
             if (grants == null) {

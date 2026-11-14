@@ -55,7 +55,7 @@ import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
-import xyz.iwolfking.woldsvaults.spellcraft.hit.OwnHits;
+import xyz.iwolfking.woldsvaults.api.cast.CastCarrier;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.ProjectileGlyphTags;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.TickingEntity;
 
@@ -267,7 +267,7 @@ public final class ProjectileSteering {
     private static void detonate(Projectile projectile) {
         TickingEntity.push(projectile);
         try {
-            CastContext.runTask(CastContext.tagOf(projectile), OwnHits.Carrier.ENTITY, () -> detonateByType(projectile));
+            CastContext.runTask(CastContext.tagOf(projectile), CastCarrier.ENTITY, () -> detonateByType(projectile));
         } finally {
             TickingEntity.pop();
         }

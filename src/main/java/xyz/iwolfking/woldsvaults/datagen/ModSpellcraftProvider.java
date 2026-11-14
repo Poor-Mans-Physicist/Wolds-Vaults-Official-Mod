@@ -462,7 +462,7 @@ public class ModSpellcraftProvider extends AbstractWoldsTableProvider {
                               int weight, List<List<String>> requires, List<String> forbids, List<String> specs, List<String> excludes,
                               SpellcraftConfig.Potency potency, List<SpellcraftConfig.Effect> step, List<SpellcraftConfig.Effect> spell,
                               int maxUses, List<Integer> useWeights, int capPerSpell, int costMin, int costMax, boolean noEscalation) {
-        SpellcraftConfig.Glyph glyph = new SpellcraftConfig.Glyph();
+        SpellcraftConfig.GlyphDefinition glyph = new SpellcraftConfig.GlyphDefinition();
         glyph.kind = kind;
         glyph.glyphClass = glyphClass;
         glyph.category = category;
@@ -481,7 +481,7 @@ public class ModSpellcraftProvider extends AbstractWoldsTableProvider {
         glyph.costMin = costMin;
         glyph.costMax = costMax;
         glyph.noEscalation = noEscalation;
-        glyph.scope = SpellcraftConfig.Glyph.SCOPE_STEP;
+        glyph.scope = SpellcraftConfig.GlyphDefinition.SCOPE_STEP;
         table.glyphs.put(type.id(), glyph);
     }
 
@@ -491,7 +491,7 @@ public class ModSpellcraftProvider extends AbstractWoldsTableProvider {
      */
     private static void spellWide(SpellcraftConfig table, GlyphType... types) {
         for (GlyphType type : types) {
-            table.glyph(type).scope = SpellcraftConfig.Glyph.SCOPE_SPELL;
+            table.glyph(type).scope = SpellcraftConfig.GlyphDefinition.SCOPE_SPELL;
         }
     }
 
@@ -622,7 +622,7 @@ public class ModSpellcraftProvider extends AbstractWoldsTableProvider {
         Set<String> etchings = new HashSet<>();
         table.etchingGlyphs.forEach(entry -> etchings.add(entry.glyph));
         for (GlyphType type : GlyphType.values()) {
-            SpellcraftConfig.Glyph glyph = table.glyph(type);
+            SpellcraftConfig.GlyphDefinition glyph = table.glyph(type);
             if (glyph != null && !etchings.contains(type.id()) && (glyph.description == null || glyph.description.isBlank())) {
                 throw new IllegalStateException("Glyph " + type.id() + " has no description template");
             }
@@ -630,7 +630,7 @@ public class ModSpellcraftProvider extends AbstractWoldsTableProvider {
     }
 
     private static void checkRoles(SpellcraftConfig table) {
-        for (Map.Entry<String, SpellcraftConfig.Glyph> entry : table.glyphs.entrySet()) {
+        for (Map.Entry<String, SpellcraftConfig.GlyphDefinition> entry : table.glyphs.entrySet()) {
             List<SpellcraftConfig.Effect> effects = new ArrayList<>(entry.getValue().step);
             effects.addAll(entry.getValue().spell);
             for (SpellcraftConfig.Effect effect : effects) {

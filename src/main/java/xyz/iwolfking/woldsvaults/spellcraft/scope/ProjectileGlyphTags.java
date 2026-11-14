@@ -3,7 +3,6 @@ package xyz.iwolfking.woldsvaults.spellcraft.scope;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.projectile.Projectile;
-import xyz.iwolfking.woldsvaults.spellcraft.hit.ShotgunHits;
 
 import javax.annotation.Nullable;
 
@@ -34,7 +33,7 @@ public final class ProjectileGlyphTags {
     private ProjectileGlyphTags() {
     }
 
-    public static void write(Projectile projectile, CastModifiers modifiers, @Nullable String spec, @Nullable ShotgunHits.Shot shot) {
+    public static void write(Projectile projectile, CastModifiers modifiers, @Nullable String spec, @Nullable ShotgunShot shot) {
         CompoundTag data = projectile.getPersistentData();
         if (spec != null) {
             data.putString(SPEC, spec);
@@ -102,11 +101,11 @@ public final class ProjectileGlyphTags {
     }
 
     @Nullable
-    public static ShotgunHits.Shot shot(@Nullable Entity entity) {
+    public static ShotgunShot shot(@Nullable Entity entity) {
         if (entity == null || !entity.getPersistentData().contains(SHOT_GROUP)) {
             return null;
         }
-        return new ShotgunHits.Shot(entity.getPersistentData().getLong(SHOT_GROUP), entity.getPersistentData().getInt(SHOT_MEMBER));
+        return new ShotgunShot(entity.getPersistentData().getLong(SHOT_GROUP), entity.getPersistentData().getInt(SHOT_MEMBER));
     }
 
     public static float damage(Entity entity) {

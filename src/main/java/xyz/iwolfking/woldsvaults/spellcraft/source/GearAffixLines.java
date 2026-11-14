@@ -15,7 +15,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemStack;
 import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
 import xyz.iwolfking.woldsvaults.spellcraft.Spellcraft;
-import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
+import xyz.iwolfking.woldsvaults.spellcraft.item.GlyphLine;
 import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
 import xyz.iwolfking.woldsvaults.modifiers.gear.unique.SteelInfernoAttribute;
 import xyz.iwolfking.woldsvaults.modifiers.gear.unique.StormTrackingAttribute;
@@ -46,13 +46,13 @@ public final class GearAffixLines {
 
     /** The {@link GlyphLineProviders} provider. */
     public static void collect(ItemStack stack, boolean arcana, List<GlyphLineProviders.SourceLine> out) {
-        for (SpellcraftItemData.Line line : lines(stack)) {
+        for (GlyphLine line : lines(stack)) {
             out.add(new GlyphLineProviders.SourceLine(line, !arcana, !arcana));
         }
     }
 
     /** The converted affixes on a stack as glyph lines (not transferable; the caller decides how the source lends them). */
-    public static List<SpellcraftItemData.Line> lines(ItemStack stack) {
+    public static List<GlyphLine> lines(ItemStack stack) {
         SpellcraftConfig config = Spellcraft.config();
         if (config == null || stack.isEmpty() || !AttributeGearData.hasData(stack)) {
             return List.of();
@@ -63,7 +63,7 @@ public final class GearAffixLines {
         }
         AttributeGearData data = AttributeGearData.read(stack);
         Map<GlyphType, Float> linkedQuality = linkedQualities(config, entries, data);
-        List<SpellcraftItemData.Line> lines = new ArrayList<>();
+        List<GlyphLine> lines = new ArrayList<>();
         for (SpellcraftConfig.GearGlyph entry : entries) {
             VaultGearAttribute<?> attribute = attribute(entry.attribute);
             GlyphType type = GlyphType.byId(entry.glyph);
@@ -71,7 +71,7 @@ public final class GearAffixLines {
                 continue;
             }
             for (Object value : values(data, attribute)) {
-                SpellcraftItemData.Line line = line(config, entry, type, value, linkedQuality.get(type));
+                GlyphLine line = line(config, entry, type, value, linkedQuality.get(type));
                 if (line != null) {
                     lines.add(line);
                 }
@@ -145,9 +145,9 @@ public final class GearAffixLines {
     }
 
     @Nullable
-    private static SpellcraftItemData.Line line(SpellcraftConfig config, SpellcraftConfig.GearGlyph entry, GlyphType type, Object value,
+    private static GlyphLine line(SpellcraftConfig config, SpellcraftConfig.GearGlyph entry, GlyphType type, Object value,
                                                 @Nullable Float linkedQuality) {
-        SpellcraftConfig.Glyph glyph = config.glyph(type);
+        SpellcraftConfig.GlyphDefinition glyph = config.glyph(type);
         float potency;
         float quality;
         if (value instanceof SteelInfernoAttribute steel) {
@@ -171,7 +171,7 @@ public final class GearAffixLines {
                 }
             }
         }
-        return new SpellcraftItemData.Line(type, potency, quality, glyph.costMin, 1, false, null);
+        return new GlyphLine(type, potency, quality, glyph.costMin, 1, false, null);
     }
 
     private static boolean hasLinkedEntry(SpellcraftConfig config, GlyphType type) {
@@ -220,7 +220,7 @@ public final class GearAffixLines {
         return (List<Object>) data.get(attribute, VaultGearAttributeTypeMerger.asList());
     }
 
-    private static float tierQuality(SpellcraftConfig.Glyph glyph, float potency) {
+    private static float tierQuality(SpellcraftConfig.GlyphDefinition glyph, float potency) {
         SpellcraftConfig.PotencyTier top = null;
         for (SpellcraftConfig.PotencyTier tier : glyph.potency.tiers) {
             if (top == null || tier.minLevel > top.minLevel) {

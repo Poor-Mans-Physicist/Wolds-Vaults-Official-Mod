@@ -6,7 +6,10 @@ import net.minecraft.world.item.ItemStack;
 import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
 import xyz.iwolfking.woldsvaults.spellcraft.Spellcraft;
 import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
+import xyz.iwolfking.woldsvaults.spellcraft.item.StoredSpell;
 import xyz.iwolfking.woldsvaults.spellcraft.spell.SpellModel;
+import xyz.iwolfking.woldsvaults.spellcraft.spell.PlacedGlyph;
+import xyz.iwolfking.woldsvaults.spellcraft.spell.ReadMode;
 import xyz.iwolfking.woldsvaults.spellcraft.spell.SpellcraftRules;
 import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
 import xyz.iwolfking.woldsvaults.spellcraft.source.EquippedSources;
@@ -48,11 +51,11 @@ public final class EffectiveBar {
 
     /**
      * One resolved slot. {@code group} is the ability (the trigger for a spell); {@code model} is null unless a spell.
-     * {@code source*}, {@code hand} and {@code prio} describe the overlay's item; {@code shadowed} names lower-priority
+     * {@code item*}, {@code hand} and {@code prio} describe the overlay's item; {@code shadowed} names lower-priority
      * overlays of the slot.
      */
-    public record Slot(int index, Kind kind, String group, @Nullable SpellcraftItemData.Spell spell, @Nullable SpellModel model,
-                       boolean hidden, String key, @Nullable String sourceKey, String sourceName, @Nullable InteractionHand hand, int prio,
+    public record Slot(int index, Kind kind, String group, @Nullable StoredSpell spell, @Nullable SpellModel model,
+                       boolean hidden, String occupantKey, @Nullable String itemKey, String itemName, @Nullable InteractionHand hand, int prio,
                        boolean locked, String lockReason, boolean implicit, List<String> shadowed) {
         public Set<String> groups() {
             return switch (this.kind) {
@@ -72,11 +75,11 @@ public final class EffectiveBar {
     }
 
     /** One equipped arcana item: its identity, name, hand, spells and their check against its view. */
-    public record ArcanaItem(String key, String name, @Nullable InteractionHand hand, ItemStack stack, List<SpellcraftItemData.Spell> spells,
+    public record ArcanaItem(String key, String name, @Nullable InteractionHand hand, ItemStack stack, List<StoredSpell> spells,
                              SpellcraftRules.ItemCheck check) {
     }
 
-    private record Overlay(ArcanaItem item, SpellcraftItemData.Spell spell, SpellModel model, int prio, int order) {
+    private record Overlay(ArcanaItem item, StoredSpell spell, SpellModel model, int prio, int order) {
         String label() {
             return this.spell.name() + " (" + this.item.name() + ")";
         }
@@ -108,7 +111,7 @@ public final class EffectiveBar {
         Map<Integer, List<Overlay>> bySlot = new TreeMap<>();
         int order = 0;
         for (ArcanaItem item : items) {
-            for (SpellcraftItemData.Spell spell : item.spells()) {
+            for (StoredSpell spell : item.spells()) {
                 SpellModel model = item.check().models().get(spell.id());
                 if (config == null || !spell.assigned() || model == null) {
                     continue;
@@ -233,9 +236,9 @@ public final class EffectiveBar {
                 }
             }
             if (tokens.size() > 1) {
-                SpellModel model = SpellModel.build(config, auto, config.rules.maxGlyphsPerSpell, tokens, specOf, SpellModel.Mode.LENIENT);
-                if (model.isValid() && model.glyphs().stream().anyMatch(SpellModel.Glyph::active)) {
-                    SpellcraftItemData.Spell spell = new SpellcraftItemData.Spell(0, groupName(group), List.copyOf(tokens));
+                SpellModel model = SpellModel.build(config, auto, config.rules.maxGlyphsPerSpell, tokens, specOf, ReadMode.LENIENT);
+                if (model.isValid() && model.glyphs().stream().anyMatch(PlacedGlyph::active)) {
+                    StoredSpell spell = new StoredSpell(0, groupName(group), List.copyOf(tokens));
                     return new Slot(index, Kind.SPELL, group, spell, model, false, key, null, "", null, 0, false, "", true, List.of());
                 }
             }
@@ -273,7 +276,7 @@ public final class EffectiveBar {
     /** Whether any slot is laid over by an item's spell. */
     public boolean hasOverlays() {
         for (Slot slot : this.slots) {
-            if (slot.sourceKey() != null) {
+            if (slot.itemKey() != null) {
                 return true;
             }
         }

@@ -27,9 +27,11 @@ import xyz.iwolfking.woldsvaults.spellcraft.ability.SpellAbilities;
 import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
 import xyz.iwolfking.woldsvaults.spellcraft.Spellcraft;
 import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
+import xyz.iwolfking.woldsvaults.spellcraft.item.StoredSpell;
 import xyz.iwolfking.woldsvaults.spellcraft.roll.SpellcraftRoller;
 import xyz.iwolfking.woldsvaults.client.spellcraft.stats.GlyphRelevance;
 import xyz.iwolfking.woldsvaults.spellcraft.spell.SpellModel;
+import xyz.iwolfking.woldsvaults.spellcraft.spell.PlacedGlyph;
 import xyz.iwolfking.woldsvaults.spellcraft.spell.SpellcraftRules;
 import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
 import xyz.iwolfking.woldsvaults.init.ModNetwork;
@@ -138,7 +140,7 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
     private int deleteArmedAt;
     private boolean loadingName;
     private EditBox nameBox;
-    private SpellBarView itemView;
+    private SpellBarView effectiveView;
     private SpellBarView defaultView;
 
     public SpellcraftScreen(@Nullable Screen parent, int inventorySlot) {
@@ -146,7 +148,7 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
         this.parent = parent;
         this.inventorySlot = inventorySlot;
         this.strip = new SpellBarStrip(this, true);
-        for (SpellcraftItemData.Spell spell : SpellcraftItemData.spells(stack())) {
+        for (StoredSpell spell : SpellcraftItemData.spells(stack())) {
             this.drafts.add(new Draft(spell.id(), spell.name(), spell.tokens()));
         }
         if (this.drafts.isEmpty()) {
@@ -277,12 +279,12 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
         return config != null && name.length() > config.rules.maxNameLength ? name.substring(0, config.rules.maxNameLength) : name;
     }
 
-    private List<SpellcraftItemData.Spell> withDraft(Draft draft) {
+    private List<StoredSpell> withDraft(Draft draft) {
         int checkId = draft.id > 0 ? draft.id : Integer.MAX_VALUE;
-        SpellcraftItemData.Spell stored = draft.id > 0 ? SpellcraftItemData.spell(stack(), draft.id).orElse(null) : null;
+        StoredSpell stored = draft.id > 0 ? SpellcraftItemData.spell(stack(), draft.id).orElse(null) : null;
         int slot = stored == null ? SpellcraftItemData.UNASSIGNED : stored.slot();
         int prio = stored == null ? 0 : stored.prio();
-        return SpellcraftRules.withEdit(stack(), checkId, new SpellcraftItemData.Spell(checkId, storedName(draft), List.copyOf(draft.tokens), slot, prio));
+        return SpellcraftRules.withEdit(stack(), checkId, new StoredSpell(checkId, storedName(draft), List.copyOf(draft.tokens), slot, prio));
     }
 
     /** The item's glyph view: its own lines plus the transferable lines the server last synced. */
@@ -303,7 +305,7 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
         if (draft.id <= 0) {
             return false;
         }
-        SpellcraftItemData.Spell stored = SpellcraftItemData.spell(stack(), draft.id).orElse(null);
+        StoredSpell stored = SpellcraftItemData.spell(stack(), draft.id).orElse(null);
         return stored != null && stored.name().equals(storedName(draft)) && stored.tokens().equals(draft.tokens);
     }
 
@@ -336,7 +338,7 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
             if (!draft.pendingNew) {
                 continue;
             }
-            for (SpellcraftItemData.Spell spell : SpellcraftItemData.spells(stack())) {
+            for (StoredSpell spell : SpellcraftItemData.spells(stack())) {
                 if (!draft.knownIds.contains(spell.id()) && !claimed.contains(spell.id())) {
                     draft.id = spell.id();
                     draft.pendingNew = false;
@@ -397,8 +399,8 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
 
     @Nullable
     @Override
-    public SpellBarView itemView() {
-        return this.itemView;
+    public SpellBarView effectiveView() {
+        return this.effectiveView;
     }
 
     @Nullable
@@ -423,7 +425,7 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
         }
         AbilityTree tree = tree();
         this.defaultView = SpellBarView.ofDefaults(tree);
-        this.itemView = SpellBarView.ofSynced(tree);
+        this.effectiveView = SpellBarView.ofSynced(tree);
         Draft draft = draft();
         SpellcraftRules.ItemCheck check = draft == null ? null : check(draft);
         SpellModel model = draft == null || check == null ? null : check.models().get(draft.id > 0 ? draft.id : Integer.MAX_VALUE);
@@ -791,7 +793,7 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
                 GlyphType type = GlyphType.byId(token);
                 SpellcraftGui.slot(pose, x, y, false);
                 if (type != null) {
-                    SpellModel.Glyph glyph = model == null ? null : model.glyphAt(cell.index());
+                    PlacedGlyph glyph = model == null ? null : model.glyphAt(cell.index());
                     SpellcraftGui.rune(pose, type, x, y, 16, glyph != null && !glyph.active());
                 } else {
                     String spec = SpellcraftRules.specOf(tree()).apply(token);
@@ -893,7 +895,7 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
 
     /** Default-bar slots this spell would hide: abilities it casts that sit on another default slot. */
     private String hides(AbilityTree tree, @Nullable Draft draft, SpellModel model) {
-        SpellcraftItemData.Spell stored = stored(draft);
+        StoredSpell stored = stored(draft);
         int own = stored == null ? -1 : stored.slot();
         List<String> hidden = new ArrayList<>();
         for (int i = 0; i < SpellcraftItemData.SLOTS; i++) {
@@ -909,7 +911,7 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
     }
 
     @Nullable
-    private SpellcraftItemData.Spell stored(@Nullable Draft draft) {
+    private StoredSpell stored(@Nullable Draft draft) {
         return draft == null || draft.id <= 0 ? null : SpellcraftItemData.spell(stack(), draft.id).orElse(null);
     }
 
@@ -918,7 +920,7 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
     }
 
     private String slotText(@Nullable Draft draft) {
-        SpellcraftItemData.Spell stored = stored(draft);
+        StoredSpell stored = stored(draft);
         if (stored == null) {
             return "-";
         }
@@ -926,7 +928,7 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
     }
 
     private String prioText(SpellcraftConfig config, @Nullable Draft draft) {
-        SpellcraftItemData.Spell stored = stored(draft);
+        StoredSpell stored = stored(draft);
         return stored == null ? "-" : String.valueOf(SpellcraftRules.priority(config, stored));
     }
 
@@ -957,7 +959,7 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
      */
     private void stepPlacement(boolean slot, int direction) {
         SpellcraftConfig config = Spellcraft.config();
-        SpellcraftItemData.Spell stored = stored(draft());
+        StoredSpell stored = stored(draft());
         if (config == null || stored == null) {
             return;
         }
@@ -1138,7 +1140,7 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
                 GlyphType type = GlyphType.byId(token);
                 if (type != null) {
                     SpellModel model = check == null ? null : check.models().get(draft.id > 0 ? draft.id : Integer.MAX_VALUE);
-                    SpellModel.Glyph glyph = model == null ? null : model.glyphAt(cell.index());
+                    PlacedGlyph glyph = model == null ? null : model.glyphAt(cell.index());
                     GlyphViewLine line = view(config).get(type);
                     GlyphRelevance.Filter relevance = model == null ? GlyphRelevance.ALL : GlyphRelevance.forToken(config, model, cell.index());
                     glyphLines(config, type, line == null ? 0.0F : line.potency(), line == null ? 0.0F : line.quality(), relevance, lines);
@@ -1194,7 +1196,7 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
 
     private void glyphLines(SpellcraftConfig config, GlyphType type, float potency, float quality, GlyphRelevance.Filter relevance,
                             List<Component> lines) {
-        SpellcraftConfig.Glyph glyph = config.glyph(type);
+        SpellcraftConfig.GlyphDefinition glyph = config.glyph(type);
         lines.add(colored(type.displayName(), SpellcraftGui.categoryColor(config, type)));
         lines.add(SpellcraftGui.describe(config, type, potency, quality));
         String side = SpellcraftGui.sideEffects(config, type, potency, relevance);

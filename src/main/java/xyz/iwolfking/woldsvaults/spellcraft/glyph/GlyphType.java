@@ -127,7 +127,7 @@ public enum GlyphType {
      * none of its forbidden traits, and is one of its specializations when the glyph is spec-locked.
      */
     public boolean fits(SpellcraftConfig config, Set<String> traits, @Nullable String spec) {
-        SpellcraftConfig.Glyph glyph = config.glyph(this);
+        SpellcraftConfig.GlyphDefinition glyph = config.glyph(this);
         if (!glyph.specs.isEmpty() && (spec == null || !glyph.specs.contains(spec))) {
             return false;
         }

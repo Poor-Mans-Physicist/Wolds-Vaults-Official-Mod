@@ -25,6 +25,7 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.network.PacketDistributor;
 import xyz.iwolfking.woldsvaults.WoldsVaults;
 import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
+import xyz.iwolfking.woldsvaults.spellcraft.item.GlyphLine;
 import xyz.iwolfking.woldsvaults.spellcraft.roll.SpellcraftRoller;
 import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
 import xyz.iwolfking.woldsvaults.init.ModNetwork;
@@ -75,12 +76,12 @@ public final class EquippedSources {
     public static final class Snapshot {
         private final List<Equipped> sources;
         private final List<Equipped> arcana;
-        private final Map<String, List<SpellcraftItemData.Line>> own;
+        private final Map<String, List<GlyphLine>> own;
         private final List<GlyphCandidate> shared;
         private final List<GlyphCandidate> auto;
         private final Map<String, GlyphView> views = new HashMap<>();
 
-        Snapshot(List<Equipped> sources, Map<String, List<SpellcraftItemData.Line>> own, List<GlyphCandidate> shared, List<GlyphCandidate> auto) {
+        Snapshot(List<Equipped> sources, Map<String, List<GlyphLine>> own, List<GlyphCandidate> shared, List<GlyphCandidate> auto) {
             this.sources = List.copyOf(sources);
             this.arcana = sources.stream().filter(Equipped::arcana).toList();
             this.own = own;
@@ -198,11 +199,11 @@ public final class EquippedSources {
             }
         });
         SpellcraftConfig config = Spellcraft.config();
-        Map<String, List<SpellcraftItemData.Line>> own = new LinkedHashMap<>();
+        Map<String, List<GlyphLine>> own = new LinkedHashMap<>();
         List<GlyphCandidate> shared = new ArrayList<>();
         List<GlyphCandidate> auto = new ArrayList<>();
         for (Equipped source : sources) {
-            List<SpellcraftItemData.Line> lines = new ArrayList<>();
+            List<GlyphLine> lines = new ArrayList<>();
             for (GlyphLineProviders.SourceLine line : GlyphLineProviders.of(source.stack(), source.arcana())) {
                 lines.add(line.line());
                 boolean transferable = line.transferable() || !source.arcana();

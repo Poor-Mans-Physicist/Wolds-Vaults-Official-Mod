@@ -11,6 +11,7 @@ import xyz.iwolfking.woldsvaults.api.cast.CastContext;
 import xyz.iwolfking.woldsvaults.api.cast.CastTag;
 import xyz.iwolfking.woldsvaults.spellcraft.ability.AbilityCastTracker;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.CastScope;
+import xyz.iwolfking.woldsvaults.spellcraft.scope.CastBilling;
 import xyz.iwolfking.woldsvaults.mixins.vaulthunters.gods.idona.ManaCostHelperAccessor;
 
 import javax.annotation.Nullable;
@@ -30,19 +31,19 @@ public final class SlotManaBilling {
 
     /** The cost a slot trigger is checked and dumped against: the slot cost for the trigger step, {@code cost} otherwise. */
     public static float slotCost(ServerPlayer player, Skill skill, float cost) {
-        CastScope.Billing billing = CastScope.billing(player);
-        if (billing == null || billing.mode() != CastScope.Mode.TRIGGER || !isTrigger(billing, skill)) {
+        CastBilling billing = CastScope.billing(player);
+        if (billing == null || billing.mode() != CastBilling.Mode.TRIGGER || !isTrigger(billing, skill)) {
             return cost;
         }
         return (cost + billing.otherAbilitiesMana()) * billing.manaFactor();
     }
 
     public static float check(ServerPlayer player, Skill skill, float cost) {
-        CastScope.Billing billing = CastScope.billing(player);
+        CastBilling billing = CastScope.billing(player);
         if (billing == null) {
             return cost;
         }
-        if (billing.mode() == CastScope.Mode.FREE) {
+        if (billing.mode() == CastBilling.Mode.FREE) {
             return 0.0F;
         }
         return slotCost(player, skill, cost);
@@ -54,11 +55,11 @@ public final class SlotManaBilling {
     }
 
     public static float pay(ServerPlayer player, Skill skill, float paid) {
-        CastScope.Billing billing = CastScope.billing(player);
+        CastBilling billing = CastScope.billing(player);
         if (billing == null) {
             return paid;
         }
-        if (billing.mode() == CastScope.Mode.FREE) {
+        if (billing.mode() == CastBilling.Mode.FREE) {
             return 0.0F;
         }
         if (!isTrigger(billing, skill)) {
@@ -75,7 +76,7 @@ public final class SlotManaBilling {
     }
 
     /** Whether the player can pay the slot share of a trigger VH does not bill; always true for triggers VH bills. */
-    public static boolean canPayUnbilledTrigger(ServerPlayer player, Ability trigger, CastScope.Billing billing) {
+    public static boolean canPayUnbilledTrigger(ServerPlayer player, Ability trigger, CastBilling billing) {
         if (trigger instanceof InstantManaAbility || player.isCreative()) {
             return true;
         }
@@ -86,7 +87,7 @@ public final class SlotManaBilling {
      * Pays the slot share of a trigger VH does not bill, after it went through: the other abilities' mana times the
      * spell's mana factor, nothing when the Ethereal talents roll.
      */
-    public static void payUnbilledTrigger(ServerPlayer player, @Nullable Ability trigger, CastScope.Billing billing) {
+    public static void payUnbilledTrigger(ServerPlayer player, @Nullable Ability trigger, CastBilling billing) {
         if (trigger == null || trigger instanceof InstantManaAbility || player.isCreative()) {
             return;
         }
@@ -101,7 +102,7 @@ public final class SlotManaBilling {
         if (!(entity instanceof ServerPlayer player)) {
             return false;
         }
-        CastScope.Billing billing = CastScope.billing(player);
+        CastBilling billing = CastScope.billing(player);
         return billing != null && billing.suppressCastEvent();
     }
 
@@ -109,7 +110,7 @@ public final class SlotManaBilling {
         AbilityCastTracker.note(ability);
     }
 
-    private static boolean isTrigger(CastScope.Billing billing, Skill skill) {
+    private static boolean isTrigger(CastBilling billing, Skill skill) {
         Skill parent = skill.getParent();
         return billing.triggerSpec() != null && parent != null && billing.triggerSpec().equals(parent.getId());
     }

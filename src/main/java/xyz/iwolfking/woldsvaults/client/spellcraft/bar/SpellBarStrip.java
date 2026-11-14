@@ -26,6 +26,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import xyz.iwolfking.woldsvaults.spellcraft.Spellcraft;
 import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
+import xyz.iwolfking.woldsvaults.spellcraft.item.StoredSpell;
 import xyz.iwolfking.woldsvaults.spellcraft.roll.SpellcraftRoller;
 import xyz.iwolfking.woldsvaults.client.spellcraft.stats.GlyphRelevance;
 import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphStacking;
@@ -95,7 +96,7 @@ public final class SpellBarStrip {
 
         /** The focus bar view, or null when there is none to show. */
         @Nullable
-        SpellBarView itemView();
+        SpellBarView effectiveView();
 
         /** The ability group a default-bar click assigns, or null to open the ability chooser instead. */
         @Nullable
@@ -114,15 +115,15 @@ public final class SpellBarStrip {
     private int x0;
     private int y0;
     private int x1;
-    private boolean showItem;
+    private boolean showEffective;
     private SpellBarView view;
     private int popupSlot = -1;
     private List<Choice> popup = List.of();
     private int popupScroll;
 
-    public SpellBarStrip(Host host, boolean showItem) {
+    public SpellBarStrip(Host host, boolean showEffective) {
         this.host = host;
-        this.showItem = showItem;
+        this.showEffective = showEffective;
     }
 
     /** Places the window; (x0, y0) is its top left and x1 its right edge, {@link #HEIGHT} tall. */
@@ -134,18 +135,18 @@ public final class SpellBarStrip {
 
     /** The view drawn this frame: the focus bar when it is picked and available, else the default bar. */
     public SpellBarView view() {
-        SpellBarView item = this.showItem ? this.host.itemView() : null;
+        SpellBarView item = this.showEffective ? this.host.effectiveView() : null;
         this.view = item != null ? item : this.host.defaultView();
         return this.view;
     }
 
-    public boolean showingItem() {
-        return this.view != null && this.view.isItem();
+    public boolean showingEffective() {
+        return this.view != null && this.view.isEffective();
     }
 
     /** Whether the player last picked the focus bar (kept while no focus bar is available). */
-    public boolean prefersItem() {
-        return this.showItem;
+    public boolean prefersEffective() {
+        return this.showEffective;
     }
 
     public static int slotX(int x0, int index) {
@@ -164,12 +165,12 @@ public final class SpellBarStrip {
         Minecraft minecraft = Minecraft.getInstance();
         Font font = minecraft.font;
         SpellBarView view = view();
-        SpellBarView item = this.host.itemView();
+        SpellBarView item = this.host.effectiveView();
         RenderSystem.enableBlend();
         SpellcraftGui.window(pose, this.x0, this.y0, this.x1, this.y0 + HEIGHT);
-        drawPicker(pose, 0, !view.isItem(), null);
+        drawPicker(pose, 0, !view.isEffective(), null);
         if (item != null) {
-            drawPicker(pose, 1, view.isItem(), item.stack());
+            drawPicker(pose, 1, view.isEffective(), item.stack());
         }
         AbilityTree tree = this.host.tree();
         Function<String, String> specOf = SpellcraftRules.specOf(tree);
@@ -239,7 +240,7 @@ public final class SpellBarStrip {
                 }
                 SpellcraftGui.ring(pose, x - 1, y - 1, x + 17, y + 17, slot.implicit() ? IMPLICIT_RING : SpellcraftGui.ARCANE_GLOW);
                 if (!slot.implicit()) {
-                    SpellcraftGui.augmentStar(pose, x, y);
+                    SpellcraftGui.spellStar(pose, x, y);
                 }
                 if (slot.unlearned()) {
                     SpellcraftGui.redX(pose, x, y);
@@ -318,7 +319,7 @@ public final class SpellBarStrip {
             lines.add(new TextComponent(SpellcraftGui.tr("bar.default")));
             return lines;
         }
-        SpellBarView item = this.host.itemView();
+        SpellBarView item = this.host.effectiveView();
         if (item != null && inside(mouseX, mouseY, pickX(1), this.y0 + 2, PICK, PICK)) {
             lines.add(new TextComponent(SpellcraftGui.tr("bar.item"))
                     .withStyle(style -> style.withColor(TextColor.fromRgb(SpellcraftGui.ARCANE_GLOW & 0xFFFFFF))));
@@ -355,7 +356,7 @@ public final class SpellBarStrip {
             }
             case SPELL -> {
                 lines.add(colored(slot.spellName(), slot.implicit() ? IMPLICIT_RING : SpellcraftGui.ARCANE_GLOW));
-                lines.add(augmentedTitle(tree, slot.groups()));
+                lines.add(spellTitle(tree, slot.groups()));
                 if (slot.implicit()) {
                     lines.add(colored(SpellcraftGui.tr("bar.implicit"), IMPLICIT_RING));
                 } else if (!slot.sourceName().isEmpty()) {
@@ -414,7 +415,7 @@ public final class SpellBarStrip {
         String keyLine = key.isEmpty() ? SpellcraftGui.tr("bar.no_key", index + 1) : SpellcraftGui.tr("bar.key", index + 1, key);
         lines.add(colored(keyLine, SpellcraftGui.GREY));
         String hint;
-        if (view.isItem()) {
+        if (view.isEffective()) {
             hint = SpellcraftGui.tr("bar.hint_item");
         } else if (this.host.selectedGroup() != null) {
             hint = SpellcraftGui.tr("bar.hint_default", SpellcraftGui.abilityName(tree, this.host.selectedGroup()));
@@ -429,7 +430,7 @@ public final class SpellBarStrip {
      * "Augmented: Ice Bolt 21 + Nova 9": the prefix and the separators grey, each ability name gold as in plain ability
      * tooltips, each tier yellow.
      */
-    private static Component augmentedTitle(AbilityTree tree, List<String> groups) {
+    private static Component spellTitle(AbilityTree tree, List<String> groups) {
         MutableComponent names = new TextComponent("");
         for (int i = 0; i < groups.size(); i++) {
             String group = groups.get(i);
@@ -657,12 +658,12 @@ public final class SpellBarStrip {
             return false;
         }
         if (inside(mouseX, mouseY, pickX(0), this.y0 + 2, PICK, PICK)) {
-            this.showItem = false;
+            this.showEffective = false;
             click();
             return true;
         }
-        if (this.host.itemView() != null && inside(mouseX, mouseY, pickX(1), this.y0 + 2, PICK, PICK)) {
-            this.showItem = true;
+        if (this.host.effectiveView() != null && inside(mouseX, mouseY, pickX(1), this.y0 + 2, PICK, PICK)) {
+            this.showEffective = true;
             click();
             return true;
         }
@@ -747,7 +748,7 @@ public final class SpellBarStrip {
             return choices;
         }
         Function<String, String> specOf = SpellcraftRules.specOf(tree);
-        for (SpellcraftItemData.Spell spell : SpellcraftItemData.spells(stack)) {
+        for (StoredSpell spell : SpellcraftItemData.spells(stack)) {
             String spec = specOf.apply(spell.trigger());
             String label = spell.assigned() ? SpellcraftGui.tr("picker.spell_on", spell.name(), spell.slot() + 1) : SpellcraftGui.tr("picker.spell", spell.name());
             choices.add(new Choice(SPELL_CHOICE + Inventory.SLOT_OFFHAND + ":" + spell.id(), label, spec != null ? spec : spell.trigger(),

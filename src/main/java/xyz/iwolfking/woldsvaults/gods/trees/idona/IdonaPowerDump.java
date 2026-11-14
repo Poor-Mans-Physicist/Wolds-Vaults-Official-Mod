@@ -13,6 +13,7 @@ import net.minecraft.world.damagesource.DamageSource;
 import xyz.iwolfking.woldsvaults.api.cast.CastContext;
 import xyz.iwolfking.woldsvaults.api.cast.CastTag;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.CastScope;
+import xyz.iwolfking.woldsvaults.spellcraft.scope.CastBilling;
 import xyz.iwolfking.woldsvaults.spellcraft.projectile.SpellParticles;
 import xyz.iwolfking.woldsvaults.init.ModEtchingGearAttributes;
 import xyz.iwolfking.woldsvaults.mixins.vaulthunters.gods.idona.ManaCostHelperAccessor;
@@ -56,8 +57,8 @@ public final class IdonaPowerDump {
 
     /** The Power Core scale for the running slot cast: the etching's roll when the slot was fully charged, else 1. */
     private static float powerCoreScale(ServerPlayer player) {
-        CastScope.Billing billing = CastScope.billing(player);
-        if (billing == null || billing.mode() != CastScope.Mode.TRIGGER || !billing.fullyCharged()) {
+        CastBilling billing = CastScope.billing(player);
+        if (billing == null || billing.mode() != CastBilling.Mode.TRIGGER || !billing.fullyCharged()) {
             return 1.0F;
         }
         return EtchingHelper.getEtchings(player, ModEtchingGearAttributes.POWER_CORE).stream()
@@ -93,8 +94,8 @@ public final class IdonaPowerDump {
         }
         CastTag tag = CastContext.current();
         boolean ownCast = tag != null && tag.isCastOf(player, skill) && !tag.powerDumpResolved();
-        CastScope.Billing billing = CastScope.billing(player);
-        if (billing != null && billing.mode() == CastScope.Mode.FREE) {
+        CastBilling billing = CastScope.billing(player);
+        if (billing != null && billing.mode() == CastBilling.Mode.FREE) {
             if (ownCast) {
                 tag.resolvePowerDump(false, 1.0F);
             }

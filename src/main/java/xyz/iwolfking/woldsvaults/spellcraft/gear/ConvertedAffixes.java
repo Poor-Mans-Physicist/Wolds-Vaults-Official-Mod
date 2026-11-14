@@ -279,7 +279,7 @@ public final class ConvertedAffixes {
 
     @Nullable
     public static SpellcraftConfig.Linked linked(SpellcraftConfig config, GlyphType type, String name) {
-        SpellcraftConfig.Glyph glyph = config.glyph(type);
+        SpellcraftConfig.GlyphDefinition glyph = config.glyph(type);
         if (glyph == null || glyph.potency == null || glyph.potency.linked == null) {
             return null;
         }

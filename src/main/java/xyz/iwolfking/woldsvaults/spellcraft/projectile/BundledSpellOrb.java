@@ -49,7 +49,7 @@ public class BundledSpellOrb extends Projectile {
 
     public BundledSpellOrb(Level level, ServerPlayer owner, List<SpellModel.Step> payload, float damageFactor, int lifetimeTicks,
                                float scale, boolean ethereal) {
-        this(ModEntities.AUGMENT_BUNDLE, level);
+        this(ModEntities.BUNDLED_SPELL_ORB, level);
         setOwner(owner);
         this.payload = payload;
         this.damageFactor = damageFactor;

@@ -73,7 +73,7 @@ public final class SpellCharge {
             return;
         }
         EffectiveBar bar = SpellBars.current(player);
-        if (bar == null || !bar.slot(charging.slot()).key().equals(charging.occupant())) {
+        if (bar == null || !bar.slot(charging.slot()).occupantKey().equals(charging.occupant())) {
             stop(player);
             return;
         }

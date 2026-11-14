@@ -11,6 +11,7 @@ import xyz.iwolfking.woldsvaults.spellcraft.cast.SpellCaster;
 import xyz.iwolfking.woldsvaults.spellcraft.play.SpellCharge;
 import xyz.iwolfking.woldsvaults.spellcraft.projectile.ProjectileGlyphs;
 import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
+import xyz.iwolfking.woldsvaults.spellcraft.item.StoredSpell;
 import xyz.iwolfking.woldsvaults.spellcraft.roll.SpellcraftRoller;
 import xyz.iwolfking.woldsvaults.spellcraft.spell.SpellModel;
 import xyz.iwolfking.woldsvaults.spellcraft.spell.SpellcraftRules;
@@ -124,10 +125,10 @@ public final class Spellcraft {
         }
         if (down) {
             if (ready(player, slot)) {
-                SpellCharge.start(player, slot.index(), slot.key(), slot.hand(), Math.round(config.tuning.chargeSeconds * 20.0F));
+                SpellCharge.start(player, slot.index(), slot.occupantKey(), slot.hand(), Math.round(config.tuning.chargeSeconds * 20.0F));
             }
         } else {
-            float share = SpellCharge.release(player, slot.index(), slot.key());
+            float share = SpellCharge.release(player, slot.index(), slot.occupantKey());
             if (share >= 0.0F && ready(player, slot)) {
                 SpellCaster.castSlot(player, slot, share);
             }
@@ -180,15 +181,15 @@ public final class Spellcraft {
         if (cleanName.length() > config.rules.maxNameLength) {
             cleanName = cleanName.substring(0, config.rules.maxNameLength);
         }
-        SpellcraftItemData.Spell stored = spellId > 0 ? SpellcraftItemData.spell(stack, spellId).orElse(null) : null;
+        StoredSpell stored = spellId > 0 ? SpellcraftItemData.spell(stack, spellId).orElse(null) : null;
         int slot = stored == null ? SpellcraftItemData.UNASSIGNED : stored.slot();
         int prio = stored == null ? 0 : stored.prio();
         int checkId = spellId > 0 ? spellId : Integer.MAX_VALUE;
-        SpellcraftItemData.Spell edited = new SpellcraftItemData.Spell(checkId, cleanName, List.copyOf(tokens), slot, prio);
+        StoredSpell edited = new StoredSpell(checkId, cleanName, List.copyOf(tokens), slot, prio);
         if (!store(player, config, stack, SpellcraftRules.withEdit(stack, checkId, edited), "Spell not saved: ")) {
             return;
         }
-        SpellcraftItemData.putSpell(stack, new SpellcraftItemData.Spell(spellId > 0 ? spellId : 0, cleanName, List.copyOf(tokens), slot, prio));
+        SpellcraftItemData.putSpell(stack, new StoredSpell(spellId > 0 ? spellId : 0, cleanName, List.copyOf(tokens), slot, prio));
         SpellBars.refresh(player);
     }
 
@@ -206,7 +207,7 @@ public final class Spellcraft {
         if (stack == null) {
             return;
         }
-        SpellcraftItemData.Spell stored = SpellcraftItemData.spell(stack, spellId).orElse(null);
+        StoredSpell stored = SpellcraftItemData.spell(stack, spellId).orElse(null);
         if (stored == null) {
             refuse(player, "That spell is not on the item");
             return;
@@ -215,7 +216,7 @@ public final class Spellcraft {
             refuse(player, "Spell not moved: slot or priority out of range");
             return;
         }
-        SpellcraftItemData.Spell moved = stored.withSlot(barSlot).withPrio(prio > 0 ? prio : stored.prio());
+        StoredSpell moved = stored.withSlot(barSlot).withPrio(prio > 0 ? prio : stored.prio());
         if (!store(player, config, stack, SpellcraftRules.withEdit(stack, spellId, moved), "Spell not moved: ")) {
             return;
         }
@@ -223,7 +224,7 @@ public final class Spellcraft {
         SpellBars.refresh(player);
     }
 
-    private static boolean store(ServerPlayer player, SpellcraftConfig config, ItemStack stack, List<SpellcraftItemData.Spell> spells,
+    private static boolean store(ServerPlayer player, SpellcraftConfig config, ItemStack stack, List<StoredSpell> spells,
                                  String refusal) {
         GlyphView view = EquippedSources.get(player).view(config, stack);
         SpellcraftRules.ItemCheck check = SpellcraftRules.checkEdit(config, stack, view, spells, SpellcraftRules.specOf(SpellCooldowns.tree(player)));

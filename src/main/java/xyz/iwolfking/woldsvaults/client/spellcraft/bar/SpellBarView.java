@@ -9,7 +9,11 @@ import net.minecraft.world.item.ItemStack;
 import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
 import xyz.iwolfking.woldsvaults.spellcraft.Spellcraft;
 import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
+import xyz.iwolfking.woldsvaults.spellcraft.item.GlyphLine;
+import xyz.iwolfking.woldsvaults.spellcraft.item.StoredSpell;
 import xyz.iwolfking.woldsvaults.spellcraft.spell.SpellModel;
+import xyz.iwolfking.woldsvaults.spellcraft.spell.GlyphState;
+import xyz.iwolfking.woldsvaults.spellcraft.spell.ReadMode;
 import xyz.iwolfking.woldsvaults.spellcraft.spell.SpellcraftRules;
 import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
 import xyz.iwolfking.woldsvaults.init.ModNetwork;
@@ -43,7 +47,7 @@ public final class SpellBarView {
      * One displayed slot; {@code spell} and {@code model} are set for spells. {@code itemKey}/{@code spellId} identify the
      * spell's item and spell; {@code sourceName} names the item.
      */
-    public record Slot(int index, State state, String group, String spellName, boolean unlearned, @Nullable SpellcraftItemData.Spell spell,
+    public record Slot(int index, State state, String group, String spellName, boolean unlearned, @Nullable StoredSpell spell,
                        @Nullable SpellModel model, List<String> groups, String itemKey, int spellId, String sourceName,
                        @Nullable InteractionHand hand, int prio, boolean locked, String lockReason, boolean implicit, List<String> shadowed) {
         public boolean filled() {
@@ -90,7 +94,7 @@ public final class SpellBarView {
             if (entry.kind() == ClientSpellBar.ABILITY) {
                 slots[i] = Slot.of(i, State.ABILITY, group, List.of(group), !learned(tree, group));
             } else if (entry.kind() == ClientSpellBar.SPELL) {
-                SpellcraftItemData.Spell spell = new SpellcraftItemData.Spell(entry.spellId(), entry.spellName(), entry.tokens(), i, entry.prio());
+                StoredSpell spell = new StoredSpell(entry.spellId(), entry.spellName(), entry.tokens(), i, entry.prio());
                 SpellModel model = config == null ? null : model(config, tree, entry);
                 InteractionHand hand = entry.hand() >= 0 && entry.hand() < InteractionHand.values().length ? InteractionHand.values()[entry.hand()] : null;
                 slots[i] = new Slot(i, State.SPELL, group, entry.spellName(), entry.groups().stream().anyMatch(g -> !learned(tree, g)), spell, model,
@@ -108,8 +112,8 @@ public final class SpellBarView {
      * glyph it did not find active for a reason the client can't see (sources, uses, budget).
      */
     private static SpellModel model(SpellcraftConfig config, AbilityTree tree, SpellBarSyncMessage.Entry entry) {
-        Map<GlyphType, SpellcraftItemData.Line> lines = new LinkedHashMap<>();
-        Map<Integer, SpellModel.State> forced = new HashMap<>();
+        Map<GlyphType, GlyphLine> lines = new LinkedHashMap<>();
+        Map<Integer, GlyphState> forced = new HashMap<>();
         for (SpellBarSyncMessage.Glyph glyph : entry.glyphs()) {
             if (glyph.token() < 0 || glyph.token() >= entry.tokens().size()) {
                 continue;
@@ -118,15 +122,15 @@ public final class SpellBarView {
             if (type == null) {
                 continue;
             }
-            lines.putIfAbsent(type, new SpellcraftItemData.Line(type, glyph.potency(), glyph.quality(), glyph.cost(), entry.tokens().size(), false,
+            lines.putIfAbsent(type, new GlyphLine(type, glyph.potency(), glyph.quality(), glyph.cost(), entry.tokens().size(), false,
                     entry.tokens().size()));
-            SpellModel.State state = glyph.stateEnum();
-            if (!glyph.dependent() && state != SpellModel.State.ACTIVE && state != SpellModel.State.DORMANT) {
+            GlyphState state = glyph.stateEnum();
+            if (!glyph.dependent() && state != GlyphState.ACTIVE && state != GlyphState.DORMANT) {
                 forced.put(glyph.token(), state);
             }
         }
         GlyphView view = GlyphView.of(config, "", "", new ArrayList<>(lines.values()), List.of());
-        return SpellModel.build(config, view, config.rules.maxGlyphsPerSpell, entry.tokens(), SpellcraftRules.specOf(tree), SpellModel.Mode.LENIENT,
+        return SpellModel.build(config, view, config.rules.maxGlyphsPerSpell, entry.tokens(), SpellcraftRules.specOf(tree), ReadMode.LENIENT,
                 forced, Map.of());
     }
 
@@ -150,7 +154,7 @@ public final class SpellBarView {
         return this.slots[index];
     }
 
-    public boolean isItem() {
+    public boolean isEffective() {
         return this.item;
     }
 

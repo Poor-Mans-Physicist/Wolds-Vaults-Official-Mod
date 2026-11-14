@@ -13,8 +13,11 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import xyz.iwolfking.woldsvaults.spellcraft.Spellcraft;
 import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
+import xyz.iwolfking.woldsvaults.spellcraft.item.GlyphLine;
+import xyz.iwolfking.woldsvaults.spellcraft.item.StoredSpell;
 import xyz.iwolfking.woldsvaults.spellcraft.roll.SpellcraftRoller;
 import xyz.iwolfking.woldsvaults.spellcraft.spell.SpellModel;
+import xyz.iwolfking.woldsvaults.spellcraft.spell.PlacedGlyph;
 import xyz.iwolfking.woldsvaults.spellcraft.spell.SpellcraftRules;
 import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
 import xyz.iwolfking.woldsvaults.spellcraft.play.SpellBars;
@@ -98,19 +101,19 @@ public final class SpellcraftCommand {
         line(source, "Arcana " + Math.round(check.arcana()) + "/" + SpellcraftItemData.budget(stack) + ", depth "
                 + SpellcraftItemData.depth(stack) + (check.budgetInactive() > 0 ? ", over budget: " + check.budgetInactive() + " glyphs inactive" : ""),
                 ChatFormatting.LIGHT_PURPLE);
-        for (SpellcraftItemData.Line line : SpellcraftItemData.lines(stack)) {
+        for (GlyphLine line : SpellcraftItemData.lines(stack)) {
             line(source, "  " + line.type().id() + "  potency " + String.format("%.3f", line.potency()) + "  cost " + line.cost()
                     + "  up to " + SpellModel.perSpellLimit(config, line) + " per spell" + (line.transferable() ? "  transferable" : ""),
                     ChatFormatting.GRAY);
         }
-        for (SpellcraftItemData.Spell spell : SpellcraftItemData.spells(stack)) {
+        for (StoredSpell spell : SpellcraftItemData.spells(stack)) {
             SpellModel model = check.models().get(spell.id());
             String slot = spell.assigned() ? "slot " + (spell.slot() + 1) : "off the bar";
             line(source, "  #" + spell.id() + " " + spell.name() + " [" + slot + ", priority " + SpellcraftRules.priority(config, spell) + "]: "
                     + String.join(" ", spell.tokens()) + "  (" + Math.round(model.arcana()) + " arcana, mana x" + String.format("%.2f", model.manaFactor())
                     + ", cd base x" + String.format("%.2f", model.cooldownBase()) + ", glyph haste x" + String.format("%.2f", model.glyphHaste()) + ", "
                     + model.casts() + " casts)", ChatFormatting.DARK_PURPLE);
-            for (SpellModel.Glyph glyph : model.glyphs()) {
+            for (PlacedGlyph glyph : model.glyphs()) {
                 if (!glyph.active()) {
                     line(source, "     token " + (glyph.token() + 1) + " " + glyph.type().id() + ": "
                             + glyph.state().name().toLowerCase(Locale.ROOT) + (glyph.dependent() ? " (rides on an inactive Bundled Spell)" : ""),
@@ -163,7 +166,7 @@ public final class SpellcraftCommand {
     private static int setPrio(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         ServerPlayer player = context.getSource().getPlayerOrException();
         int spellId = IntegerArgumentType.getInteger(context, "spell");
-        SpellcraftItemData.Spell spell = SpellcraftItemData.spell(player.getOffhandItem(), spellId).orElse(null);
+        StoredSpell spell = SpellcraftItemData.spell(player.getOffhandItem(), spellId).orElse(null);
         if (spell == null) {
             context.getSource().sendFailure(new TextComponent("No spell #" + spellId + " on the off-hand item"));
             return 0;

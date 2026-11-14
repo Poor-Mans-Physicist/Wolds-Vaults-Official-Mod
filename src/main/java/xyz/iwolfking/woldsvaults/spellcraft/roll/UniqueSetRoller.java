@@ -7,6 +7,8 @@ import net.minecraft.world.item.ItemStack;
 import xyz.iwolfking.woldsvaults.api.util.AncientUniqueHelper;
 import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
 import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
+import xyz.iwolfking.woldsvaults.spellcraft.item.GlyphLine;
+import xyz.iwolfking.woldsvaults.spellcraft.item.StoredSpell;
 import xyz.iwolfking.woldsvaults.spellcraft.spell.SpellModel;
 import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
 
@@ -40,7 +42,7 @@ public final class UniqueSetRoller implements SpellcraftRoller.UniqueSets {
     }
 
     /** What a set roll produces, before it is written. */
-    public record Rolled(int budget, int depth, List<SpellcraftItemData.Line> lines) {
+    public record Rolled(int budget, int depth, List<GlyphLine> lines) {
     }
 
     @Override
@@ -85,7 +87,7 @@ public final class UniqueSetRoller implements SpellcraftRoller.UniqueSets {
      */
     private static int deepestSpell(SpellcraftConfig config, ItemStack stack) {
         int deepest = 0;
-        for (SpellcraftItemData.Spell spell : SpellcraftItemData.spells(stack)) {
+        for (StoredSpell spell : SpellcraftItemData.spells(stack)) {
             int count = 0;
             for (String token : spell.tokens()) {
                 GlyphType type = GlyphType.byId(token);
@@ -143,9 +145,9 @@ public final class UniqueSetRoller implements SpellcraftRoller.UniqueSets {
     }
 
     /** The stored lines of a set roll, given the glyph types the item's own affixes already grant. */
-    public static List<SpellcraftItemData.Line> lines(SpellcraftConfig config, SpellcraftConfig.UniqueSet set, int level,
+    public static List<GlyphLine> lines(SpellcraftConfig config, SpellcraftConfig.UniqueSet set, int level,
                                                       Set<GlyphType> fromAffixes, Random random) {
-        List<SpellcraftItemData.Line> lines = new ArrayList<>();
+        List<GlyphLine> lines = new ArrayList<>();
         for (SpellcraftConfig.SetGlyph always : set.always) {
             GlyphType type = GlyphType.byId(always.glyph);
             if (type == null) {
@@ -158,8 +160,8 @@ public final class UniqueSetRoller implements SpellcraftRoller.UniqueSets {
                 errorOnce("affix:" + type.id(), "Spellcraft: a unique set's signature glyph " + type.id()
                         + " has no granting affix on the item; it is stored as a rolled line instead");
             }
-            SpellcraftItemData.Line rolled = SpellcraftRoller.rollLine(config, type, level, random);
-            lines.add(new SpellcraftItemData.Line(type, rolled.potency(), rolled.quality(), rolled.cost(),
+            GlyphLine rolled = SpellcraftRoller.rollLine(config, type, level, random);
+            lines.add(new GlyphLine(type, rolled.potency(), rolled.quality(), rolled.cost(),
                     always.uses != null ? always.uses : rolled.uses(), false, always.cap));
         }
         List<String> pool = new ArrayList<>(set.draw);

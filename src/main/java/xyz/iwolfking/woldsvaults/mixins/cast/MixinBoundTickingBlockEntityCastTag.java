@@ -7,7 +7,7 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import xyz.iwolfking.woldsvaults.api.cast.CastContext;
-import xyz.iwolfking.woldsvaults.spellcraft.hit.OwnHits;
+import xyz.iwolfking.woldsvaults.api.cast.CastCarrier;
 
 /** Runs the tick of a block entity a cast placed under that cast's context. */
 @Mixin(targets = "net.minecraft.world.level.chunk.LevelChunk$BoundTickingBlockEntity")
@@ -19,7 +19,7 @@ public class MixinBoundTickingBlockEntityCastTag {
 
     @WrapMethod(method = "tick")
     private void woldsvaults$tickUnderCast(Operation<Void> original) {
-        CastContext.runTask(CastContext.tagOrRestore(this.blockEntity), OwnHits.Carrier.BLOCK_ENTITY, () -> {
+        CastContext.runTask(CastContext.tagOrRestore(this.blockEntity), CastCarrier.BLOCK_ENTITY, () -> {
             original.call();
         });
     }

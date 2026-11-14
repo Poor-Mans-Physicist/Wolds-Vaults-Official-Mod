@@ -12,7 +12,8 @@ import net.minecraft.world.phys.Vec3;
 import xyz.iwolfking.woldsvaults.spellcraft.Spellcraft;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.CastModifiers;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.CastScope;
-import xyz.iwolfking.woldsvaults.spellcraft.hit.ShotgunHits;
+import xyz.iwolfking.woldsvaults.spellcraft.scope.CastBilling;
+import xyz.iwolfking.woldsvaults.spellcraft.scope.ShotgunShot;
 import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
 import xyz.iwolfking.woldsvaults.mixins.vaulthunters.accessors.ChargedBoltsAbilityInvoker;
 
@@ -38,7 +39,7 @@ public final class ChargedBoltPaths {
     }
 
     public static void cast(ChargedBoltsAbility ability, ServerPlayer player, CastModifiers modifiers, @Nullable String spec,
-                            @Nullable ShotgunHits.Shot shot) {
+                            @Nullable ShotgunShot shot) {
         SpellcraftConfig config = Spellcraft.config();
         ChargedBoltsAbilityInvoker invoker = (ChargedBoltsAbilityInvoker) ability;
         Vec3 look = player.getLookAngle().normalize();
@@ -67,7 +68,7 @@ public final class ChargedBoltPaths {
         final ServerPlayer player;
         final CastModifiers modifiers;
         @Nullable final String spec;
-        @Nullable final ShotgunHits.Shot shot;
+        @Nullable final ShotgunShot shot;
         final double speed;
         final boolean homing;
         final Map<Integer, Integer> hitCounts;
@@ -78,7 +79,7 @@ public final class ChargedBoltPaths {
         Vec3 direction;
         boolean active = true;
 
-        Bolt(ChargedBoltsAbility ability, ServerPlayer player, CastModifiers modifiers, @Nullable String spec, @Nullable ShotgunHits.Shot shot,
+        Bolt(ChargedBoltsAbility ability, ServerPlayer player, CastModifiers modifiers, @Nullable String spec, @Nullable ShotgunShot shot,
              Vec3 start, Vec3 direction, double speed, @Nullable LivingEntity preferred, boolean homing, Map<Integer, Integer> hitCounts) {
             this.ability = ability;
             this.player = player;
@@ -112,7 +113,7 @@ public final class ChargedBoltPaths {
             LivingEntity hit = findHit(previous, current);
             if (hit != null) {
                 this.active = false;
-                CastScope.call(this.player, this.modifiers, null, CastScope.Billing.free(true), this.spec, this.shot, () -> {
+                CastScope.call(this.player, this.modifiers, null, CastBilling.free(true), this.spec, this.shot, () -> {
                     ((ChargedBoltsAbilityInvoker) this.ability).woldsvaults$hitTarget(this.player, hit, this.hitCounts);
                     return null;
                 });

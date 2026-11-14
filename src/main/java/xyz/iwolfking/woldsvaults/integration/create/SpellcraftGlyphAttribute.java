@@ -5,6 +5,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
 import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
 import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
+import xyz.iwolfking.woldsvaults.spellcraft.item.GlyphLine;
 import xyz.iwolfking.woldsvaults.spellcraft.roll.SpellcraftRoller;
 
 import javax.annotation.Nullable;
@@ -49,7 +50,7 @@ public class SpellcraftGlyphAttribute implements ItemAttribute {
         if (!SpellcraftRoller.canCarry(stack) || !SpellcraftItemData.has(stack)) {
             return attributes;
         }
-        for (SpellcraftItemData.Line line : SpellcraftItemData.lines(stack)) {
+        for (GlyphLine line : SpellcraftItemData.lines(stack)) {
             attributes.add(new SpellcraftGlyphAttribute(line.type()));
         }
         return attributes;

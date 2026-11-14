@@ -2,6 +2,7 @@ package xyz.iwolfking.woldsvaults.spellcraft.source;
 
 import net.minecraft.world.item.ItemStack;
 import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
+import xyz.iwolfking.woldsvaults.spellcraft.item.GlyphLine;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,7 +24,7 @@ public final class GlyphLineProviders {
      * arcana). {@code auto}: it augments plain base-bar casts of the ability it is locked to; only unique glyphs may be auto
      * lines: converted affixes on gear without arcana, and etchings on any source.
      */
-    public record SourceLine(SpellcraftItemData.Line line, boolean transferable, boolean auto) {
+    public record SourceLine(GlyphLine line, boolean transferable, boolean auto) {
     }
 
     /** Adds the lines one item grants. {@code arcana} is true for an identified focus, wand or other arcana carrier. */
@@ -46,8 +47,8 @@ public final class GlyphLineProviders {
     }
 
     /** An arcana item's own lines as it would see them: every line any provider grants it. */
-    public static List<SpellcraftItemData.Line> own(ItemStack stack) {
-        List<SpellcraftItemData.Line> lines = new ArrayList<>();
+    public static List<GlyphLine> own(ItemStack stack) {
+        List<GlyphLine> lines = new ArrayList<>();
         of(stack, true).forEach(line -> lines.add(line.line()));
         return lines;
     }
@@ -56,7 +57,7 @@ public final class GlyphLineProviders {
         if (!arcana) {
             return;
         }
-        for (SpellcraftItemData.Line line : SpellcraftItemData.lines(stack)) {
+        for (GlyphLine line : SpellcraftItemData.lines(stack)) {
             out.add(new SourceLine(line, line.transferable(), false));
         }
     }

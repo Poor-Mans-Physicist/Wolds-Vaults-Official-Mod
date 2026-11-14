@@ -17,7 +17,7 @@ public abstract class MixinEntityRenderDispatcherGlyphScale {
 
     /** Draws a projectile resized by Size Up or Size Down at its augmented scale. */
     @WrapOperation(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/entity/EntityRenderer;render(Lnet/minecraft/world/entity/Entity;FFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V"))
-    private <E extends Entity> void woldsvaults$scaleAugmented(EntityRenderer<? super E> renderer, E entity, float yaw, float partialTicks,
+    private <E extends Entity> void woldsvaults$scaleGlyphed(EntityRenderer<? super E> renderer, E entity, float yaw, float partialTicks,
                                                                 PoseStack pose, MultiBufferSource buffers, int light, Operation<Void> original) {
         if (!(entity instanceof Projectile) || !entity.getPersistentData().contains(ProjectileGlyphTags.SCALE)) {
             original.call(renderer, entity, yaw, partialTicks, pose, buffers, light);

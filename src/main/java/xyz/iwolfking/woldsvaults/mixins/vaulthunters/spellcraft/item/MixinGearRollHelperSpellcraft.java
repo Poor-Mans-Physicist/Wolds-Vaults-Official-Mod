@@ -14,7 +14,7 @@ public abstract class MixinGearRollHelperSpellcraft {
 
     /** Rolls spellcraft implicits (arcana, glyph lines, depth) onto a wand or focus once it has been identified. */
     @Inject(method = "initializeGear(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/entity/player/Player;)V", at = @At("TAIL"))
-    private static void woldsvaults$rollAugments(ItemStack stack, Player player, CallbackInfo ci) {
+    private static void woldsvaults$rollSpellcraft(ItemStack stack, Player player, CallbackInfo ci) {
         if (player == null || !player.level.isClientSide) {
             SpellcraftRoller.rollIfMissing(stack, GearRollHelper.rand);
         }

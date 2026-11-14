@@ -22,7 +22,7 @@ import net.minecraft.network.chat.TextComponent;
 import net.minecraft.resources.ResourceLocation;
 import xyz.iwolfking.woldsvaults.WoldsVaults;
 import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
-import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
+import xyz.iwolfking.woldsvaults.spellcraft.item.StoredSpell;
 import xyz.iwolfking.woldsvaults.client.spellcraft.stats.GlyphRelevance;
 import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphStacking;
 import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
@@ -42,7 +42,7 @@ import iskallia.vault.util.TextUtil;
 import xyz.iwolfking.woldsvaults.spellcraft.gear.ConvertedEtchings;
 import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
 import com.mojang.blaze3d.platform.InputConstants;
-import xyz.iwolfking.woldsvaults.spellcraft.spell.SpellModel;
+import xyz.iwolfking.woldsvaults.spellcraft.spell.PlacedGlyph;
 import xyz.iwolfking.woldsvaults.client.spellcraft.keys.SpellBarKeys;
 
 /**
@@ -235,7 +235,7 @@ public final class SpellcraftGui {
     }
 
     /** The corner star of an augmented spell's cell. */
-    public static void augmentStar(PoseStack pose, int x, int y) {
+    public static void spellStar(PoseStack pose, int x, int y) {
         GuiComponent.fill(pose, x + 11, y, x + 16, y + 5, 0xFF2A1840);
         GuiComponent.fill(pose, x + 13, y, x + 14, y + 5, ARCANE_GLOW);
         GuiComponent.fill(pose, x + 11, y + 2, x + 16, y + 3, ARCANE_GLOW);
@@ -304,7 +304,7 @@ public final class SpellcraftGui {
 
     /** A line's potency in its table format (percent, seconds, blocks), labelled from the table. */
     /** Why a glyph does nothing right now, for tooltips; a dormant spell-wide glyph fits no step of the spell. */
-    public static String inactiveReason(@Nullable SpellcraftConfig config, SpellModel.Glyph glyph) {
+    public static String inactiveReason(@Nullable SpellcraftConfig config, PlacedGlyph glyph) {
         if (glyph.dependent()) {
             return tr("glyph_state.dependent");
         }
@@ -351,7 +351,7 @@ public final class SpellcraftGui {
 
     /** Replaces each {@code {name}} in a description template with the glyph's linked value of that name at the quality, as a whole percent. */
     private static String fillLinked(SpellcraftConfig config, GlyphType type, String template, float quality) {
-        SpellcraftConfig.Glyph glyph = config.glyph(type);
+        SpellcraftConfig.GlyphDefinition glyph = config.glyph(type);
         if (glyph.potency == null || glyph.potency.linked == null) {
             return template;
         }
@@ -417,7 +417,7 @@ public final class SpellcraftGui {
 
     /** The glyph's side effects that apply where {@code relevance} says, coloured as {@link #sideEffects}. */
     public static String sideEffects(SpellcraftConfig config, GlyphType type, float p, GlyphRelevance.Filter relevance) {
-        SpellcraftConfig.Glyph glyph = config.glyph(type);
+        SpellcraftConfig.GlyphDefinition glyph = config.glyph(type);
         List<String> parts = new ArrayList<>();
         List<SpellcraftConfig.Effect> effects = new ArrayList<>(glyph.step);
         effects.addAll(glyph.spell);
@@ -520,7 +520,7 @@ public final class SpellcraftGui {
     }
 
     /** The ability groups a spell casts (its tokens that are not glyphs), in order. */
-    public static List<String> groups(SpellcraftItemData.Spell spell) {
+    public static List<String> groups(StoredSpell spell) {
         List<String> groups = new ArrayList<>();
         for (String token : spell.tokens()) {
             if (GlyphType.byId(token) == null && !groups.contains(token)) {

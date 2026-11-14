@@ -20,6 +20,7 @@ import net.minecraft.world.phys.Vec3;
 import xyz.iwolfking.woldsvaults.spellcraft.ability.SpellAbility;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.CastModifiers;
 import xyz.iwolfking.woldsvaults.spellcraft.hit.ShotgunHits;
+import xyz.iwolfking.woldsvaults.spellcraft.scope.ShotgunShot;
 
 import javax.annotation.Nullable;
 
@@ -45,7 +46,7 @@ public final class RailBolts {
     }
 
     public static void widen(ServerPlayer player, SpellAbility glyph, CastModifiers modifiers, Vec3 aim, double extraRadius, double range,
-                             @Nullable ShotgunHits.Shot shot) {
+                             @Nullable ShotgunShot shot) {
         if (!(glyph.findAbility(player).orElse(null) instanceof ArcaneRailAbility rail)) {
             return;
         }

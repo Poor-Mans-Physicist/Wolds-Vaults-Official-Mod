@@ -38,43 +38,6 @@ public final class SpellcraftItemData {
     private SpellcraftItemData() {
     }
 
-    /**
-     * One rolled glyph line: its type, rolled potency, arcana cost per placement and how many placements it allows.
-     * {@code transferable} lines may be used by other arcana items; {@code cap}, when set, replaces the type's
-     * per-spell cap for this line's own item only.
-     */
-    public record Line(GlyphType type, float potency, float quality, int cost, int uses, boolean transferable, @Nullable Integer cap) {
-        public Line(GlyphType type, float potency, float quality, int cost, int uses) {
-            this(type, potency, quality, cost, uses, false, null);
-        }
-    }
-
-    /**
-     * One augmented spell: a per-item id (kept across edits), a name, its tokens, the bar slot it overlays
-     * ({@link #UNASSIGNED} for none) and its priority (0 for the table's default).
-     */
-    public record Spell(int id, String name, List<String> tokens, int slot, int prio) {
-        public Spell(int id, String name, List<String> tokens) {
-            this(id, name, tokens, UNASSIGNED, 0);
-        }
-
-        public String trigger() {
-            return this.tokens.isEmpty() ? "" : this.tokens.get(0);
-        }
-
-        public Spell withSlot(int slot) {
-            return new Spell(this.id, this.name, this.tokens, slot, this.prio);
-        }
-
-        public Spell withPrio(int prio) {
-            return new Spell(this.id, this.name, this.tokens, this.slot, prio);
-        }
-
-        public boolean assigned() {
-            return this.slot >= 0 && this.slot < SLOTS;
-        }
-    }
-
     /** Bumped on every spellcraft write on this side, so cached views and bars know an item changed. */
     public static int revision() {
         return revision;
@@ -119,39 +82,39 @@ public final class SpellcraftItemData {
         return root == null ? 0 : root.getInt("depth");
     }
 
-    public static List<Line> lines(ItemStack stack) {
+    public static List<GlyphLine> lines(ItemStack stack) {
         CompoundTag root = root(stack);
         if (root == null) {
             return List.of();
         }
-        List<Line> lines = new ArrayList<>();
+        List<GlyphLine> lines = new ArrayList<>();
         for (Tag tag : root.getList("lines", Tag.TAG_COMPOUND)) {
             CompoundTag line = (CompoundTag) tag;
             GlyphType type = GlyphType.byId(line.getString("g"));
             if (type != null) {
                 Integer cap = line.contains("cap", Tag.TAG_ANY_NUMERIC) ? (int) line.getByte("cap") : null;
-                lines.add(new Line(type, line.getFloat("p"), line.getFloat("q"), line.getInt("c"), line.getInt("u"), line.getBoolean("x"), cap));
+                lines.add(new GlyphLine(type, line.getFloat("p"), line.getFloat("q"), line.getInt("c"), line.getInt("u"), line.getBoolean("x"), cap));
             }
         }
         return Collections.unmodifiableList(lines);
     }
 
-    public static Optional<Line> line(ItemStack stack, GlyphType type) {
+    public static Optional<GlyphLine> line(ItemStack stack, GlyphType type) {
         return lines(stack).stream().filter(line -> line.type() == type).findFirst();
     }
 
-    public static List<Spell> spells(ItemStack stack) {
+    public static List<StoredSpell> spells(ItemStack stack) {
         CompoundTag root = root(stack);
         return root == null ? List.of() : Collections.unmodifiableList(readSpells(root));
     }
 
-    public static Optional<Spell> spell(ItemStack stack, int id) {
+    public static Optional<StoredSpell> spell(ItemStack stack, int id) {
         return spells(stack).stream().filter(spell -> spell.id() == id).findFirst();
     }
 
-    private static List<Spell> readSpells(CompoundTag root) {
+    private static List<StoredSpell> readSpells(CompoundTag root) {
         Map<Integer, Integer> legacySlots = root.contains(LEGACY_BAR, Tag.TAG_LIST) ? legacySlots(root) : Map.of();
-        List<Spell> spells = new ArrayList<>();
+        List<StoredSpell> spells = new ArrayList<>();
         for (Tag tag : root.getList("spells", Tag.TAG_COMPOUND)) {
             CompoundTag spell = (CompoundTag) tag;
             List<String> tokens = new ArrayList<>();
@@ -165,7 +128,7 @@ public final class SpellcraftItemData {
                         root.getLong("id"), slot);
                 slot = UNASSIGNED;
             }
-            spells.add(new Spell(id, spell.getString("name"), Collections.unmodifiableList(tokens), slot, spell.getByte("prio")));
+            spells.add(new StoredSpell(id, spell.getString("name"), Collections.unmodifiableList(tokens), slot, spell.getByte("prio")));
         }
         return spells;
     }
@@ -208,9 +171,9 @@ public final class SpellcraftItemData {
         return slots;
     }
 
-    private static void writeSpells(CompoundTag root, List<Spell> spells) {
+    private static void writeSpells(CompoundTag root, List<StoredSpell> spells) {
         ListTag list = new ListTag();
-        for (Spell spell : spells) {
+        for (StoredSpell spell : spells) {
             CompoundTag tag = new CompoundTag();
             tag.putInt("id", spell.id());
             tag.putString("name", spell.name());
@@ -225,9 +188,9 @@ public final class SpellcraftItemData {
         root.remove(LEGACY_BAR);
     }
 
-    private static ListTag writeLines(List<Line> lines) {
+    private static ListTag writeLines(List<GlyphLine> lines) {
         ListTag list = new ListTag();
-        for (Line line : lines) {
+        for (GlyphLine line : lines) {
             CompoundTag tag = new CompoundTag();
             tag.putString("g", line.type().id());
             tag.putFloat("p", line.potency());
@@ -246,7 +209,7 @@ public final class SpellcraftItemData {
     }
 
     /** Writes freshly rolled implicits and clears the spells. */
-    public static void writeImplicits(ItemStack stack, long id, int budget, int depth, List<Line> lines) {
+    public static void writeImplicits(ItemStack stack, long id, int budget, int depth, List<GlyphLine> lines) {
         CompoundTag root = rootForWrite(stack);
         root.putLong("id", id);
         root.putInt("budget", budget);
@@ -273,9 +236,9 @@ public final class SpellcraftItemData {
      * Replaces budget, depth and lines but keeps the item id and its spells (a converted unique keeps its spells; glyphs
      * the new lines can't back go inactive on their own).
      */
-    public static void replaceImplicits(ItemStack stack, int budget, int depth, List<Line> lines) {
+    public static void replaceImplicits(ItemStack stack, int budget, int depth, List<GlyphLine> lines) {
         CompoundTag root = rootForWrite(stack);
-        List<Spell> spells = readSpells(root);
+        List<StoredSpell> spells = readSpells(root);
         root.putInt("budget", budget);
         root.putInt("depth", depth);
         root.put("lines", writeLines(lines));
@@ -283,15 +246,15 @@ public final class SpellcraftItemData {
     }
 
     /** Replaces the spell with the same id, or adds it; a spell id of 0 gets the next free id. Returns the stored id. */
-    public static int putSpell(ItemStack stack, Spell spell) {
+    public static int putSpell(ItemStack stack, StoredSpell spell) {
         CompoundTag root = rootForWrite(stack);
         int id = spell.id();
         if (id <= 0) {
             id = Math.max(1, root.getInt("nextSpell"));
             root.putInt("nextSpell", id + 1);
         }
-        Spell stored = new Spell(id, spell.name(), spell.tokens(), spell.slot(), spell.prio());
-        List<Spell> spells = new ArrayList<>(readSpells(root));
+        StoredSpell stored = new StoredSpell(id, spell.name(), spell.tokens(), spell.slot(), spell.prio());
+        List<StoredSpell> spells = new ArrayList<>(readSpells(root));
         boolean replaced = false;
         for (int i = 0; i < spells.size(); i++) {
             if (spells.get(i).id() == id) {
@@ -308,7 +271,7 @@ public final class SpellcraftItemData {
 
     public static void removeSpell(ItemStack stack, int id) {
         CompoundTag root = rootForWrite(stack);
-        List<Spell> spells = new ArrayList<>(readSpells(root));
+        List<StoredSpell> spells = new ArrayList<>(readSpells(root));
         spells.removeIf(spell -> spell.id() == id);
         writeSpells(root, spells);
     }

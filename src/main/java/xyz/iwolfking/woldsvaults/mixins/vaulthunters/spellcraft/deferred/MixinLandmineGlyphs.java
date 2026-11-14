@@ -8,7 +8,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import xyz.iwolfking.woldsvaults.api.cast.CastContext;
 import xyz.iwolfking.woldsvaults.api.cast.CastTag;
-import xyz.iwolfking.woldsvaults.spellcraft.hit.OwnHits;
+import xyz.iwolfking.woldsvaults.api.cast.CastCarrier;
 
 /**
  * A landmine is triggered by whatever steps on it, outside its own tick. A mine a spell step placed triggers under that
@@ -19,12 +19,12 @@ public class MixinLandmineGlyphs {
 
     @WrapMethod(method = "trigger")
     private void woldsvaults$triggerUnderCast(LivingEntity entity, Operation<Void> original) {
-        CastContext.runTask(woldsvaults$spellTag(), OwnHits.Carrier.BLOCK_ENTITY, () -> original.call(entity));
+        CastContext.runTask(woldsvaults$spellTag(), CastCarrier.BLOCK_ENTITY, () -> original.call(entity));
     }
 
     @WrapMethod(method = "triggerChainReaction")
     private void woldsvaults$chainUnderCast(Operation<Void> original) {
-        CastContext.runTask(woldsvaults$spellTag(), OwnHits.Carrier.BLOCK_ENTITY, () -> original.call());
+        CastContext.runTask(woldsvaults$spellTag(), CastCarrier.BLOCK_ENTITY, () -> original.call());
     }
 
     @Unique

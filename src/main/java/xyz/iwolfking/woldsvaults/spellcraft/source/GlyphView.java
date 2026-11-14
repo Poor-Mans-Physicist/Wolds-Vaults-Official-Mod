@@ -1,7 +1,7 @@
 package xyz.iwolfking.woldsvaults.spellcraft.source;
 
 import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
-import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
+import xyz.iwolfking.woldsvaults.spellcraft.item.GlyphLine;
 import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
 
 import javax.annotation.Nullable;
@@ -29,13 +29,13 @@ public final class GlyphView {
     }
 
     /** The per-spell limit of an item's own line: its cap override when it has one, else the type's cap, within its uses. */
-    public static int ownLimit(SpellcraftConfig config, SpellcraftItemData.Line line) {
+    public static int ownLimit(SpellcraftConfig config, GlyphLine line) {
         int cap = line.cap() != null ? line.cap() : config.glyph(line.type()).capPerSpell;
         return Math.max(0, Math.min(cap, line.uses()));
     }
 
     /** The per-spell limit a borrowed line lends: never its own cap override, only the type's cap. */
-    public static int borrowedLimit(SpellcraftConfig config, SpellcraftItemData.Line line) {
+    public static int borrowedLimit(SpellcraftConfig config, GlyphLine line) {
         return Math.max(0, Math.min(config.glyph(line.type()).capPerSpell, line.uses()));
     }
 
@@ -43,10 +43,10 @@ public final class GlyphView {
      * Builds the view of the item {@code ownKey} from its own lines and the shared (transferable) candidates of every
      * equipped source; shared candidates from the item itself are skipped.
      */
-    public static GlyphView of(SpellcraftConfig config, String ownKey, String ownName, List<SpellcraftItemData.Line> own,
+    public static GlyphView of(SpellcraftConfig config, String ownKey, String ownName, List<GlyphLine> own,
                                List<GlyphCandidate> shared) {
         Map<GlyphType, List<Entry>> byType = new LinkedHashMap<>();
-        for (SpellcraftItemData.Line line : own) {
+        for (GlyphLine line : own) {
             byType.computeIfAbsent(line.type(), type -> new ArrayList<>()).add(new Entry(line, ownName, true, ownLimit(config, line)));
         }
         for (GlyphCandidate candidate : shared) {
@@ -66,7 +66,7 @@ public final class GlyphView {
         return of(config, "", "", List.of(), candidates);
     }
 
-    private record Entry(SpellcraftItemData.Line line, String source, boolean own, int limit) {
+    private record Entry(GlyphLine line, String source, boolean own, int limit) {
     }
 
     private static GlyphViewLine combine(GlyphType type, List<Entry> entries) {
@@ -85,7 +85,7 @@ public final class GlyphView {
                 uses.source(), potency.own(), uses.own(), transferable);
     }
 
-    private static boolean stronger(SpellcraftItemData.Line a, SpellcraftItemData.Line b) {
+    private static boolean stronger(GlyphLine a, GlyphLine b) {
         if (a.potency() != b.potency()) {
             return a.potency() > b.potency();
         }

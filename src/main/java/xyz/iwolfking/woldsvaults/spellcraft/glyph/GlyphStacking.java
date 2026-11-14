@@ -37,7 +37,7 @@ public final class GlyphStacking {
     }
 
     /** Whether this effect of a glyph of this class goes into the additive pool rather than multiplying. */
-    public static boolean pooled(SpellcraftConfig.Glyph glyph, SpellcraftConfig.Effect effect) {
+    public static boolean pooled(SpellcraftConfig.GlyphDefinition glyph, SpellcraftConfig.Effect effect) {
         return "common".equals(glyph.glyphClass) && "upside".equals(effect.role);
     }
 
@@ -98,7 +98,7 @@ public final class GlyphStacking {
         private final Map<String, Stat> stats = new LinkedHashMap<>();
 
         /** Adds every effect of one placed glyph copy at its rolled potency. */
-        public void add(SpellcraftConfig.Glyph glyph, List<SpellcraftConfig.Effect> effects, float potency) {
+        public void add(SpellcraftConfig.GlyphDefinition glyph, List<SpellcraftConfig.Effect> effects, float potency) {
             for (SpellcraftConfig.Effect effect : effects) {
                 float factor = effect.factor(potency);
                 Stat stat = this.stats.computeIfAbsent(effect.stat, Stat::new);

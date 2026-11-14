@@ -12,6 +12,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import xyz.iwolfking.woldsvaults.api.cast.CastContext;
 import xyz.iwolfking.woldsvaults.api.cast.CastTag;
 import xyz.iwolfking.woldsvaults.spellcraft.hit.OwnHits;
+import xyz.iwolfking.woldsvaults.api.cast.CastCarrier;
 
 import javax.annotation.Nullable;
 import java.util.Collections;
@@ -40,7 +41,7 @@ public final class DeferredReach {
     }
 
     /** A step's frozen glyphs and the carriers whose hit sources they reach here. */
-    public record Reach(DeferredGlyphs glyphs, Set<OwnHits.Carrier> carriers) {
+    public record Reach(DeferredGlyphs glyphs, Set<CastCarrier> carriers) {
     }
 
     /**
@@ -53,11 +54,11 @@ public final class DeferredReach {
             return null;
         }
         CastTag tag = CastContext.current();
-        OwnHits.Carrier carrier = CastContext.currentCarrier();
+        CastCarrier carrier = CastContext.currentCarrier();
         if (tag == null || carrier == null || tag.glyphs() == null || !tag.glyphs().isOwnedBy((ServerPlayer) owner)) {
             return null;
         }
-        Set<OwnHits.Carrier> reaches = carrier.reaches();
+        Set<CastCarrier> reaches = carrier.reaches();
         return reaches == null ? null : new Reach(tag.glyphs(), reaches);
     }
 
@@ -77,11 +78,11 @@ public final class DeferredReach {
         }
         CastTag dot = DOT_SOURCES.get(source);
         if (dot != null && dot.glyphs() != null && dot.glyphs().isOwnedBy(owner) && ActiveFlags.IS_DOT_ATTACKING.isSet()) {
-            return new Reach(dot.glyphs(), EnumSet.of(OwnHits.Carrier.DOT));
+            return new Reach(dot.glyphs(), EnumSet.of(CastCarrier.DOT));
         }
         if (attacker == owner && ActiveFlags.IS_NECROMANCY_MINION_ATTACKING.isSet()) {
             DeferredGlyphs minion = MINIONS.get(owner.getUUID());
-            return minion == null ? null : new Reach(minion, EnumSet.of(OwnHits.Carrier.MINION));
+            return minion == null ? null : new Reach(minion, EnumSet.of(CastCarrier.MINION));
         }
         Reach frame = current(owner);
         if (frame != null) {
@@ -89,7 +90,7 @@ public final class DeferredReach {
         }
         CastTag direct = CastContext.tagOf(source.getDirectEntity());
         if (direct != null && direct.glyphs() != null && direct.glyphs().isOwnedBy(owner)) {
-            return new Reach(direct.glyphs(), OwnHits.Carrier.ENTITY.reaches());
+            return new Reach(direct.glyphs(), CastCarrier.ENTITY.reaches());
         }
         return null;
     }

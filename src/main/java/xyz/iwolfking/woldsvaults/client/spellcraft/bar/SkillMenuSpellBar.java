@@ -17,7 +17,7 @@ import xyz.iwolfking.woldsvaults.client.spellcraft.keys.SpellKeysScreen;
 public final class SkillMenuSpellBar implements SpellBarStrip.Host {
     @Nullable
     private static SkillMenuSpellBar current;
-    private static boolean showItem = true;
+    private static boolean showEffective = true;
 
     private final AbilitiesElementContainerScreen screen;
     private final Supplier<String> selectedSpec;
@@ -25,14 +25,14 @@ public final class SkillMenuSpellBar implements SpellBarStrip.Host {
     private final SpellBarStrip strip;
     private SpellBarView defaultView;
     @Nullable
-    private SpellBarView itemView;
+    private SpellBarView effectiveView;
     private boolean renderingTree;
 
     private SkillMenuSpellBar(AbilitiesElementContainerScreen screen, Supplier<String> selectedSpec, Supplier<Float> treeZoom) {
         this.screen = screen;
         this.selectedSpec = selectedSpec;
         this.treeZoom = treeZoom;
-        this.strip = new SpellBarStrip(this, showItem);
+        this.strip = new SpellBarStrip(this, showEffective);
     }
 
     /**
@@ -61,11 +61,11 @@ public final class SkillMenuSpellBar implements SpellBarStrip.Host {
     public void beginFrame() {
         AbilityTree tree = tree();
         this.defaultView = SpellBarView.ofDefaults(tree);
-        this.itemView = SpellBarView.ofSynced(tree);
+        this.effectiveView = SpellBarView.ofSynced(tree);
         int h = this.screen.height;
         this.strip.layout(21, h - 21 - SpellBarStrip.HEIGHT, this.screen.width - 21);
         this.strip.view();
-        showItem = this.strip.prefersItem();
+        showEffective = this.strip.prefersEffective();
         this.renderingTree = true;
     }
 
@@ -100,8 +100,8 @@ public final class SkillMenuSpellBar implements SpellBarStrip.Host {
 
     @Nullable
     @Override
-    public SpellBarView itemView() {
-        return this.itemView;
+    public SpellBarView effectiveView() {
+        return this.effectiveView;
     }
 
     @Nullable

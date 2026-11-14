@@ -5,7 +5,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.network.NetworkEvent;
 import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
-import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
+import xyz.iwolfking.woldsvaults.spellcraft.item.GlyphLine;
 import xyz.iwolfking.woldsvaults.client.spellcraft.state.ClientGlyphViews;
 import xyz.iwolfking.woldsvaults.spellcraft.source.GlyphCandidate;
 
@@ -38,7 +38,7 @@ public record GlyphViewSyncMessage(List<GlyphCandidate> shared, List<GlyphCandid
     private static void write(FriendlyByteBuf buffer, List<GlyphCandidate> candidates) {
         buffer.writeVarInt(candidates.size());
         for (GlyphCandidate candidate : candidates) {
-            SpellcraftItemData.Line line = candidate.line();
+            GlyphLine line = candidate.line();
             buffer.writeUtf(line.type().id());
             buffer.writeFloat(line.potency());
             buffer.writeFloat(line.quality());
@@ -66,7 +66,7 @@ public record GlyphViewSyncMessage(List<GlyphCandidate> shared, List<GlyphCandid
             String name = buffer.readUtf();
             GlyphType type = GlyphType.byId(id);
             if (type != null) {
-                candidates.add(new GlyphCandidate(new SpellcraftItemData.Line(type, potency, quality, cost, uses, transferable,
+                candidates.add(new GlyphCandidate(new GlyphLine(type, potency, quality, cost, uses, transferable,
                         cap == 0 ? null : cap - 1), key, name));
             }
         }

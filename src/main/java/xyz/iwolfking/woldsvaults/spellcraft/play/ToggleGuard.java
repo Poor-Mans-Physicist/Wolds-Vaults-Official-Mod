@@ -12,6 +12,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import xyz.iwolfking.woldsvaults.WoldsVaults;
 import xyz.iwolfking.woldsvaults.spellcraft.spell.SpellModel;
+import xyz.iwolfking.woldsvaults.spellcraft.spell.PlacedGlyph;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -94,13 +95,13 @@ public final class ToggleGuard {
             return "-";
         }
         EffectiveBar.Slot slot = bar.slot(index);
-        StringBuilder out = new StringBuilder().append(index).append('|').append(slot.key());
+        StringBuilder out = new StringBuilder().append(index).append('|').append(slot.occupantKey());
         if (slot.spell() != null) {
             out.append('|').append(String.join(",", slot.spell().tokens()));
         }
         SpellModel model = slot.model();
         if (model != null) {
-            for (SpellModel.Glyph glyph : model.glyphs()) {
+            for (PlacedGlyph glyph : model.glyphs()) {
                 out.append('|').append(glyph.token()).append(':').append(glyph.type().id()).append(':')
                         .append(String.format(Locale.ROOT, "%.4f", glyph.potency())).append(':').append(glyph.state());
             }

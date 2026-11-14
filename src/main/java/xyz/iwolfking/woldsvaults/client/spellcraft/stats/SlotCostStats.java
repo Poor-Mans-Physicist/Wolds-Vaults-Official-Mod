@@ -87,8 +87,8 @@ public final class SlotCostStats {
             }
         }
         int plain = chain(config, tree, model.groups());
-        int augmented = spellCooldown(config, tree, model.groups(), model.cooldownBase(), model.glyphHaste());
-        return new Numbers(mana, mana < 0.0F ? mana : mana * model.manaFactor(), plain, augmented);
+        int glyphed = spellCooldown(config, tree, model.groups(), model.cooldownBase(), model.glyphHaste());
+        return new Numbers(mana, mana < 0.0F ? mana : mana * model.manaFactor(), plain, glyphed);
     }
 
     private static int chain(SpellcraftConfig config, AbilityTree tree, Collection<String> groups) {

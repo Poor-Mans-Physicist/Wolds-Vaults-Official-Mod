@@ -8,7 +8,6 @@ import net.minecraft.world.entity.player.Player;
 import javax.annotation.Nullable;
 import java.util.UUID;
 import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
-import xyz.iwolfking.woldsvaults.spellcraft.hit.ShotgunHits;
 
 /**
  * The glyph state of one spell step, frozen when the step's cast opens: whose cast it is, the ability spec, the step's
@@ -17,7 +16,7 @@ import xyz.iwolfking.woldsvaults.spellcraft.hit.ShotgunHits;
  * tag onto everything the cast leaves behind (scheduled work, entities, block entities, minions), so what the ability
  * does later still gets the step's glyphs.
  */
-public record DeferredGlyphs(UUID owner, String spec, CastModifiers modifiers, @Nullable ShotgunHits.Shot shot) {
+public record DeferredGlyphs(UUID owner, String spec, CastModifiers modifiers, @Nullable ShotgunShot shot) {
     private static final String OWNER = "owner";
     private static final String SPEC = "spec";
     private static final String SHOT_GROUP = "shot_group";
@@ -85,7 +84,7 @@ public record DeferredGlyphs(UUID owner, String spec, CastModifiers modifiers, @
         CastModifiers modifiers = new CastModifiers(v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7], v[8], v[9], v[10], v[11], v[12],
                 v[13], tag.getInt("shotgun_copies"), v[14], v[15],
                 tag.contains(GRANTS, Tag.TAG_COMPOUND) ? GlyphGrants.read(tag.getCompound(GRANTS)) : GlyphGrants.NONE);
-        ShotgunHits.Shot shot = tag.contains(SHOT_GROUP) ? new ShotgunHits.Shot(tag.getLong(SHOT_GROUP), tag.getInt(SHOT_MEMBER)) : null;
+        ShotgunShot shot = tag.contains(SHOT_GROUP) ? new ShotgunShot(tag.getLong(SHOT_GROUP), tag.getInt(SHOT_MEMBER)) : null;
         return new DeferredGlyphs(tag.getUUID(OWNER), tag.getString(SPEC), modifiers, shot);
     }
 }

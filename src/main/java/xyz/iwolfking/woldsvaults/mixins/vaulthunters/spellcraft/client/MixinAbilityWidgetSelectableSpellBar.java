@@ -49,7 +49,7 @@ public class MixinAbilityWidgetSelectableSpellBar {
         poseStack.pushPose();
         poseStack.translate(widget.x + widget.getWidth() / 2.0F - 2.0F, widget.y + widget.getHeight() / 2.0F - 2.0F, 3.0);
         SpellcraftGui.smallText(poseStack, font, text, -width, -8.0F * TAG_SCALE,
-                menu.shown().isItem() ? SpellcraftGui.ARCANE_GLOW : SpellcraftGui.GOLD, TAG_SCALE);
+                menu.shown().isEffective() ? SpellcraftGui.ARCANE_GLOW : SpellcraftGui.GOLD, TAG_SCALE);
         poseStack.popPose();
         RenderSystem.enableDepthTest();
     }

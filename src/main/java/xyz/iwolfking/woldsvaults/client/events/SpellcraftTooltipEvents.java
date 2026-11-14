@@ -32,6 +32,8 @@ import xyz.iwolfking.woldsvaults.WoldsVaults;
 import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
 import xyz.iwolfking.woldsvaults.spellcraft.Spellcraft;
 import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
+import xyz.iwolfking.woldsvaults.spellcraft.item.GlyphLine;
+import xyz.iwolfking.woldsvaults.spellcraft.item.StoredSpell;
 import xyz.iwolfking.woldsvaults.spellcraft.roll.SpellcraftRoller;
 import xyz.iwolfking.woldsvaults.spellcraft.spell.SpellModel;
 import xyz.iwolfking.woldsvaults.spellcraft.spell.SpellcraftRules;
@@ -137,8 +139,8 @@ public class SpellcraftTooltipEvents {
         AbilityTree tree = ClientAbilityData.getTree();
         Function<String, String> specOf = SpellcraftRules.specOf(tree);
         SpellcraftRules.ItemCheck check = SpellcraftRules.check(config, stack, ClientGlyphViews.view(config, stack), specOf);
-        List<SpellcraftItemData.Line> lines = SpellcraftItemData.lines(stack);
-        List<SpellcraftItemData.Spell> spells = SpellcraftItemData.spells(stack);
+        List<GlyphLine> lines = SpellcraftItemData.lines(stack);
+        List<StoredSpell> spells = SpellcraftItemData.spells(stack);
         int budget = SpellcraftItemData.budget(stack);
         int depth = SpellcraftItemData.depth(stack);
         block.add(Either.left(TextComponent.EMPTY));
@@ -146,7 +148,7 @@ public class SpellcraftTooltipEvents {
                 Math.round(check.arcana()) + "/" + budget, "", List.of(), List.of(), SpellcraftGui.ARCANE_GLOW, false, check.arcana(), budget, width)));
         if (!Screen.hasAltDown()) {
             List<SpellcraftTooltipRow.Rune> runes = new ArrayList<>();
-            for (SpellcraftItemData.Line line : lines) {
+            for (GlyphLine line : lines) {
                 runes.add(new SpellcraftTooltipRow.Rune(line.type(), false));
             }
             block.add(Either.right(new SpellcraftTooltipRow(SpellcraftTooltipRow.Kind.RUNES, SpellcraftGui.tr("tooltip.depth", depth), "", "",
@@ -160,7 +162,7 @@ public class SpellcraftTooltipEvents {
         } else {
             block.add(Either.left(colored(SpellcraftGui.tr("tooltip.legend", depth), SpellcraftGui.DARK)));
             block.add(Either.left(colored(SpellcraftGui.tr("tooltip.glyphs"), SpellcraftGui.WHITE)));
-            for (SpellcraftItemData.Line line : lines) {
+            for (GlyphLine line : lines) {
                 int left = SpellModel.perSpellLimit(config, line);
                 block.add(Either.right(new SpellcraftTooltipRow(SpellcraftTooltipRow.Kind.GLYPH, line.type().displayName(),
                         "x" + left, SpellcraftGui.potency(config, line.type(), line.potency()),
@@ -172,7 +174,7 @@ public class SpellcraftTooltipEvents {
                 }
             }
             block.add(Either.left(colored(SpellcraftGui.tr("tooltip.spells_header"), SpellcraftGui.WHITE)));
-            for (SpellcraftItemData.Spell spell : spells) {
+            for (StoredSpell spell : spells) {
                 SpellModel model = check.models().get(spell.id());
                 String trigger = spell.trigger();
                 String spec = specOf.apply(trigger);

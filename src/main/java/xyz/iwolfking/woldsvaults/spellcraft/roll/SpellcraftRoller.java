@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Random;
 import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
 import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
+import xyz.iwolfking.woldsvaults.spellcraft.item.GlyphLine;
 
 /**
  * Rolls a focus's or wand's spellcraft implicits when it is identified: arcana from item level and rarity, glyph lines
@@ -112,12 +113,12 @@ public final class SpellcraftRoller {
         }
         List<GlyphType> pool = new ArrayList<>();
         for (GlyphType type : GlyphType.values()) {
-            SpellcraftConfig.Glyph glyph = config.glyph(type);
+            SpellcraftConfig.GlyphDefinition glyph = config.glyph(type);
             if (glyph.minLevel <= level && glyph.weight > 0 && SpellcraftConfig.potencyTier(glyph, level) != null) {
                 pool.add(type);
             }
         }
-        List<SpellcraftItemData.Line> lines = new ArrayList<>();
+        List<GlyphLine> lines = new ArrayList<>();
         for (int i = 0; i < lineCount && !pool.isEmpty(); i++) {
             GlyphType type = draw(config, pool, random);
             pool.remove(type);
@@ -159,8 +160,8 @@ public final class SpellcraftRoller {
      * follows the quality plus noise, and uses from the glyph's weights. A level below every tier rolls in the lowest
      * tier (unique sets grant their glyphs whatever the level).
      */
-    public static SpellcraftItemData.Line rollLine(SpellcraftConfig config, GlyphType type, int level, Random random) {
-        SpellcraftConfig.Glyph glyph = config.glyph(type);
+    public static GlyphLine rollLine(SpellcraftConfig config, GlyphType type, int level, Random random) {
+        SpellcraftConfig.GlyphDefinition glyph = config.glyph(type);
         SpellcraftConfig.PotencyTier tier = SpellcraftConfig.potencyTier(glyph, level);
         if (tier == null) {
             tier = lowestTier(glyph);
@@ -172,10 +173,10 @@ public final class SpellcraftRoller {
             cost += noise(config, random);
         }
         int uses = 1 + weighted(glyph.useWeights, random);
-        return new SpellcraftItemData.Line(type, potency, quality, Math.max(1, cost), uses);
+        return new GlyphLine(type, potency, quality, Math.max(1, cost), uses);
     }
 
-    private static SpellcraftConfig.PotencyTier lowestTier(SpellcraftConfig.Glyph glyph) {
+    private static SpellcraftConfig.PotencyTier lowestTier(SpellcraftConfig.GlyphDefinition glyph) {
         SpellcraftConfig.PotencyTier lowest = glyph.potency.tiers.get(0);
         for (SpellcraftConfig.PotencyTier tier : glyph.potency.tiers) {
             if (tier.minLevel < lowest.minLevel) {

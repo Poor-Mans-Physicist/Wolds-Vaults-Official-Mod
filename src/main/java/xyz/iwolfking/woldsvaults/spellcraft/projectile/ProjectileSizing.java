@@ -18,7 +18,7 @@ import xyz.iwolfking.woldsvaults.api.cast.CastContext;
 import xyz.iwolfking.woldsvaults.init.ModNetwork;
 import xyz.iwolfking.woldsvaults.mixins.accessors.AccessorProjectile;
 import xyz.iwolfking.woldsvaults.network.packets.ProjectileScaleMessage;
-import xyz.iwolfking.woldsvaults.spellcraft.hit.OwnHits;
+import xyz.iwolfking.woldsvaults.api.cast.CastCarrier;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.ProjectileGlyphTags;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.TickingEntity;
 
@@ -120,7 +120,7 @@ public final class ProjectileSizing {
             if (!ForgeEventFactory.onProjectileImpact(projectile, hit)) {
                 TickingEntity.push(projectile);
                 try {
-                    CastContext.runTask(CastContext.tagOf(projectile), OwnHits.Carrier.ENTITY, () -> access.woldsvaults$onHit(hit));
+                    CastContext.runTask(CastContext.tagOf(projectile), CastCarrier.ENTITY, () -> access.woldsvaults$onHit(hit));
                 } finally {
                     TickingEntity.pop();
                 }

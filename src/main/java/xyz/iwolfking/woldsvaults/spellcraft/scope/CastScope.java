@@ -1,9 +1,7 @@
 package xyz.iwolfking.woldsvaults.spellcraft.scope;
 
 import net.minecraft.server.level.ServerPlayer;
-import xyz.iwolfking.woldsvaults.spellcraft.bar.EffectiveBar;
 import xyz.iwolfking.woldsvaults.spellcraft.ability.CastOrigin;
-import xyz.iwolfking.woldsvaults.spellcraft.hit.ShotgunHits;
 
 import javax.annotation.Nullable;
 import java.util.Optional;
@@ -22,31 +20,8 @@ public final class CastScope {
     private CastScope() {
     }
 
-    /**
-     * How mana and cooldown are charged inside a slot cast. The trigger step charges the whole slot (the mana of every
-     * ability in the spell times the spell's mana factor, and the slot cooldown); every other step is free, since the
-     * slot already paid. {@code suppressCastEvent} keeps a step from firing on-cast effects (Shotgun copies).
-     * {@code fullyCharged}: the slot was cast with Charge held to full.
-     */
-    public record Billing(Mode mode, @Nullable String triggerSpec, float otherAbilitiesMana, float manaFactor,
-                          @Nullable EffectiveBar.Slot slot, boolean suppressCastEvent, boolean fullyCharged) {
-        public static Billing trigger(String triggerSpec, float otherAbilitiesMana, float manaFactor, EffectiveBar.Slot slot,
-                                      boolean fullyCharged) {
-            return new Billing(Mode.TRIGGER, triggerSpec, otherAbilitiesMana, manaFactor, slot, false, fullyCharged);
-        }
-
-        public static Billing free(boolean suppressCastEvent) {
-            return new Billing(Mode.FREE, null, 0.0F, 1.0F, null, suppressCastEvent, false);
-        }
-    }
-
-    public enum Mode {
-        TRIGGER,
-        FREE
-    }
-
-    public static <T> T call(ServerPlayer player, CastModifiers modifiers, @Nullable CastOrigin origin, @Nullable Billing billing,
-                             @Nullable String spec, @Nullable ShotgunHits.Shot shot, Supplier<T> action) {
+    public static <T> T call(ServerPlayer player, CastModifiers modifiers, @Nullable CastOrigin origin, @Nullable CastBilling billing,
+                             @Nullable String spec, @Nullable ShotgunShot shot, Supplier<T> action) {
         Active outer = current;
         current = new Active(player, modifiers, origin, billing, spec, shot);
         try {
@@ -62,11 +37,11 @@ public final class CastScope {
 
     /** The billing of the scope open for this player, or null outside a slot cast. */
     @Nullable
-    public static Billing billing(ServerPlayer player) {
+    public static CastBilling billing(ServerPlayer player) {
         return current != null && current.player() == player ? current.billing() : null;
     }
 
-    public record Active(ServerPlayer player, CastModifiers modifiers, @Nullable CastOrigin origin, @Nullable Billing billing,
-                         @Nullable String spec, @Nullable ShotgunHits.Shot shot) {
+    public record Active(ServerPlayer player, CastModifiers modifiers, @Nullable CastOrigin origin, @Nullable CastBilling billing,
+                         @Nullable String spec, @Nullable ShotgunShot shot) {
     }
 }

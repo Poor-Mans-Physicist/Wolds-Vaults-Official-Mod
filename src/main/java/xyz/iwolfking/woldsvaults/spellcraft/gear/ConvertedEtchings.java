@@ -25,7 +25,7 @@ import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
 import xyz.iwolfking.woldsvaults.spellcraft.Spellcraft;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.CastScope;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.DeferredReach;
-import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
+import xyz.iwolfking.woldsvaults.spellcraft.item.GlyphLine;
 import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
 import xyz.iwolfking.woldsvaults.spellcraft.source.GlyphLineProviders;
 import xyz.iwolfking.woldsvaults.spellcraft.source.EquippedSources;
@@ -194,7 +194,7 @@ public final class ConvertedEtchings {
                 continue;
             }
             for (VaultGearAttributeInstance<?> instance : data.getModifiers(attribute, VaultGearData.Type.ALL)) {
-                SpellcraftItemData.Line line = line(current.config(), entry, instance.getValue());
+                GlyphLine line = line(current.config(), entry, instance.getValue());
                 if (line != null) {
                     out.add(new GlyphLineProviders.SourceLine(line, true, true));
                 }
@@ -203,7 +203,7 @@ public final class ConvertedEtchings {
     }
 
     @Nullable
-    private static SpellcraftItemData.Line line(SpellcraftConfig config, Entry entry, Object value) {
+    private static GlyphLine line(SpellcraftConfig config, Entry entry, Object value) {
         List<Object> components = components(value);
         List<SpellcraftConfig.EtchingPart> parts = entry.config().parts;
         if (components.size() != parts.size()) {
@@ -211,7 +211,7 @@ public final class ConvertedEtchings {
                     + " parts but its glyph entry reads " + parts.size() + "; it grants nothing");
             return null;
         }
-        SpellcraftConfig.Glyph glyph = config.glyph(entry.type());
+        SpellcraftConfig.GlyphDefinition glyph = config.glyph(entry.type());
         Float potency = null;
         Float quality = null;
         for (int i = 0; i < parts.size(); i++) {
@@ -261,11 +261,11 @@ public final class ConvertedEtchings {
         if (potency == null) {
             return null;
         }
-        return new SpellcraftItemData.Line(entry.type(), potency, quality != null ? quality : tierQuality(glyph, potency), glyph.costMin, 1, false, null);
+        return new GlyphLine(entry.type(), potency, quality != null ? quality : tierQuality(glyph, potency), glyph.costMin, 1, false, null);
     }
 
     @Nullable
-    private static SpellcraftItemData.Line mismatch(Entry entry, int index, Object component) {
+    private static GlyphLine mismatch(Entry entry, int index, Object component) {
         reportOnce("part:" + entry.config().attribute + ":" + index, "Spellcraft: etching " + entry.config().attribute + " part " + index + " is "
                 + (component == null ? "missing" : component.getClass().getSimpleName()) + ", which its glyph entry cannot read; it grants nothing");
         return null;
@@ -281,7 +281,7 @@ public final class ConvertedEtchings {
         return Collections.singletonList(value);
     }
 
-    private static float tierQuality(SpellcraftConfig.Glyph glyph, float potency) {
+    private static float tierQuality(SpellcraftConfig.GlyphDefinition glyph, float potency) {
         SpellcraftConfig.PotencyTier top = null;
         for (SpellcraftConfig.PotencyTier tier : glyph.potency.tiers) {
             if (top == null || tier.minLevel > top.minLevel) {
@@ -367,7 +367,7 @@ public final class ConvertedEtchings {
     @Nullable
     private static GlyphGrants.Grant lingering(ServerPlayer player, Entry entry, SpellcraftConfig config, @Nullable CastScope.Active scope) {
         GlyphType type = entry.type();
-        SpellcraftConfig.Glyph glyph = config.glyph(type);
+        SpellcraftConfig.GlyphDefinition glyph = config.glyph(type);
         if (glyph == null || glyph.specs == null || glyph.specs.size() != 1) {
             reportOnce("lingering_spec:" + type.id(), "Spellcraft: lingering etching glyph " + type.id()
                     + " is not locked to exactly one ability; it reads the gear auto line");

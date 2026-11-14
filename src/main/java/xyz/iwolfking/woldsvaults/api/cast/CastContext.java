@@ -18,7 +18,6 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import xyz.iwolfking.woldsvaults.WoldsVaults;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.DeferredGlyphs;
-import xyz.iwolfking.woldsvaults.spellcraft.hit.OwnHits;
 
 import javax.annotation.Nullable;
 import java.util.ArrayDeque;
@@ -51,7 +50,7 @@ public final class CastContext {
     private CastContext() {
     }
 
-    private record Frame(CastTag tag, OwnHits.Carrier carrier) {
+    private record Frame(CastTag tag, CastCarrier carrier) {
     }
 
     @Nullable
@@ -62,16 +61,16 @@ public final class CastContext {
 
     /** What delivers the current cast's effects right now; null outside any cast. */
     @Nullable
-    public static OwnHits.Carrier currentCarrier() {
+    public static CastCarrier currentCarrier() {
         Frame frame = STACK.get().peek();
         return frame == null ? null : frame.carrier();
     }
 
     public static void push(CastTag tag) {
-        push(tag, OwnHits.Carrier.CAST);
+        push(tag, CastCarrier.CAST);
     }
 
-    public static void push(CastTag tag, OwnHits.Carrier carrier) {
+    public static void push(CastTag tag, CastCarrier carrier) {
         STACK.get().push(new Frame(tag, carrier));
     }
 
@@ -88,11 +87,11 @@ public final class CastContext {
 
     /** Runs {@code action} with {@code tag} as the current cast. A null tag runs it unchanged. */
     public static <T> T run(@Nullable CastTag tag, Supplier<T> action) {
-        return run(tag, OwnHits.Carrier.CAST, action);
+        return run(tag, CastCarrier.CAST, action);
     }
 
     /** Runs {@code action} with {@code tag} as the current cast, delivered by {@code carrier}. A null tag runs it unchanged. */
-    public static <T> T run(@Nullable CastTag tag, OwnHits.Carrier carrier, Supplier<T> action) {
+    public static <T> T run(@Nullable CastTag tag, CastCarrier carrier, Supplier<T> action) {
         if (tag == null) {
             return action.get();
         }
@@ -105,10 +104,10 @@ public final class CastContext {
     }
 
     public static void runTask(@Nullable CastTag tag, Runnable action) {
-        runTask(tag, OwnHits.Carrier.CAST, action);
+        runTask(tag, CastCarrier.CAST, action);
     }
 
-    public static void runTask(@Nullable CastTag tag, OwnHits.Carrier carrier, Runnable action) {
+    public static void runTask(@Nullable CastTag tag, CastCarrier carrier, Runnable action) {
         run(tag, carrier, () -> {
             action.run();
             return null;
@@ -121,7 +120,7 @@ public final class CastContext {
         if (tag == null) {
             return task;
         }
-        return () -> runTask(tag, OwnHits.Carrier.SCHEDULED, task);
+        return () -> runTask(tag, CastCarrier.SCHEDULED, task);
     }
 
     @Nullable
