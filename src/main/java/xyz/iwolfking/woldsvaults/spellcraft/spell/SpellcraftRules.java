@@ -1,10 +1,10 @@
 package xyz.iwolfking.woldsvaults.spellcraft.spell;
 
 import net.minecraft.world.item.ItemStack;
+import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
 import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
 import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
 import xyz.iwolfking.woldsvaults.spellcraft.item.StoredSpell;
-import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
 import xyz.iwolfking.woldsvaults.spellcraft.source.GlyphView;
 
 import javax.annotation.Nullable;
@@ -18,11 +18,11 @@ import java.util.Map;
 import java.util.function.Function;
 
 /**
- * Item-wide spellcraft rules. Every spell on a focus or wand is read against the item's glyph view; together the
- * active glyphs must fit the item's arcana budget, so when they don't (a pricier line arrived, a source came back) the
- * budget pass greys glyphs one at a time from the end (newest spell first, last token first), recomputing every cost
- * after each step, until they fit. Editing adds the table's limits on spell count, names and slots, refuses new glyphs
- * the view can't back, and refuses an edit that would grey more glyphs than the item had greyed before it.
+ * Item-wide spellcraft rules. Every spell on a focus or wand is read against the item's glyph view; together the active
+ * glyphs must fit the item's arcana budget, so when they don't (a pricier line arrived, a source came back) the budget
+ * pass greys glyphs one at a time from the end (newest spell first, last token first), recomputing every cost after
+ * each step, until they fit. Editing adds the table's limits on spell count, names and slots, refuses new glyphs the
+ * view can't back, and refuses an edit that would grey more glyphs than the item had greyed before it.
  */
 public final class SpellcraftRules {
     private SpellcraftRules() {
@@ -51,9 +51,9 @@ public final class SpellcraftRules {
     }
 
     /**
-     * Checks spells against an item's budget, depth and view. {@code saved} gives, per spell id, the glyph copies the
-     * stored spell already holds (used by {@link ReadMode#STRICT_NEW}). In the lenient mode only spell structure
-     * is an error; the editing modes add the item's limits.
+     * Checks spells against an item's budget, depth and view. In the lenient mode only spell structure is an error,
+     * while the editing modes add the item's limits and use {@code saved}, the glyph copies each stored spell already
+     * holds, by spell id.
      */
     public static ItemCheck check(SpellcraftConfig config, int budget, int depth, GlyphView view, List<StoredSpell> spells,
                                   Function<String, String> specOf, ReadMode mode, Map<Integer, Map<GlyphType, Integer>> saved) {
@@ -143,7 +143,6 @@ public final class SpellcraftRules {
         return -1;
     }
 
-    /** The glyph copies of each type a stored spell holds, by spell id. */
     private static Map<Integer, Map<GlyphType, Integer>> savedCounts(List<StoredSpell> spells) {
         Map<Integer, Map<GlyphType, Integer>> saved = new HashMap<>();
         for (StoredSpell spell : spells) {
@@ -161,8 +160,8 @@ public final class SpellcraftRules {
 
     /**
      * Checks an edit of the item's spells (a spell replaced, added or removed, or a slot or priority changed) the way
-     * the editor and the server must: {@link ReadMode#STRICT_NEW} against the stored spells, plus a refusal when
-     * the edit makes the budget pass grey more glyphs than the stored spells do.
+     * the editor and the server must: {@link ReadMode#STRICT_NEW} against the stored spells, plus a refusal when the
+     * edit makes the budget pass grey more glyphs than the stored spells do.
      */
     public static ItemCheck checkEdit(SpellcraftConfig config, ItemStack stack, GlyphView view, List<StoredSpell> edited,
                                       Function<String, String> specOf) {

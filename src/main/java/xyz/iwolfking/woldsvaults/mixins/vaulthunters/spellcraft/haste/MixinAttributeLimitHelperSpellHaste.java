@@ -13,8 +13,8 @@ import xyz.iwolfking.woldsvaults.spellcraft.haste.SpellHaste;
 public abstract class MixinAttributeLimitHelperSpellHaste {
 
     /**
-     * The cooldown reduction limit becomes the spell haste cap, in haste (4.0 for +400%). Once
-     * {@code getCooldownMultiplier} is replaced, only the stats tab and dumps read it.
+     * The cooldown reduction limit becomes the spell haste cap, expressed in haste rather than as a share of the
+     * cooldown.
      */
     @Inject(method = "getCooldownReductionLimit", at = @At("HEAD"), cancellable = true)
     private static void woldsvaults$hasteCap(LivingEntity entity, CallbackInfoReturnable<Float> cir) {

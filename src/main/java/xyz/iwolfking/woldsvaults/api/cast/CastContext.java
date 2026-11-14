@@ -9,6 +9,7 @@ import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import xyz.iwolfking.woldsvaults.WoldsVaults;
+import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
 
 import javax.annotation.Nullable;
 import java.util.ArrayDeque;
@@ -19,16 +20,12 @@ import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
-import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
 
 /**
- * Tracks which ability cast is running. A cast pushes its {@link CastTag} for its own call; entities
- * and block entities created under a tag keep it and push it again while they tick, and scheduled
- * tasks capture it, so every hit a cast causes can find the cast it came from. Each pushed tag records
- * what carries it right now (the cast itself, a scheduled task, an entity's or block entity's tick, an
- * ability's own later window), so a spell's glyphs reach only the hits that carrier delivers. A totem or
- * landmine placed by a spell step also keeps the step's glyphs in its saved data and gets them back after
- * its chunk reloads.
+ * Tracks which ability cast is running. A cast pushes its {@link CastTag} for its own call, entities and block entities
+ * created under the tag push it again while they tick, and scheduled tasks capture it, so every hit a cast causes can
+ * find the cast it came from. Each pushed tag records its {@link CastCarrier}, so a spell's glyphs reach only the hits
+ * that carrier delivers.
  */
 @Mod.EventBusSubscriber(modid = WoldsVaults.MOD_ID)
 public final class CastContext {
@@ -75,12 +72,14 @@ public final class CastContext {
         stack.pop();
     }
 
-    /** Runs {@code action} with {@code tag} as the current cast. A null tag runs it unchanged. */
     public static <T> T run(@Nullable CastTag tag, Supplier<T> action) {
         return run(tag, CastCarrier.CAST, action);
     }
 
-    /** Runs {@code action} with {@code tag} as the current cast, delivered by {@code carrier}. A null tag runs it unchanged. */
+    /**
+     * Runs {@code action} with {@code tag} as the current cast, delivered by {@code carrier}, or unchanged when the tag
+     * is null.
+     */
     public static <T> T run(@Nullable CastTag tag, CastCarrier carrier, Supplier<T> action) {
         if (tag == null) {
             return action.get();
@@ -127,6 +126,7 @@ public final class CastContext {
         return blockEntity == null ? null : BLOCK_ENTITY_TAGS.get(blockEntity);
     }
 
+    /** Tags a server-side block entity created during a cast with that cast; returns the tag, or null outside a cast. */
     @Nullable
     public static CastTag tagIfCasting(BlockEntity blockEntity) {
         CastTag tag = current();
@@ -140,9 +140,10 @@ public final class CastContext {
     public static void tag(BlockEntity blockEntity, CastTag tag) {
         BLOCK_ENTITY_TAGS.put(blockEntity, tag);
     }
+
     /**
-     * The cast a hit belongs to: the running cast when {@code player} owns it, otherwise the cast that
-     * created the hit's direct entity. Null when the hit came from no tracked cast.
+     * The cast a hit belongs to: the running cast when {@code player} owns it, otherwise the cast that created the
+     * hit's direct entity. Null when the hit came from no tracked cast.
      */
     @Nullable
     public static CastTag forHit(ServerPlayer player, DamageSource source) {

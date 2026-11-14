@@ -4,9 +4,9 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.network.NetworkEvent;
+import xyz.iwolfking.woldsvaults.client.spellcraft.state.ClientGlyphViews;
 import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
 import xyz.iwolfking.woldsvaults.spellcraft.item.GlyphLine;
-import xyz.iwolfking.woldsvaults.client.spellcraft.state.ClientGlyphViews;
 import xyz.iwolfking.woldsvaults.spellcraft.source.GlyphCandidate;
 
 import java.util.ArrayList;
@@ -14,9 +14,9 @@ import java.util.List;
 import java.util.function.Supplier;
 
 /**
- * Server to client: the glyph candidates the player's equipped sources offer, so the client builds the same views as
- * the server for any arcana item it shows (its own lines come from the item; everything else from here). {@code shared}
- * holds every transferable line, {@code auto} the auto lines. Curios and gear on the client are not trusted for this.
+ * Server to client: the glyph candidates the player's equipped sources offer, so the client builds the same glyph views
+ * as the server. {@code shared} holds every transferable line and {@code auto} the auto lines. The client does not
+ * trust its own copy of curios and gear for this.
  */
 public record GlyphViewSyncMessage(List<GlyphCandidate> shared, List<GlyphCandidate> auto) {
     private static final int MAX_LINES = 256;

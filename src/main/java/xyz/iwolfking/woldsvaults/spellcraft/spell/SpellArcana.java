@@ -13,9 +13,9 @@ final class SpellArcana {
     }
 
     /**
-     * Live arcana over active glyphs: common glyphs pay their view line's cost and escalate; unique glyphs are free
-     * while every active glyph in the spell is unique, and otherwise cost the table's {@code uniqueMixCost} each, never
-     * escalating and adding no escalation step; combos count active glyphs.
+     * Live arcana over active glyphs. Common glyphs pay their view line's cost and escalate, and unique glyphs are free
+     * while every active glyph in the spell is unique, otherwise costing the table's {@code uniqueMixCost} each without
+     * escalating. Combos count active glyphs.
      */
     static Arcana arcana(SpellcraftConfig config, SpellParser parser) {
         List<PlacedGlyph> active = parser.byToken.values().stream().filter(PlacedGlyph::active).toList();

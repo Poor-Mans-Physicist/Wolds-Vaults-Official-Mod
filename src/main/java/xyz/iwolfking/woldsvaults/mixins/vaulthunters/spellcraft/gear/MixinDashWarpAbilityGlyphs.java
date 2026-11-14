@@ -10,8 +10,8 @@ import iskallia.vault.snapshot.AttributeSnapshot;
 import net.minecraft.server.level.ServerPlayer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
-import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
 import xyz.iwolfking.woldsvaults.spellcraft.gear.ConvertedAffixes;
+import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.GlyphGrants;
 
 @Mixin(value = DashWarpAbility.class, remap = false)

@@ -7,8 +7,8 @@ import xyz.iwolfking.woldsvaults.mixins.vaulthunters.accessors.LightningOrbEntit
 import java.util.Set;
 
 /**
- * Homing and Orbit on VH's Ball of Lightning. The orb sets its own motion every tick from a private direction and
- * its synced speed, so steering sets those instead of its motion, on the server and on tracking clients.
+ * Homing and Orbit on VH's Ball of Lightning. The orb sets its own motion every tick from a private direction and its
+ * synced speed, so steering sets those instead of its motion, on the server and on tracking clients.
  */
 public final class LightningOrbs {
     private LightningOrbs() {

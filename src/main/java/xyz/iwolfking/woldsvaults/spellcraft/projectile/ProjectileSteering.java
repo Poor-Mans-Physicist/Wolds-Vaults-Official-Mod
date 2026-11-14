@@ -16,31 +16,22 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.network.PacketDistributor;
 import xyz.iwolfking.woldsvaults.api.lib.HomingJavelin;
 import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
+import xyz.iwolfking.woldsvaults.init.ModConfigs;
 import xyz.iwolfking.woldsvaults.init.ModNetwork;
 import xyz.iwolfking.woldsvaults.network.packets.OrbSteerMessage;
+import xyz.iwolfking.woldsvaults.spellcraft.scope.ProjectileGlyphTags;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
-import xyz.iwolfking.woldsvaults.spellcraft.scope.ProjectileGlyphTags;
-import xyz.iwolfking.woldsvaults.init.ModConfigs;
 
 /**
- * Homing and Orbit: steers projectiles a cast spawned by setting their motion each server tick; the projectile's own
- * logic still moves it and handles hits. Steering stops when the projectile is gone, stuck, or its owner left.
- * Javelins already homing through the Warbound flag are left to that steering, so no projectile is steered twice.
- * Homing flies straight until an enemy is within the table's lock-on range, then turns toward it at its rolled rate
- * (degrees per second). The enemy nearest the owner's crosshair when the projectile was fired is preferred whenever it
- * is in range; otherwise the nearest enemy is chased. Lock-on needs no line of sight, so split children at a wall still
- * find mobs past it. Steered projectiles send their position and motion to clients every tick.
- * <p>
- * An orbit ends on an absolute game tick kept in the projectile's tags, so copies it spawns (bounces, ricochets, splits)
- * orbit only for the time left; a copy made after the end does not orbit. The projectile's own timers (grenade fuses,
- * Ball of Lightning duration, Volley duration, Bundled Spell flight; Taunt decoy and Blizzard shard through their
- * mixins) are held until the orbit ends. At the end, or when an orbiting projectile gets stuck, it detonates by type
- * inside its cast's context: fireballs explode, grenades explode, ice bolts run their impact area, decoys spawn their
- * decoy, Bundled Spell orbs land their payload, and the rest are removed. Orbiting grenades explode on contact.
+ * Homing and Orbit: steers projectiles a cast spawned by setting their motion each server tick, while the projectile's
+ * own logic still moves it and handles hits. Homing flies straight until an enemy is within lock-on range, then turns
+ * toward it at its rolled rate, preferring the enemy nearest the owner's crosshair when the projectile was fired. An
+ * orbit ends on an absolute game tick kept in the projectile's tags, so copies it spawns orbit only for the time left,
+ * and at the end the projectile detonates by type inside its cast's context.
  */
 public final class ProjectileSteering {
     private static final double GOLDEN_ANGLE = 2.39996;

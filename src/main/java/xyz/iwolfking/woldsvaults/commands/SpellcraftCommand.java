@@ -5,52 +5,49 @@ import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import net.minecraft.ChatFormatting;
-import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.commands.Commands;
-import net.minecraft.network.chat.TextComponent;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.item.ItemStack;
-import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
-import xyz.iwolfking.woldsvaults.spellcraft.item.GlyphLine;
-import xyz.iwolfking.woldsvaults.spellcraft.item.StoredSpell;
-import xyz.iwolfking.woldsvaults.spellcraft.roll.SpellcraftRoller;
-import xyz.iwolfking.woldsvaults.spellcraft.spell.SpellModel;
-import xyz.iwolfking.woldsvaults.spellcraft.spell.PlacedGlyph;
-import xyz.iwolfking.woldsvaults.spellcraft.spell.SpellcraftRules;
-import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
-import xyz.iwolfking.woldsvaults.spellcraft.play.DefaultBar;
-import xyz.iwolfking.woldsvaults.spellcraft.play.SpellBars;
-import xyz.iwolfking.woldsvaults.spellcraft.play.SpellEdits;
-import xyz.iwolfking.woldsvaults.spellcraft.source.EquippedSources;
-import xyz.iwolfking.woldsvaults.spellcraft.source.GlyphView;
-import xyz.iwolfking.woldsvaults.spellcraft.source.GlyphViewLine;
-
-import java.util.Arrays;
-import java.util.List;
-import java.util.Random;
 import iskallia.vault.gear.GearRollHelper;
 import iskallia.vault.gear.VaultGearRarity;
 import iskallia.vault.gear.VaultGearState;
 import iskallia.vault.gear.data.VaultGearData;
 import iskallia.vault.gear.item.VaultGearItem;
 import iskallia.vault.init.ModGearAttributes;
+import iskallia.vault.init.ModItems;
 import iskallia.vault.world.data.DiscoveredModelsData;
+import net.minecraft.ChatFormatting;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
+import net.minecraft.commands.SharedSuggestionProvider;
+import net.minecraft.network.chat.TextComponent;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.ItemStack;
 import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
+import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
 import xyz.iwolfking.woldsvaults.init.ModConfigs;
 import xyz.iwolfking.woldsvaults.spellcraft.ability.AbilityLookup;
-import iskallia.vault.init.ModItems;
+import xyz.iwolfking.woldsvaults.spellcraft.item.GlyphLine;
+import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
+import xyz.iwolfking.woldsvaults.spellcraft.item.StoredSpell;
+import xyz.iwolfking.woldsvaults.spellcraft.play.DefaultBar;
+import xyz.iwolfking.woldsvaults.spellcraft.play.SpellBars;
+import xyz.iwolfking.woldsvaults.spellcraft.play.SpellEdits;
+import xyz.iwolfking.woldsvaults.spellcraft.roll.SpellcraftRoller;
+import xyz.iwolfking.woldsvaults.spellcraft.source.EquippedSources;
+import xyz.iwolfking.woldsvaults.spellcraft.source.GlyphView;
+import xyz.iwolfking.woldsvaults.spellcraft.source.GlyphViewLine;
+import xyz.iwolfking.woldsvaults.spellcraft.spell.PlacedGlyph;
+import xyz.iwolfking.woldsvaults.spellcraft.spell.SpellModel;
+import xyz.iwolfking.woldsvaults.spellcraft.spell.SpellcraftRules;
+
+import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
-import net.minecraft.commands.SharedSuggestionProvider;
+import java.util.Random;
 
 /**
- * {@code /wvspellcraft}: test tools for the spell bar and focus spellcraft, next to the screens. {@code show} prints the
- * off-hand item's implicits and spells with their glyph states; {@code view} prints the off-hand item's glyph view and
- * the auto lines; {@code bar <slot> <ability|clear>} sets a default bar slot; {@code spell add <tokens>} and
- * {@code spell remove <id>} edit the off-hand item's spells; {@code slot <spell id> <slot|0>} puts a spell on a bar slot
- * (0 takes it off) and {@code prio <spell id> <priority>} sets its priority. Operators: {@code reroll} rerolls the held
- * focus or wand; {@code givefocus <level> <rarity> [wand]} gives an identified focus or wand of that level and rarity.
+ * {@code /wvspellcraft}: test tools for the spell bar and focus spellcraft. Player subcommands inspect and edit the
+ * off-hand item's spells and the default bar. The operator subcommands {@code reroll} and {@code givefocus} reroll the
+ * held focus or wand and give an identified one of a chosen level and rarity.
  */
 public final class SpellcraftCommand {
     private static final int OFFHAND_SLOT = 40;
@@ -212,8 +209,8 @@ public final class SpellcraftCommand {
     }
 
     /**
-     * Gives a focus (or wand) of the given level and rarity, identified on the spot so the rarity sticks (identifying
-     * an unidentified item re-rolls its rarity), with its affixes and spellcraft rolled.
+     * The focus is identified on the spot so its rarity sticks, since identifying an unidentified item re-rolls its
+     * rarity.
      */
     private static int giveFocus(CommandContext<CommandSourceStack> context, boolean wand) throws CommandSyntaxException {
         ServerPlayer player = context.getSource().getPlayerOrException();
@@ -244,8 +241,8 @@ public final class SpellcraftCommand {
     }
 
     /**
-     * Rolls the gear model the identification roll would have picked. {@link GearRollHelper#initializeGear} never sets
-     * one (only the roll tick does), and gear without a model renders with the unidentified texture.
+     * {@link GearRollHelper#initializeGear} never sets a gear model, and gear without one renders with the unidentified
+     * texture.
      */
     private static void rollModel(ItemStack stack, ServerPlayer player) {
         VaultGearData data = VaultGearData.read(stack);

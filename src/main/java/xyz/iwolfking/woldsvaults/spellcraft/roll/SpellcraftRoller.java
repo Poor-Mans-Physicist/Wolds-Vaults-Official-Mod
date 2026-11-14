@@ -6,23 +6,22 @@ import iskallia.vault.gear.data.VaultGearData;
 import iskallia.vault.item.gear.WandItem;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
-import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
+import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
 import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
+import xyz.iwolfking.woldsvaults.init.ModConfigs;
+import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
+import xyz.iwolfking.woldsvaults.spellcraft.item.GlyphLine;
+import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.function.ToIntFunction;
-import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
-import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
-import xyz.iwolfking.woldsvaults.spellcraft.item.GlyphLine;
-import xyz.iwolfking.woldsvaults.init.ModConfigs;
 
 /**
- * Rolls a focus's or wand's spellcraft implicits when it is identified: arcana from item level and rarity, glyph lines
- * by rarity (distinct types, weighted, level-gated), each with a potency in its level tier, a cost that follows the
- * potency roll plus noise, and a number of uses; and depth (glyphs per spell) by level. Wands roll a smaller budget,
- * fewer lines and a lower depth cap.
+ * Rolls a focus's or wand's spellcraft implicits when it is identified: arcana from item level and rarity, distinct
+ * weighted glyph lines by rarity with a potency in their level tier, a cost that follows the potency roll plus noise
+ * and a number of uses, and depth by level. Wands roll a smaller budget, fewer lines and a lower depth cap.
  */
 public final class SpellcraftRoller {
     private static UniqueSets uniqueSets;
@@ -31,17 +30,16 @@ public final class SpellcraftRoller {
     }
 
     /**
-     * The unique-set hook (R30, loadout spec sec. 6.1): a unique focus or wand with a set rolls its lines from the set and
-     * its budget and depth from the set's rarity row, and a unique rolled before sets existed converts on first read.
-     * Until a provider is installed uniques roll like any other carrier.
+     * The unique-set hook: a unique focus or wand with a set rolls its lines from the set and its budget and depth from
+     * the set's rarity row. Until a provider is installed uniques roll like any other carrier.
      */
     public interface UniqueSets {
         /** Rolls a unique's implicits from its set; false when the unique has no set, so it rolls as any carrier. */
         boolean roll(SpellcraftConfig config, ItemStack stack, VaultGearData data, Random random);
 
         /**
-         * Converts a unique whose implicits predate its set: new lines, budget and depth through
-         * {@link SpellcraftItemData#replaceImplicits}, spells kept. Returns true when it changed the item.
+         * Converts a unique whose implicits predate its set: new lines, budget and depth through {@link
+         * SpellcraftItemData#replaceImplicits}, spells kept. Returns true when it changed the item.
          */
         boolean convert(SpellcraftConfig config, ItemStack stack, VaultGearData data, Random random);
     }
@@ -85,9 +83,8 @@ public final class SpellcraftRoller {
     }
 
     /**
-     * Gives spellcraft implicits to any identified focus or wand in the inventory that has none (identified before
-     * spellcraft existed, uniques identified through a path that skips the roll hook, any other route that bypasses
-     * it), and lets the unique-set hook convert old uniques.
+     * Gives spellcraft implicits to any identified focus or wand in the inventory that has none, and lets the
+     * unique-set hook convert old uniques.
      */
     public static void rollMissingSpellcraft(ServerPlayer player) {
         for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
@@ -136,8 +133,8 @@ public final class SpellcraftRoller {
     }
 
     /**
-     * The arcana budget a carrier of this level rolls on a rarity row: base plus per level, times the row's budget and a
-     * roll, then the wand factor for wands or the row's focus multiplier for focuses.
+     * The arcana budget a carrier of this level rolls on a rarity row: base plus per level, times the row's budget and
+     * a roll, then the wand factor for wands or the row's focus multiplier for focuses.
      */
     public static float budget(SpellcraftConfig config, ItemStack stack, int level, SpellcraftConfig.RarityRolls rolls, Random random) {
         SpellcraftConfig.FocusRolls focus = config.focus;
@@ -152,7 +149,10 @@ public final class SpellcraftRoller {
         return budget;
     }
 
-    /** The depth a carrier of this level rolls on a rarity row: the level tier, or the row's bonus tier once reached; wands cap it. */
+    /**
+     * The depth a carrier of this level rolls on a rarity row: the level tier, or the row's bonus tier once reached;
+     * wands cap it.
+     */
     public static int depth(SpellcraftConfig config, ItemStack stack, int level, String rarity, Random random) {
         SpellcraftConfig.DepthTier depthTier = SpellcraftConfig.depthTier(config.focus.depth, level);
         SpellcraftConfig.DepthTier bonus = config.focus.depthBonus.get(rarity);
@@ -209,7 +209,6 @@ public final class SpellcraftRoller {
         return index < 0 ? 0 : index;
     }
 
-    /** One weighted draw over {@code entries}: the picked index, or -1 when the weights run out before the draw. */
     private static <T> int pick(List<T> entries, ToIntFunction<T> weight, Random random) {
         int total = entries.stream().mapToInt(weight).sum();
         int pick = random.nextInt(Math.max(1, total));

@@ -18,7 +18,10 @@ import java.util.List;
 @Mixin(value = AreaOfEffectHelper.class, remap = false)
 public abstract class MixinAreaOfEffectHelperGlyphs {
 
-    /** Converted keyed area affixes (fireball, storm, fear) come from the step's granted glyphs, after VH's area clamp as before. */
+    /**
+     * Converted keyed area affixes (fireball, storm, fear) come from the step's granted glyphs, applied after VH's area
+     * clamp.
+     */
     @SuppressWarnings("rawtypes")
     @WrapOperation(method = "adjustAreaOfEffect(Lnet/minecraft/world/entity/LivingEntity;Liskallia/vault/skill/base/Skill;F)F",
             at = @At(value = "INVOKE", target = "Liskallia/vault/snapshot/AttributeSnapshot;getAttributeValue(Liskallia/vault/gear/attribute/VaultGearAttribute;Liskallia/vault/gear/attribute/type/VaultGearAttributeTypeMerger;)Ljava/lang/Object;"))

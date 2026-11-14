@@ -9,10 +9,9 @@ import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.server.ServerStoppedEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import xyz.iwolfking.woldsvaults.api.cast.CastCarrier;
 import xyz.iwolfking.woldsvaults.api.cast.CastContext;
 import xyz.iwolfking.woldsvaults.api.cast.CastTag;
-import xyz.iwolfking.woldsvaults.spellcraft.hit.OwnHits;
-import xyz.iwolfking.woldsvaults.api.cast.CastCarrier;
 
 import javax.annotation.Nullable;
 import java.util.Collections;
@@ -26,10 +25,10 @@ import java.util.function.Supplier;
 
 /**
  * The deferred scope: a spell step's glyphs acting on what its ability does after the cast returned. The glyphs ride on
- * the cast's tag ({@link CastContext}) onto scheduled work, entities and block entities; a damage-over-time entry keeps
- * the tag of the cast that applied it; Necromancy's minions read the player's last Necromancy cast. A deferred scope
- * opens no spell step, so it never bills mana, starts or blocks cooldowns, fires cast events or resolves Power Dump.
- * Hits count only when {@link OwnHits} lists them for the carrier that delivers them. Server thread only.
+ * the cast's tag onto scheduled work, entities and block entities, a damage-over-time entry keeps the tag of the cast
+ * that applied it, and Necromancy's minions read the player's last Necromancy cast. A deferred scope opens no spell
+ * step, so it never bills mana, starts or blocks cooldowns, fires cast events or resolves Power Dump, and a hit counts
+ * only when its ability lists it for the carrier that delivers it.
  */
 public final class DeferredReach {
     private static final Map<DamageSource, CastTag> DOT_SOURCES = Collections.synchronizedMap(new WeakHashMap<>());
@@ -63,8 +62,9 @@ public final class DeferredReach {
     }
 
     /**
-     * The deferred glyphs a hurt belongs to: a damage-over-time tick of a spell step's entry, a Necromancy minion hit of
-     * the owner's last Necromancy cast, the current deferred carrier, or a tagged entity hitting outside its own tick.
+     * The deferred glyphs a hurt belongs to: a damage-over-time tick of a spell step's entry, a Necromancy minion hit
+     * of the owner's last Necromancy cast, the current deferred carrier, or a tagged entity hitting outside its own
+     * tick.
      */
     @Nullable
     public static Reach forHit(DamageSource source) {
@@ -107,7 +107,10 @@ public final class DeferredReach {
         return attacker.getServer().getPlayerList().getPlayer(tag.owner());
     }
 
-    /** Runs {@code action} with every deferred scope closed: etching recasts that share an own hit's carrier and signature. */
+    /**
+     * Runs {@code action} with every deferred scope closed: etching recasts that share an own hit's carrier and
+     * signature.
+     */
     public static <T> T suppress(Supplier<T> action) {
         suppressed++;
         try {
@@ -125,7 +128,9 @@ public final class DeferredReach {
         }
     }
 
-    /** A Necromancy cast went through: its minions follow this cast's glyphs (none for a plain cast) until the next one. */
+    /**
+     * A Necromancy cast went through: its minions follow this cast's glyphs (none for a plain cast) until the next one.
+     */
     public static void noteMinionCast(ServerPlayer player, @Nullable DeferredGlyphs glyphs) {
         if (glyphs == null) {
             MINIONS.remove(player.getUUID());

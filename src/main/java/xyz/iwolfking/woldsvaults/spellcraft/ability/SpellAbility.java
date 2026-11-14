@@ -17,10 +17,10 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
- * One VH ability specialization as a recipe step: its traits from the focus augments table, and the bridge that
- * casts it. A native cast is one real key press on the player's own ability (mana, cooldown, curses, downed,
- * cast-failure chance); an extra cast runs only the instant's action, starts no cooldown, and is refused under the
- * same curse and downed gates a key press checks.
+ * One VH ability specialization as a spell step: its traits from the spellcraft table, and the bridge that casts it. A
+ * native cast is one real key press on the player's own ability (mana, cooldown, curses, downed, cast-failure chance).
+ * An extra cast runs only the instant's action, starts no cooldown, and is refused under the same curse and downed
+ * gates a key press checks.
  */
 public final class SpellAbility {
     private final String id;
@@ -84,9 +84,8 @@ public final class SpellAbility {
     }
 
     /**
-     * One extra cast (Echo, Shotgun copies, repeat Bundled Spell landings): runs the instant's action, which checks
-     * and pays mana and rolls cast failure, without the key-press cooldown. Refused while the player is downed or a
-     * challenge curse disables the ability, as a key press would be.
+     * One extra cast, used for every step after the trigger: runs the instant's action without the key-press cooldown.
+     * Refused while the player is downed or a challenge curse disables the ability, as a key press would be.
      */
     public CastResult castExtra(ServerPlayer player, @Nullable CastOrigin origin) {
         AbilityTree tree = AbilityLookup.tree(player);

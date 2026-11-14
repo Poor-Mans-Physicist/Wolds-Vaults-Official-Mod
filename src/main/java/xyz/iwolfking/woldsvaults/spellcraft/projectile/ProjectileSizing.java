@@ -14,11 +14,11 @@ import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.server.ServerStoppedEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.network.PacketDistributor;
+import xyz.iwolfking.woldsvaults.api.cast.CastCarrier;
 import xyz.iwolfking.woldsvaults.api.cast.CastContext;
 import xyz.iwolfking.woldsvaults.init.ModNetwork;
 import xyz.iwolfking.woldsvaults.mixins.accessors.AccessorProjectile;
 import xyz.iwolfking.woldsvaults.network.packets.ProjectileScaleMessage;
-import xyz.iwolfking.woldsvaults.api.cast.CastCarrier;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.ProjectileGlyphTags;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.TickingEntity;
 
@@ -30,12 +30,10 @@ import java.util.Set;
 import java.util.WeakHashMap;
 
 /**
- * Size Up and Size Down on VH ability projectiles. The hitbox follows Forge's size event; clients learn the scale
- * when they start tracking the projectile and draw it scaled. Vanilla projectiles find entities with a thin ray, so an
- * enlarged projectile also hits any entity its enlarged box swept through since the last check (from the position seen
- * then, never from {@code xo}, which is still the world origin before a new projectile's first tick), through the projectile's own
- * impact event and hit handling, run in the projectile's cast context as its own tick's hits are. Those hits can spawn
- * more sized projectiles, so the tick walks a snapshot. Ball of Lightning damages by its own synced radius, so its radius is scaled instead.
+ * Size Up and Size Down on VH ability projectiles. The hitbox follows Forge's size event, and clients draw the
+ * projectile at the scale they learn when they start tracking it. Vanilla projectiles find entities with a thin ray, so
+ * an enlarged projectile also hits every entity its enlarged box swept through since the last check, measured from the
+ * position seen then rather than {@code xo}, which is still the world origin before a new projectile's first tick.
  */
 public final class ProjectileSizing {
     private static final Map<Projectile, Tracked> ENLARGED = new WeakHashMap<>();
@@ -91,7 +89,6 @@ public final class ProjectileSizing {
         }
     }
 
-    /** An enlarged projectile's entities already hit and its position at the previous check (null before the first). */
     private static final class Tracked {
         private final Set<Entity> hit = new HashSet<>();
         @Nullable

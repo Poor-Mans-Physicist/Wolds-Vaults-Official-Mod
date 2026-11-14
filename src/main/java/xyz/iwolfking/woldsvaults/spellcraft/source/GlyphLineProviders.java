@@ -1,8 +1,8 @@
 package xyz.iwolfking.woldsvaults.spellcraft.source;
 
 import net.minecraft.world.item.ItemStack;
-import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
 import xyz.iwolfking.woldsvaults.spellcraft.item.GlyphLine;
+import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,8 +21,8 @@ public final class GlyphLineProviders {
 
     /**
      * One line a source grants. {@code transferable}: other arcana items may use it (always true for gear without
-     * arcana). {@code auto}: it augments plain base-bar casts of the ability it is locked to; only unique glyphs may be auto
-     * lines: converted affixes on gear without arcana, and etchings on any source.
+     * arcana). {@code auto}: it augments plain base-bar casts of the ability it is locked to; only unique glyphs may be
+     * auto lines: converted affixes on gear without arcana, and etchings on any source.
      */
     public record SourceLine(GlyphLine line, boolean transferable, boolean auto) {
     }

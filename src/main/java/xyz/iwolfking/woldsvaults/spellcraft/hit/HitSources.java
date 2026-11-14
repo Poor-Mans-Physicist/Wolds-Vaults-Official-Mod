@@ -5,6 +5,7 @@ import iskallia.vault.entity.entity.EternalEntity;
 import iskallia.vault.entity.entity.IceBoltEntity;
 import iskallia.vault.event.ActiveFlags;
 import net.minecraft.world.entity.Entity;
+import xyz.iwolfking.woldsvaults.api.cast.CastCarrier;
 import xyz.iwolfking.woldsvaults.events.WoldActiveFlags;
 
 import javax.annotation.Nullable;
@@ -15,7 +16,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import xyz.iwolfking.woldsvaults.api.cast.CastCarrier;
 
 public final class HitSources {
     private static final String PLAYER_ATTACK = "player";
@@ -41,8 +41,8 @@ public final class HitSources {
 
     /**
      * One way an ability deals its own damage. {@code msgId} is the damage source id (null: any), {@code direct} the
-     * class of the source's direct entity (null: the attacking player), {@code flags} the exact VH flag set,
-     * {@code wvFlags} WV flags that must be set, {@code via} what carries it, {@code nested} whether VH deals it inside
+     * class of the source's direct entity (null: the attacking player), {@code flags} the exact VH flag set, {@code
+     * wvFlags} WV flags that must be set, {@code carrier} what carries it, {@code nested} whether VH deals it inside
      * another entity's hurt call.
      */
     public record Source(Kind kind, CastCarrier carrier, @Nullable String msgId, @Nullable Class<? extends Entity> direct,

@@ -4,8 +4,8 @@ import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 import iskallia.vault.config.Config;
 import xyz.iwolfking.woldsvaults.spellcraft.ability.AbilityTrait;
-import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
 import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphStacking;
+import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -13,10 +13,9 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
- * Spellcraft glyphs, generated as {@code vault_configs/spellcraft/spellcraft.json}: every glyph's rolls, cost,
- * effects and limits; how focuses and wands roll their arcana, glyph lines and depth; the spell cost rules; the
- * mechanics tuning; and which abilities take which glyphs. Ability mana costs and cooldowns stay VH's; glyphs only
- * multiply them.
+ * Spellcraft glyphs, generated as {@code vault_configs/spellcraft/spellcraft.json}: every glyph's rolls, cost, effects
+ * and limits, how focuses and wands roll, the spell rules, mechanics tuning and which abilities take which glyphs.
+ * Ability mana costs and cooldowns stay VH's, and glyphs only multiply them.
  */
 public class SpellcraftConfig extends Config implements WoldsTable {
     @Expose public boolean worksOutsideVaults;
@@ -33,7 +32,6 @@ public class SpellcraftConfig extends Config implements WoldsTable {
     @Expose public List<EtchingGlyph> etchingGlyphs;
     @Expose public List<String> removedEtchings;
 
-    /** Spell-wide rules: cost escalation, chained abilities, floors and hard limits. */
     public static class Rules {
         @Expose public float escalationPerGlyph;
         @Expose public int abilityStepCost;
@@ -77,14 +75,13 @@ public class SpellcraftConfig extends Config implements WoldsTable {
     }
 
     /**
-     * One glyph. {@code kind} is {@code modifier}, {@code delay} or {@code bundle}. {@code class} is {@code common},
-     * {@code special}, {@code unique} or {@code utility} and decides how its effects stack ({@link GlyphStacking}).
-     * {@code requires} is a list of trait sets; a modifier fits a target when the target has every trait of one set (a
-     * Bundled Spell orb has the single trait {@code bundle}), none of the {@code forbids} traits, and, when
-     * {@code specs} is not empty, is one of those specializations. {@code excludes} lists glyphs it never shares a step
-     * with. Step effects change the modified step; spell effects change the whole slot. {@code scope} decides which
-     * steps take the step effects: {@code step}, the ability or orb the glyph follows; {@code spell}, every live
-     * ability step and orb of the spell it fits, wherever it sits.
+     * One glyph. {@code kind} is {@code modifier}, {@code delay} or {@code bundle}, and {@code class} ({@code common},
+     * {@code special}, {@code unique} or {@code utility}) decides how its effects stack ({@link GlyphStacking}). A
+     * modifier fits a target that has every trait of one {@code requires} set (a Bundled Spell orb has the single trait
+     * {@code bundle}), none of the {@code forbids} traits and, when {@code specs} is not empty, one of those
+     * specializations. {@code excludes} lists glyphs it never shares a step with. Step effects change the modified step
+     * and spell effects the whole slot. With {@code scope} {@code step} the step effects reach the ability or orb the
+     * glyph follows, with {@code spell} every live ability step and orb of the spell it fits.
      */
     public static class GlyphDefinition {
         public static final String SCOPE_STEP = "step";
@@ -168,8 +165,8 @@ public class SpellcraftConfig extends Config implements WoldsTable {
     /**
      * A multiplier on a stat: {@code base + k * potency} ({@code base} defaults to 1), a {@code fixed} factor, or
      * {@code 1 + perUse} once per use. {@code role} is {@code upside}, {@code downside} or {@code cost}; with the
-     * glyph's class it decides how the effect stacks ({@link GlyphStacking}). Step stats are
-     * {@link GlyphStacking#STEP_STATS}, spell stats {@link GlyphStacking#SPELL_STATS}.
+     * glyph's class it decides how the effect stacks ({@link GlyphStacking}). Step stats are {@link
+     * GlyphStacking#STEP_STATS}, spell stats {@link GlyphStacking#SPELL_STATS}.
      */
     public static class Effect {
         @Expose public String stat;
@@ -234,12 +231,12 @@ public class SpellcraftConfig extends Config implements WoldsTable {
 
     /**
      * A gear affix that grants a unique glyph instead of acting on its own. {@code attribute} is the gear attribute id;
-     * {@code key} the ability key of a keyed ability attribute or the special modification id of an
-     * {@code ability_special_modification}, null for a plain attribute. The glyph's potency is the affix's rolled value,
-     * negated when {@code orientation} is {@code lower} (the affix is stronger the lower it rolls), times {@code scale};
-     * a flag attribute grants potency {@code scale}. With {@code linked} set, the affix grants no line of its own: it is
-     * the second half of the glyph another affix on the same item grants, its value places that line's quality in the
-     * glyph's linked value of that name, and the cast reads it back from there.
+     * {@code key} the ability key of a keyed ability attribute or the special modification id of an {@code
+     * ability_special_modification}, null for a plain attribute. The glyph's potency is the affix's rolled value,
+     * negated when {@code orientation} is {@code lower} (the affix is stronger the lower it rolls), times {@code
+     * scale}; a flag attribute grants potency {@code scale}. With {@code linked} set, the affix grants no line of its
+     * own: it is the second half of the glyph another affix on the same item grants, its value places that line's
+     * quality in the glyph's linked value of that name, and the cast reads it back from there.
      */
     public static class GearGlyph {
         @Expose public String attribute;
@@ -272,12 +269,12 @@ public class SpellcraftConfig extends Config implements WoldsTable {
     }
 
     /**
-     * An etching that grants a unique glyph instead of acting on its own (the etching's effect runs from the glyph). Its
-     * value is read part by part in the order of the attribute's value ({@code parts}, one for a plain value, two for a
-     * pair, three for a throuple): the {@code potency} part becomes the glyph's potency ({@code offset + value * scale}),
-     * a {@code linked} part places the line's quality in the glyph's linked value of that name, and a {@code choice} part
-     * is one of {@code choices} (with more than one, the line's quality picks it). A {@code flag} etching grants potency
-     * {@code offset + scale}.
+     * An etching that grants a unique glyph instead of acting on its own (the etching's effect runs from the glyph).
+     * Its value is read part by part in the order of the attribute's value ({@code parts}, one for a plain value, two
+     * for a pair, three for a throuple): the {@code potency} part becomes the glyph's potency ({@code offset + value *
+     * scale}), a {@code linked} part places the line's quality in the glyph's linked value of that name, and a {@code
+     * choice} part is one of {@code choices} (with more than one, the line's quality picks it). A {@code flag} etching
+     * grants potency {@code offset + scale}.
      */
     public static class EtchingGlyph {
         public static final String LINGERING_CAST = "cast";
@@ -302,7 +299,10 @@ public class SpellcraftConfig extends Config implements WoldsTable {
         }
     }
 
-    /** One part of an etching's value: its role ({@code potency}, {@code linked}, {@code choice}, {@code flag}), number type ({@code int}, {@code float}) and linked value name. */
+    /**
+     * One part of an etching's value: its role ({@code potency}, {@code linked}, {@code choice}, {@code flag}), number
+     * type ({@code int}, {@code float}) and linked value name.
+     */
     public static class EtchingPart {
         @Expose public String role;
         @Expose public String type;
@@ -314,9 +314,9 @@ public class SpellcraftConfig extends Config implements WoldsTable {
     }
 
     /**
-     * A unique focus's or wand's fixed glyph set. Budget and depth roll from {@code rarityRow} ({@code ancientRarityRow}
-     * for an ancient), with the wand rules for wands; the lines are every {@code always} glyph plus a draw of
-     * {@code drawMin}-{@code drawMax} distinct glyphs from {@code draw} at equal odds.
+     * A unique focus's or wand's fixed glyph set. Budget and depth roll from {@code rarityRow} ({@code
+     * ancientRarityRow} for an ancient), with the wand rules for wands; the lines are every {@code always} glyph plus a
+     * draw of {@code drawMin}-{@code drawMax} distinct glyphs from {@code draw} at equal odds.
      */
     public static class UniqueSet {
         @Expose public String rarityRow;
@@ -327,7 +327,10 @@ public class SpellcraftConfig extends Config implements WoldsTable {
         @Expose public int drawMax;
     }
 
-    /** A signature glyph of a unique set; {@code uses} and {@code cap}, when set, replace the rolled uses and the type's cap. */
+    /**
+     * A signature glyph of a unique set; {@code uses} and {@code cap}, when set, replace the rolled uses and the type's
+     * cap.
+     */
     public static class SetGlyph {
         @Expose public String glyph;
         @Expose public Integer uses;
@@ -404,7 +407,7 @@ public class SpellcraftConfig extends Config implements WoldsTable {
             if (glyph == null) {
                 return "glyph " + type.id() + " has no entry";
             }
-            String problem = validateGlyph(type, glyph);
+            String problem = validateGlyph(glyph);
             if (problem != null) {
                 return "glyph " + type.id() + " " + problem;
             }
@@ -586,7 +589,7 @@ public class SpellcraftConfig extends Config implements WoldsTable {
     }
 
     @Nullable
-    private static String validateGlyph(GlyphType type, GlyphDefinition glyph) {
+    private static String validateGlyph(GlyphDefinition glyph) {
         if (glyph.kind == null || !List.of("modifier", "delay", "bundle").contains(glyph.kind)) {
             return "has an unknown kind";
         }

@@ -10,8 +10,11 @@ import net.minecraftforge.event.server.ServerStoppedEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import xyz.iwolfking.woldsvaults.WoldsVaults;
-import xyz.iwolfking.woldsvaults.spellcraft.spell.SpellModel;
+import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
+import xyz.iwolfking.woldsvaults.spellcraft.ability.AbilityLookup;
+import xyz.iwolfking.woldsvaults.spellcraft.bar.EffectiveBar;
 import xyz.iwolfking.woldsvaults.spellcraft.spell.PlacedGlyph;
+import xyz.iwolfking.woldsvaults.spellcraft.spell.SpellModel;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -19,15 +22,12 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
-import xyz.iwolfking.woldsvaults.spellcraft.bar.EffectiveBar;
-import xyz.iwolfking.woldsvaults.spellcraft.ability.AbilityLookup;
 
 /**
- * Switches a toggle off when the spell that switched it on changes. Each activation records the bar slot that holds
- * the toggle's group: its occupant key, the spell's tokens and every glyph's potency and state. When the bar resolves
- * again and that slot differs (another item's spell, a moved or removed spell, an edit, a different borrowed potency,
- * a locked slot), the toggle goes through VH's own off path, which starts its cooldown from the slot now holding it.
+ * Switches a toggle off when the spell that switched it on changes. Each activation records the signature of the bar
+ * slot holding the toggle's group (occupant, tokens, every glyph's potency and state), and when a later bar resolution
+ * finds that slot different, the toggle goes through VH's own off path, which starts its cooldown from the slot now
+ * holding it.
  */
 @Mod.EventBusSubscriber(modid = WoldsVaults.MOD_ID)
 public final class ToggleGuard {
@@ -115,7 +115,6 @@ public final class ToggleGuard {
         }
     }
 
-    @Nullable
     @SubscribeEvent
     public static void onLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
         ACTIVE.remove(event.getPlayer().getUUID());

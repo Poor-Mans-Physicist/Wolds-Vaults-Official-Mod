@@ -8,8 +8,8 @@ import java.util.Comparator;
 import java.util.List;
 
 /**
- * Shotgun directions: the base direction plus one per copy, fanned horizontally {@code spreadDegrees} apart and
- * centred on the aim. The direction closest to the aim comes first; it is the native cast.
+ * Shotgun directions: the base direction plus one per copy, fanned horizontally {@code spreadDegrees} apart and centred
+ * on the aim. The direction closest to the aim comes first; it is the native cast.
  */
 public final class ShotgunPattern {
     private ShotgunPattern() {

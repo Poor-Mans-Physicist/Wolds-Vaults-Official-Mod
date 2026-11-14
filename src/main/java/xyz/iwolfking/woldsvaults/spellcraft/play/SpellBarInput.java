@@ -136,7 +136,6 @@ public final class SpellBarInput {
         });
     }
 
-    /** The player's tree once its selection follows {@code slot}, or null when the slot's ability did not become selected. */
     @Nullable
     private static AbilityTree selectedTree(ServerPlayer player, EffectiveBar.Slot slot) {
         AbilityTree tree = AbilityLookup.tree(player);

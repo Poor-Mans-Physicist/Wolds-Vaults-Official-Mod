@@ -13,8 +13,8 @@ import xyz.iwolfking.woldsvaults.api.cast.CastTag;
 import xyz.iwolfking.woldsvaults.api.cast.LuckyReset;
 
 /**
- * Lucky Reset removes {@link LuckyReset#REMAINING_SHARE} of the remaining cooldown (at least one tick) instead of 25% of the full one,
- * and each ability cast can trigger it at most once.
+ * Lucky Reset removes {@link LuckyReset#REMAINING_SHARE} of the remaining cooldown (at least one tick) instead of 25%
+ * of the full one, and each ability cast can trigger it at most once.
  */
 @Mixin(value = LuckyHitTalent.class, remap = false)
 public class MixinLuckyHitTalentLuckyReset {

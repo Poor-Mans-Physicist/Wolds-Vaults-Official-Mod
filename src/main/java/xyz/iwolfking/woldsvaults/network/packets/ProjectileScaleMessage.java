@@ -11,8 +11,8 @@ import xyz.iwolfking.woldsvaults.spellcraft.scope.ProjectileGlyphTags;
 import java.util.function.Supplier;
 
 /**
- * Server to client: an augmented projectile's Size Up / Size Down scale, so the client draws it scaled and its copy
- * of the hitbox matches the server's.
+ * Server to client: an augmented projectile's Size Up / Size Down scale, so the client draws it scaled and its copy of
+ * the hitbox matches the server's.
  */
 public record ProjectileScaleMessage(int entityId, float scale) {
     public static void encode(ProjectileScaleMessage message, FriendlyByteBuf buffer) {

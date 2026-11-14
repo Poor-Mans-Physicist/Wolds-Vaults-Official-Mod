@@ -7,6 +7,7 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.world.item.ItemStack;
+import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
 import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
 
 import javax.annotation.Nullable;
@@ -18,14 +19,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
 
 /**
  * Spellcraft data on a focus or wand, in NBT {@code woldsvaults_spellcraft}: the rolled implicits (arcana budget,
- * depth, glyph lines) and the augmented spells built on it. Each spell names the bar slot it overlays (or none) and its
- * priority. Spell tokens are ability group ids and glyph ids; the first token is the trigger ability. Items from before
- * slots stored a whole {@code bar}; its spell entries become slots on read and the rest is dropped (one WARN per item),
- * and the next edit writes the new form.
+ * depth, glyph lines) and the augmented spells built on it. Spell tokens are ability group ids and glyph ids, and the
+ * first token is the trigger ability. An item that still holds an old {@code bar} list has its spell entries read as
+ * slots and the rest dropped with one warning per item, and the next edit writes the current form.
  */
 public final class SpellcraftItemData {
     public static final int SLOTS = 16;
@@ -139,10 +138,6 @@ public final class SpellcraftItemData {
         return spells;
     }
 
-    /**
-     * The slots an item bar from before per-spell slots gave its spells: the first {@code s:<id>} entry for each spell.
-     * Ability and blank entries have no home any more; they are dropped with one WARN per item.
-     */
     private static Map<Integer, Integer> legacySlots(CompoundTag root) {
         Set<Integer> ids = new HashSet<>();
         for (Tag tag : root.getList("spells", Tag.TAG_COMPOUND)) {
@@ -239,8 +234,8 @@ public final class SpellcraftItemData {
     }
 
     /**
-     * Replaces budget, depth and lines but keeps the item id and its spells (a converted unique keeps its spells; glyphs
-     * the new lines can't back go inactive on their own).
+     * Replaces budget, depth and lines but keeps the item id and its spells (a converted unique keeps its spells;
+     * glyphs the new lines can't back go inactive on their own).
      */
     public static void replaceImplicits(ItemStack stack, int budget, int depth, List<GlyphLine> lines) {
         CompoundTag root = rootForWrite(stack);
@@ -251,7 +246,9 @@ public final class SpellcraftItemData {
         writeSpells(root, spells);
     }
 
-    /** Replaces the spell with the same id, or adds it; a spell id of 0 gets the next free id. Returns the stored id. */
+    /**
+     * Replaces the spell with the same id, or adds it; a spell id of 0 gets the next free id. Returns the stored id.
+     */
     public static int putSpell(ItemStack stack, StoredSpell spell) {
         CompoundTag root = rootForWrite(stack);
         int id = spell.id();

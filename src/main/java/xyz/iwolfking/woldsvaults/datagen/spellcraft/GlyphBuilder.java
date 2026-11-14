@@ -125,7 +125,6 @@ public final class GlyphBuilder {
         return this;
     }
 
-    /** Makes the step effects reach every live step of the spell the glyph fits, wherever it sits. */
     public GlyphBuilder spellWide() {
         this.scope = SpellcraftConfig.GlyphDefinition.SCOPE_SPELL;
         return this;

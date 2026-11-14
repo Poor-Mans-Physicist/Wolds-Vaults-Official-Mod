@@ -16,7 +16,10 @@ import java.util.List;
 @Mixin(value = CooldownHelper.class, remap = false)
 public abstract class MixinCooldownHelperGlyphs {
 
-    /** Converted keyed cooldown affixes (warp, storm, group heal) stop acting here; their glyphs are a spell cooldown factor. */
+    /**
+     * Converted keyed cooldown affixes (warp, storm, group heal) stop acting here; their glyphs are a spell cooldown
+     * factor.
+     */
     @SuppressWarnings("rawtypes")
     @WrapOperation(method = "adjustCooldown",
             at = @At(value = "INVOKE", target = "Liskallia/vault/snapshot/AttributeSnapshot;getAttributeValue(Liskallia/vault/gear/attribute/VaultGearAttribute;Liskallia/vault/gear/attribute/type/VaultGearAttributeTypeMerger;)Ljava/lang/Object;"))

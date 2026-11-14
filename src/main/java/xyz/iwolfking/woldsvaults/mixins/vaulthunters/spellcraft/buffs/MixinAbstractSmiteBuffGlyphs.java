@@ -8,7 +8,10 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import xyz.iwolfking.woldsvaults.spellcraft.buff.BuffGlyphs;
 
-/** Smite and Archon: the bolt's ability power range takes Intensify (Lightning Damage talents add unscaled); the per-bolt cost takes drain. */
+/**
+ * Smite and Archon: the bolt's ability power range takes Intensify (Lightning Damage talents add unscaled); the
+ * per-bolt cost takes drain.
+ */
 @Mixin(value = AbstractSmiteAbility.class, remap = false)
 public class MixinAbstractSmiteBuffGlyphs {
     @WrapOperation(method = "getRandomAbilityPowerDamage", at = @At(value = "FIELD",

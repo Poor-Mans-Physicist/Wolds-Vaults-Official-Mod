@@ -10,11 +10,11 @@ import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.event.server.ServerStoppedEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import xyz.iwolfking.woldsvaults.spellcraft.scope.ProjectileGlyphTags;
-import xyz.iwolfking.woldsvaults.spellcraft.scope.DeferredReach;
-import xyz.iwolfking.woldsvaults.spellcraft.scope.CastScope;
-import xyz.iwolfking.woldsvaults.spellcraft.scope.ShotgunShot;
 import xyz.iwolfking.woldsvaults.api.cast.CastCarrier;
+import xyz.iwolfking.woldsvaults.spellcraft.scope.CastScope;
+import xyz.iwolfking.woldsvaults.spellcraft.scope.DeferredReach;
+import xyz.iwolfking.woldsvaults.spellcraft.scope.ProjectileGlyphTags;
+import xyz.iwolfking.woldsvaults.spellcraft.scope.ShotgunShot;
 
 import javax.annotation.Nullable;
 import java.util.BitSet;
@@ -24,10 +24,9 @@ import java.util.WeakHashMap;
 import java.util.function.Supplier;
 
 /**
- * Shotgun volleys and hurt immunity. Every cast of a step with Shotgun is one volley: the native cast is member 0 and
- * each copy one more member. When a member hits an enemy that another member of the same volley hit within the last
- * {@link #WINDOW_TICKS} ticks, its hit ignores the enemy's hurt immunity, so every copy can land on the same enemy on
- * the same tick. A member's own repeated hits on one enemy keep normal hurt immunity. Server thread only.
+ * Shotgun volleys and hurt immunity. Every cast of a step with Shotgun is one volley, the native cast member 0 and each
+ * copy one more member, and a member's hit on an enemy another member of the volley hit within {@link #WINDOW_TICKS}
+ * ticks ignores hurt immunity, while a member's own repeated hits keep it. Server thread only.
  */
 public final class ShotgunHits {
     private static final int WINDOW_TICKS = 20;
@@ -76,7 +75,6 @@ public final class ShotgunHits {
                 && volley.members.get(shot.member());
     }
 
-    /** The volley member an own hit of a Shotgun cast belongs to; null for any other hit, procs included. */
     /** Whether a member of {@code shot}'s volley other than {@code shot}'s own hit {@code target} within the window. */
     public static boolean volleyHit(LivingEntity target, ShotgunShot shot) {
         Volley volley = HITS.get(target);

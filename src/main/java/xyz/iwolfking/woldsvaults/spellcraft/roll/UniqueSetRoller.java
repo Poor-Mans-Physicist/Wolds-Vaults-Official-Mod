@@ -4,12 +4,14 @@ import iskallia.vault.gear.data.VaultGearData;
 import iskallia.vault.init.ModGearAttributes;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
+import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
 import xyz.iwolfking.woldsvaults.api.util.AncientUniqueHelper;
-import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
-import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
-import xyz.iwolfking.woldsvaults.spellcraft.item.GlyphLine;
-import xyz.iwolfking.woldsvaults.spellcraft.item.StoredSpell;
 import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
+import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
+import xyz.iwolfking.woldsvaults.spellcraft.item.GlyphLine;
+import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
+import xyz.iwolfking.woldsvaults.spellcraft.item.StoredSpell;
+import xyz.iwolfking.woldsvaults.spellcraft.source.GearAffixLines;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -19,17 +21,12 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
-import xyz.iwolfking.woldsvaults.spellcraft.source.GearAffixLines;
 
 /**
- * Unique focuses and wands with a fixed glyph set (loadout spec sec. 6.1, table section {@code uniqueSets}). Budget and
- * depth roll on the set's rarity row (omega for a regular unique, mythic for an ancient), with the wand rules for wands;
- * the lines are every signature glyph plus a draw of distinct glyphs at equal odds, each rolled as on any carrier of
- * the item's level. A signature glyph the item's own gear affix already grants (Steel Core on Steel Inferno, Rime on
- * Frozen Orb, the warp glyphs on Ender Rings) comes from that affix with its rolled value and is not stored twice.
- * A unique rolled before its set existed (or on another row) converts on the server's inventory scan: new lines, budget
- * and depth, spells kept, one INFO line per item. A unique with no set rolls like any carrier and logs one WARN per id.
+ * Unique focuses and wands with a fixed glyph set (table section {@code uniqueSets}). Budget and depth roll on the
+ * set's rarity row, and the lines are every signature glyph the item's own gear affixes do not already grant plus a
+ * draw of distinct glyphs at equal odds. A unique rolled from another set or row converts on the server's inventory
+ * scan and keeps its spells, and a unique with no set rolls like any carrier and logs one error per id.
  */
 public final class UniqueSetRoller implements SpellcraftRoller.UniqueSets {
     private static final Set<String> WARNED = ConcurrentHashMap.newKeySet();
@@ -40,7 +37,6 @@ public final class UniqueSetRoller implements SpellcraftRoller.UniqueSets {
         }
     }
 
-    /** What a set roll produces, before it is written. */
     public record Rolled(int budget, int depth, List<GlyphLine> lines) {
     }
 
@@ -80,10 +76,6 @@ public final class UniqueSetRoller implements SpellcraftRoller.UniqueSets {
         return true;
     }
 
-    /**
-     * The most depth-counting glyphs any saved spell on the item holds (unique glyphs don't count toward depth), so a
-     * converted unique never turns a saved spell into a depth error.
-     */
     private static int deepestSpell(SpellcraftConfig config, ItemStack stack) {
         int deepest = 0;
         for (StoredSpell spell : SpellcraftItemData.spells(stack)) {
@@ -130,10 +122,6 @@ public final class UniqueSetRoller implements SpellcraftRoller.UniqueSets {
         return new Plan(uniqueId, row, set, rolls);
     }
 
-    /**
-     * Rolls a set for an item: budget and depth on the row, the signature lines not already granted by the item's gear
-     * affixes, and the draw. Public for the offline check.
-     */
     private static Rolled rollSet(SpellcraftConfig config, ItemStack stack, int level, SpellcraftConfig.UniqueSet set, String row,
                                  SpellcraftConfig.RarityRolls rolls, Random random) {
         int budget = Math.max(0, Math.round(SpellcraftRoller.budget(config, stack, level, rolls, random)));

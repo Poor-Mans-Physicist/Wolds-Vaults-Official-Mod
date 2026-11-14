@@ -22,13 +22,19 @@ import net.minecraftforge.event.server.ServerStoppedEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import xyz.iwolfking.woldsvaults.WoldsVaults;
-import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
-import xyz.iwolfking.woldsvaults.spellcraft.scope.CastScope;
 import xyz.iwolfking.woldsvaults.api.cast.CastContext;
 import xyz.iwolfking.woldsvaults.api.cast.CastTag;
+import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
 import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
+import xyz.iwolfking.woldsvaults.init.ModConfigs;
 import xyz.iwolfking.woldsvaults.modifiers.gear.unique.SteelInfernoAttribute;
+import xyz.iwolfking.woldsvaults.spellcraft.ability.AbilityLookup;
+import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
+import xyz.iwolfking.woldsvaults.spellcraft.scope.CastScope;
+import xyz.iwolfking.woldsvaults.spellcraft.scope.GlyphGrants;
+import xyz.iwolfking.woldsvaults.spellcraft.source.GearAffixLines;
 import xyz.iwolfking.woldsvaults.spellcraft.source.GlyphLineProviders;
+import xyz.iwolfking.woldsvaults.spellcraft.source.GlyphQuality;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -36,22 +42,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
-import xyz.iwolfking.woldsvaults.spellcraft.scope.GlyphGrants;
-import xyz.iwolfking.woldsvaults.spellcraft.source.GearAffixLines;
-import xyz.iwolfking.woldsvaults.init.ModConfigs;
-import xyz.iwolfking.woldsvaults.spellcraft.ability.AbilityLookup;
-import xyz.iwolfking.woldsvaults.spellcraft.source.GlyphQuality;
 
 /**
- * Gear effects that became glyph grants (loadout spec sec. 6, 9.4). The table's {@code gearGlyphs} section names each
- * converted affix; its rolled value is a unique glyph line of the item ({@link GearAffixLines}). VH and WV no longer
- * read those affixes from the attribute snapshot: the snapshot reads filter them out, and the step's active unique
- * glyphs ({@link GlyphGrants}) stand in for them, as a synthetic attribute of today's form where VH reads one (special
- * modifications, keyed area of effect) or through WV's own readers (Steel Core, Implosion, Warp Velocity). The grants in
- * effect come from the open cast scope, the deferred scope of a spell step (its frozen glyphs ride on the cast tag of
- * what it spawned or scheduled), or a toggle switched on by a spell.
- * Outside all three nothing is granted, so a plain cast sees none of the converted affixes.
+ * Gear affixes that became glyph grants. Each affix in the table's {@code gearGlyphs} section is a unique glyph line of
+ * its item, the attribute snapshot reads filter it out, and the step's active unique glyphs ({@link GlyphGrants}) stand
+ * in for it. The grants in effect come from the open cast scope, the deferred scope of a spell step, or a toggle a
+ * spell switched on, so a plain cast sees none of the converted affixes.
  */
 @Mod.EventBusSubscriber(modid = WoldsVaults.MOD_ID)
 public final class ConvertedAffixes {
@@ -65,7 +61,6 @@ public final class ConvertedAffixes {
     private ConvertedAffixes() {
     }
 
-    /** Registers the gear glyph line provider and the toggle listener; called once from common setup. */
     public static void init() {
         GlyphLineProviders.register(GearAffixLines::collect);
         CommonEvents.ABILITY_CAST.register(LISTENER_OWNER, data -> {
@@ -77,8 +72,7 @@ public final class ConvertedAffixes {
 
     /**
      * The unique glyphs in effect for an entity's ability reads: the open cast scope's step, else the deferred scope of
-     * one of its spell steps (an entity it cast ticking, scheduled work), else the toggles a spell switched on. Clients and
-     * other entities get none.
+     * one of its spell steps, else the toggles a spell switched on. Clients and other entities get none.
      */
     public static GlyphGrants grants(@Nullable Entity holder) {
         if (!(holder instanceof ServerPlayer player)) {
@@ -189,8 +183,8 @@ public final class ConvertedAffixes {
     }
 
     /**
-     * Steel Core on a fireball: the centre bonus is the glyph's potency and the radius multiplier its linked
-     * {@code radius} value at the line's quality. Null when the fireball's cast had no Steel Core.
+     * Steel Core on a fireball: the centre bonus is the glyph's potency and the radius multiplier its linked {@code
+     * radius} value at the line's quality. Null when the fireball's cast had no Steel Core.
      */
     @Nullable
     public static SteelInfernoAttribute steelCore(VaultFireball fireball) {

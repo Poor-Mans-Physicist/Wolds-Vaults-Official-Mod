@@ -1,13 +1,13 @@
 package xyz.iwolfking.woldsvaults.spellcraft.spell;
 
-import xyz.iwolfking.woldsvaults.spellcraft.ability.SpellAbilities;
-import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
 import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
+import xyz.iwolfking.woldsvaults.spellcraft.ability.AbilityLookup;
+import xyz.iwolfking.woldsvaults.spellcraft.ability.SpellAbilities;
+import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphStacking;
+import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphStats;
+import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
 import xyz.iwolfking.woldsvaults.spellcraft.source.GlyphView;
 import xyz.iwolfking.woldsvaults.spellcraft.source.GlyphViewLine;
-import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphStacking;
-import xyz.iwolfking.woldsvaults.spellcraft.ability.AbilityLookup;
-import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphStats;
 import xyz.iwolfking.woldsvaults.spellcraft.spell.SpellModel.Bundle;
 import xyz.iwolfking.woldsvaults.spellcraft.spell.SpellModel.Cast;
 import xyz.iwolfking.woldsvaults.spellcraft.spell.SpellModel.Pause;
@@ -92,8 +92,8 @@ final class SpellParser {
     }
 
     /**
-     * Intensify on a heal costs spell mana instead of duration (ruling R20): the product of every live heal step's heal
-     * mana total, applied after the mana floor so billing and every display agree.
+     * Intensify on a heal costs spell mana instead of duration: the product of every live heal step's heal mana total,
+     * applied after the mana floor so billing and every display agree.
      */
     private static float healManaFactor(List<Step> steps, Map<Step, GlyphStacking.Pool> stepPools) {
         float factor = 1.0F;
@@ -223,6 +223,7 @@ final class SpellParser {
         if (result.active() && this.inactiveBundle != null) {
             result = new PlacedGlyph(result.type(), result.potency(), result.quality(), result.cost(), this.inactiveBundle, true, result.token());
         }
+
         record(result);
         return result;
     }

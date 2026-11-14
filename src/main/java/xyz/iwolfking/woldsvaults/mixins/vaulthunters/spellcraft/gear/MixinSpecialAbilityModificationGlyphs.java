@@ -15,8 +15,8 @@ import java.util.List;
 public abstract class MixinSpecialAbilityModificationGlyphs {
 
     /**
-     * Converted special modifications (Frost Nova vulnerability, entropic poison, hypothermia, fireball recast, imploding
-     * javelin damage) come from the step's granted glyphs instead of the attribute snapshot.
+     * Converted special modifications (Frost Nova vulnerability, entropic poison, hypothermia, fireball recast,
+     * imploding javelin damage) come from the step's granted glyphs instead of the attribute snapshot.
      */
     @SuppressWarnings({"rawtypes", "unchecked"})
     @Inject(method = "getModifications", at = @At("RETURN"), cancellable = true)

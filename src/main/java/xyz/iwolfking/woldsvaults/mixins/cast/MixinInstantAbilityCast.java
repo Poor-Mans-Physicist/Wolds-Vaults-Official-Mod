@@ -10,16 +10,16 @@ import net.minecraft.server.level.ServerPlayer;
 import org.spongepowered.asm.mixin.Mixin;
 import xyz.iwolfking.woldsvaults.api.cast.CastContext;
 import xyz.iwolfking.woldsvaults.api.cast.CastTag;
-import xyz.iwolfking.woldsvaults.spellcraft.scope.DeferredGlyphs;
-import xyz.iwolfking.woldsvaults.spellcraft.buff.BuffGlyphs;
-import xyz.iwolfking.woldsvaults.spellcraft.scope.DeferredReach;
 import xyz.iwolfking.woldsvaults.spellcraft.ability.AbilityLookup;
+import xyz.iwolfking.woldsvaults.spellcraft.buff.BuffGlyphs;
+import xyz.iwolfking.woldsvaults.spellcraft.scope.DeferredGlyphs;
+import xyz.iwolfking.woldsvaults.spellcraft.scope.DeferredReach;
 
 /**
- * Opens a cast context for every instant ability a player casts, covering the mana check, the hits
- * and the payment, so per-cast effects can tell the hits of one cast apart from the next. A cast run
- * as a spell step carries that step's frozen glyphs on its tag; a cast that went through starts its
- * buff activation (Intensify, Extend) and, for Necromancy, sets the glyphs its minions follow.
+ * Opens a cast context for every instant ability a player casts, covering the mana check, the hits and the payment, so
+ * per-cast effects can tell the hits of one cast apart from the next. A cast run as a spell step carries that step's
+ * frozen glyphs on its tag; a cast that went through starts its buff activation (Intensify, Extend) and, for
+ * Necromancy, sets the glyphs its minions follow.
  */
 @Mixin(value = InstantAbility.class, remap = false)
 public class MixinInstantAbilityCast {

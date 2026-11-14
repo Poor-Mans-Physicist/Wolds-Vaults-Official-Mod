@@ -3,18 +3,17 @@ package xyz.iwolfking.woldsvaults.spellcraft.scope;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
+import xyz.iwolfking.woldsvaults.api.cast.CastTag;
+import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
 
 import javax.annotation.Nullable;
 import java.util.UUID;
-import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
-import xyz.iwolfking.woldsvaults.api.cast.CastTag;
 
 /**
  * The glyph state of one spell step, frozen when the step's cast opens: whose cast it is, the ability spec, the step's
  * modifiers (Echo power and Charge already folded into damage, unique glyph grants included) and its Shotgun volley
- * member. It rides on the cast's
- * tag onto everything the cast leaves behind (scheduled work, entities, block entities, minions), so what the ability
- * does later still gets the step's glyphs.
+ * member. It rides on the cast's tag onto everything the cast leaves behind (scheduled work, entities, block entities,
+ * minions), so what the ability does later still gets the step's glyphs.
  */
 public record DeferredGlyphs(UUID owner, String spec, CastModifiers modifiers, @Nullable ShotgunShot shot) {
     private static final String OWNER = "owner";

@@ -1,22 +1,24 @@
 package xyz.iwolfking.woldsvaults.spellcraft.source;
 
-import iskallia.vault.gear.data.VaultGearData;
-import iskallia.vault.gear.attribute.VaultGearModifier;
 import iskallia.vault.gear.attribute.VaultGearAttribute;
 import iskallia.vault.gear.attribute.VaultGearAttributeRegistry;
+import iskallia.vault.gear.attribute.VaultGearModifier;
 import iskallia.vault.gear.attribute.ability.AbilityFloatValueAttribute;
 import iskallia.vault.gear.attribute.ability.special.base.SpecialAbilityGearAttribute;
 import iskallia.vault.gear.attribute.ability.special.base.template.value.FloatValue;
 import iskallia.vault.gear.attribute.ability.special.base.template.value.IntValue;
 import iskallia.vault.gear.attribute.type.VaultGearAttributeTypeMerger;
 import iskallia.vault.gear.data.AttributeGearData;
+import iskallia.vault.gear.data.VaultGearData;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
-import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
-import xyz.iwolfking.woldsvaults.spellcraft.item.GlyphLine;
+import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
 import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
+import xyz.iwolfking.woldsvaults.init.ModConfigs;
 import xyz.iwolfking.woldsvaults.modifiers.gear.unique.SteelInfernoAttribute;
 import xyz.iwolfking.woldsvaults.modifiers.gear.unique.StormTrackingAttribute;
+import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
+import xyz.iwolfking.woldsvaults.spellcraft.item.GlyphLine;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -26,16 +28,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
-import xyz.iwolfking.woldsvaults.init.ModConfigs;
 
 /**
- * The glyph lines converted gear affixes grant (loadout spec sec. 6): every value of a {@code gearGlyphs} attribute on
- * the stack, read the way VH's snapshot reads it, becomes one line of the entry's glyph with the affix's value as its
- * potency. On an arcana item the lines belong to that item (not transferable, not auto); on other gear they are
- * transferable auto lines. Each line allows one copy and its cost is the glyph's minimum (unique glyph costs come from
- * the spell rule). Quality places the value in the glyph's top potency tier; for Steel Core it places the rolled radius
- * multiplier in the glyph's linked radius range, so the cast reproduces both rolled values.
+ * The glyph lines converted gear affixes grant: every value of a {@code gearGlyphs} attribute on the stack, read the
+ * way VH's snapshot reads it, becomes one line of the entry's glyph with the affix's value as its potency. On an arcana
+ * item the lines belong to that item, and on other gear they are transferable auto lines. Each line allows one copy and
+ * costs the glyph's minimum, and its quality places the value in the glyph's top potency tier and a linked affix's
+ * value in its linked range.
  */
 public final class GearAffixLines {
     private static Index index;
@@ -98,14 +97,15 @@ public final class GearAffixLines {
         return null;
     }
 
-    /** The {@link GlyphLineProviders} provider. */
     public static void collect(ItemStack stack, boolean arcana, List<GlyphLineProviders.SourceLine> out) {
         for (GlyphLine line : lines(stack)) {
             out.add(new GlyphLineProviders.SourceLine(line, !arcana, !arcana));
         }
     }
 
-    /** The converted affixes on a stack as glyph lines (not transferable; the caller decides how the source lends them). */
+    /**
+     * The converted affixes on a stack as glyph lines (not transferable; the caller decides how the source lends them).
+     */
     public static List<GlyphLine> lines(ItemStack stack) {
         SpellcraftConfig config = ModConfigs.SPELLCRAFT;
         if (config == null || stack.isEmpty() || !AttributeGearData.hasData(stack)) {
@@ -134,7 +134,6 @@ public final class GearAffixLines {
         return lines;
     }
 
-    /** The quality each linked affix on the item places in its glyph's linked value. */
     private static Map<GlyphType, Float> linkedQualities(SpellcraftConfig config, List<SpellcraftConfig.GearGlyph> entries, AttributeGearData data) {
         Map<GlyphType, Float> out = new HashMap<>();
         for (SpellcraftConfig.GearGlyph entry : entries) {

@@ -9,11 +9,11 @@ import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.server.ServerStoppedEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import xyz.iwolfking.woldsvaults.spellcraft.ability.AbilityLookup;
+import xyz.iwolfking.woldsvaults.spellcraft.ability.SpellAbilities;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.CastModifiers;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.CastScope;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.DeferredGlyphs;
-import xyz.iwolfking.woldsvaults.spellcraft.ability.AbilityLookup;
-import xyz.iwolfking.woldsvaults.spellcraft.ability.SpellAbilities;
 
 import javax.annotation.Nullable;
 import java.util.Collections;
@@ -24,13 +24,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
 /**
- * Intensify and Extend on buff abilities (redesign/spellcraft/BALANCE_PLAN_2026-11-10.md sec. 7). Each spec's own
- * getter or field asks here for its factor; the tier object is never changed. A value VH reads during the cast takes
- * the open spell step's factor ({@link #atCast}); a value VH re-reads while the buff runs takes the factor of the
- * activation that started it ({@link #live}), kept per player and spec until the buff or toggle ends, and replaced by
- * the next cast of that spec (with its own glyphs, or none). Which factors apply depends on the spec: a timed buff
- * takes intensity and duration, a toggle intensity and drain (its timed parts only the duration upside), a heal
- * intensity and heal mana.
+ * Intensify and Extend on buff abilities. Each spec's own getter or field asks here for its factor, and the tier object
+ * is never changed. A value VH reads during the cast takes the open spell step's factor ({@link #atCast}), and a value
+ * it re-reads while the buff runs takes the factor of the activation that started it ({@link #live}), kept per player
+ * and spec until the buff ends or the spec is cast again.
  */
 public final class BuffGlyphs {
     private static final Map<UUID, Map<String, Live>> BY_PLAYER = new ConcurrentHashMap<>();
@@ -89,7 +86,9 @@ public final class BuffGlyphs {
         return factorsOf(ability, scope.modifiers());
     }
 
-    /** The factors in effect for {@code ability} now: the open step's during its cast, else its running activation's. */
+    /**
+     * The factors in effect for {@code ability} now: the open step's during its cast, else its running activation's.
+     */
     public static Factors live(Skill ability) {
         Factors cast = atCast(ability);
         if (!cast.isNone()) {
@@ -123,7 +122,9 @@ public final class BuffGlyphs {
         return Math.max(1, Math.round(value * factor));
     }
 
-    /** An instant cast of {@code ability} went through with {@code glyphs} (null: no spell step): starts its activation. */
+    /**
+     * An instant cast of {@code ability} went through with {@code glyphs} (null: no spell step): starts its activation.
+     */
     public static void onInstantCast(ServerPlayer player, Skill ability, @Nullable DeferredGlyphs glyphs) {
         String spec = AbilityLookup.specId(ability);
         if (spec != null && TIMED_EFFECTS.containsKey(spec)) {
@@ -131,7 +132,9 @@ public final class BuffGlyphs {
         }
     }
 
-    /** A toggle switched: on, it starts an activation with the open step's factors (none outside a step); off, it ends. */
+    /**
+     * A toggle switched: on, it starts an activation with the open step's factors (none outside a step); off, it ends.
+     */
     public static void onToggle(ServerPlayer player, ToggleAbility ability) {
         String spec = AbilityLookup.specId(ability);
         if (spec == null) {

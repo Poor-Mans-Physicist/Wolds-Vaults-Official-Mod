@@ -9,19 +9,19 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import xyz.iwolfking.woldsvaults.api.cast.CastContext;
 import xyz.iwolfking.woldsvaults.api.cast.CastTag;
-import xyz.iwolfking.woldsvaults.spellcraft.ability.AbilityCastTracker;
-import xyz.iwolfking.woldsvaults.spellcraft.scope.CastScope;
-import xyz.iwolfking.woldsvaults.spellcraft.scope.CastBilling;
 import xyz.iwolfking.woldsvaults.mixins.vaulthunters.gods.idona.ManaCostHelperAccessor;
+import xyz.iwolfking.woldsvaults.spellcraft.ability.AbilityCastTracker;
+import xyz.iwolfking.woldsvaults.spellcraft.scope.CastBilling;
+import xyz.iwolfking.woldsvaults.spellcraft.scope.CastScope;
 
 import javax.annotation.Nullable;
 
 /**
  * Mana for slot casts of augmented spells. The trigger step checks and pays the whole slot: its own cost (after VH's
- * mana attributes) plus every other ability in the spell, times the spell's mana factor. A sneaking Power Dump pays the
- * whole bar instead. Every other step of the spell (chained abilities, payloads, Echo, Shotgun copies) is free. The
- * Ethereal talents roll once per slot cast: when they fire, the whole slot is free. A trigger VH does not bill per
- * cast (a toggle switching on, a mana-free instant) pays the other abilities' share here, once per activation.
+ * mana attributes) plus every other ability in the spell, times the spell's mana factor, or the whole mana bar for a
+ * Power Dump. Every other step is free, the Ethereal talents roll once per slot cast and free the whole slot when they
+ * fire, and a trigger VH does not bill per cast (a toggle switching on) pays the other abilities' share here once per
+ * activation.
  */
 public final class SlotManaBilling {
     private static boolean lastPaymentEthereal;
@@ -29,7 +29,10 @@ public final class SlotManaBilling {
     private SlotManaBilling() {
     }
 
-    /** The cost a slot trigger is checked and dumped against: the slot cost for the trigger step, {@code cost} otherwise. */
+    /**
+     * The cost a slot trigger is checked and dumped against: the slot cost for the trigger step, {@code cost}
+     * otherwise.
+     */
     public static float slotCost(ServerPlayer player, Skill skill, float cost) {
         CastBilling billing = CastScope.billing(player);
         if (billing == null || !billing.isTrigger() || !isTrigger(billing, skill)) {
@@ -49,7 +52,6 @@ public final class SlotManaBilling {
         return slotCost(player, skill, cost);
     }
 
-    /** Records whether VH's Ethereal roll inside a payment fired. */
     public static void noteEtherealRoll(boolean free) {
         lastPaymentEthereal = free;
     }

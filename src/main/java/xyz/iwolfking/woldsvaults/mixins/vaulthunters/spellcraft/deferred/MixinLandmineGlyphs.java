@@ -6,11 +6,11 @@ import iskallia.vault.block.entity.LandmineBlockEntity;
 import net.minecraft.world.entity.LivingEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
+import xyz.iwolfking.woldsvaults.api.cast.CastCarrier;
 import xyz.iwolfking.woldsvaults.api.cast.CastContext;
 import xyz.iwolfking.woldsvaults.api.cast.CastTag;
-import xyz.iwolfking.woldsvaults.api.cast.CastCarrier;
-import xyz.iwolfking.woldsvaults.spellcraft.scope.PlacedBlockGlyphs;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.DeferredGlyphs;
+import xyz.iwolfking.woldsvaults.spellcraft.scope.PlacedBlockGlyphs;
 
 /**
  * A landmine is triggered by whatever steps on it, outside its own tick. A mine a spell step placed triggers under that

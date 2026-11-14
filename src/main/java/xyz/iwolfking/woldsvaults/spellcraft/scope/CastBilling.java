@@ -5,10 +5,9 @@ import xyz.iwolfking.woldsvaults.spellcraft.bar.EffectiveBar;
 import javax.annotation.Nullable;
 
 /**
- * How mana and cooldown are charged inside a slot cast. The trigger step charges the whole slot (the mana of every
- * ability in the spell times the spell's mana factor, and the slot cooldown); every other step is free, since the
- * slot already paid. {@code suppressCastEvent} keeps a step from firing on-cast effects (Shotgun copies).
- * {@code fullyCharged}: the slot was cast with Charge held to full.
+ * How mana and cooldown are charged inside a slot cast: the trigger step charges the whole slot and every other step is
+ * free. {@code suppressCastEvent} keeps a step from firing on-cast effects. {@code fullyCharged}: the slot was cast
+ * with Charge held to full.
  */
 public record CastBilling(@Nullable String triggerSpec, float otherAbilitiesMana, float manaFactor,
                           @Nullable EffectiveBar.Slot slot, boolean suppressCastEvent, boolean fullyCharged) {

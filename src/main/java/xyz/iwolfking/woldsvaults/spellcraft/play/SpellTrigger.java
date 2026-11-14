@@ -21,9 +21,9 @@ final class SpellTrigger {
     }
 
     /**
-     * A key on a slot holding an augmented or implicit spell. Spells with Charge wind up while the key is held and cast on
-     * release; others cast on release. A LOCKED slot, a spell with a structural error, or a spell any of whose ability
-     * groups is still cooling down refuses with the reason. Inactive glyphs never refuse: they are skipped.
+     * A key on a slot holding an augmented or implicit spell: spells with Charge wind up while the key is held, and
+     * every spell casts on release. A LOCKED slot, a spell with a structural error or a spell with an ability group
+     * still cooling down refuses with the reason, while inactive glyphs are skipped.
      */
     static void onSpellKey(ServerPlayer player, EffectiveBar bar, EffectiveBar.Slot slot, boolean down) {
         SpellcraftConfig config = ModConfigs.SPELLCRAFT;
@@ -69,10 +69,6 @@ final class SpellTrigger {
         }
     }
 
-    /**
-     * The all-groups gate: every ability group the slot holds must be learned and off cooldown. Otherwise plays VH's
-     * cooldown sound and names the slowest group when it isn't the trigger.
-     */
     private static boolean ready(ServerPlayer player, EffectiveBar.Slot slot) {
         AbilityTree tree = AbilityLookup.tree(player);
         for (String group : slot.groups()) {

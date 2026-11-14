@@ -18,21 +18,19 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import xyz.iwolfking.woldsvaults.spellcraft.ability.SpellAbility;
-import xyz.iwolfking.woldsvaults.spellcraft.scope.CastModifiers;
 import xyz.iwolfking.woldsvaults.spellcraft.hit.ShotgunHits;
+import xyz.iwolfking.woldsvaults.spellcraft.scope.CastModifiers;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.ShotgunShot;
 
 import javax.annotation.Nullable;
-
 import java.util.Comparator;
 import java.util.List;
 
 /**
- * Size Up on Arcane Rail. VH fires the rail natively (mana, cooldown, its own thin hit); right after, this applies
- * VH's rail rules (ability power times a roll between its min and max percent, as many targets as the Rail Pierce
- * etching allows, nearest first, players only in PvP vaults) to every mob within the wider radius of the same line.
- * Mobs the native bolt just hit are immune for half a second, so they are skipped rather than hit twice. In a Shotgun
- * volley only mobs this member's own bolt hit are skipped; mobs another member hit take the sweep through immunity.
+ * Size Up on Arcane Rail. After VH fires the rail natively, this applies VH's rail rules (ability power times a roll
+ * between its min and max percent, as many targets as the Rail Pierce etching allows, nearest first, players only in
+ * PvP vaults) to every mob within the wider radius of the same line. Mobs the native bolt just hit are skipped rather
+ * than hit twice, except in a Shotgun volley, where only the mobs this member's own bolt hit are skipped.
  */
 public final class RailBolts {
     private static final int JUST_HIT = 10;

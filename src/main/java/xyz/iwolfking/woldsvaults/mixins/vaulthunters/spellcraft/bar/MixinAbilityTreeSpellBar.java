@@ -31,7 +31,9 @@ public abstract class MixinAbilityTreeSpellBar {
         }
     }
 
-    /** Quick-select keys and the ability wheel select the slot casting that ability; abilities off the bar are refused. */
+    /**
+     * Quick-select keys and the ability wheel select the slot casting that ability; abilities off the bar are refused.
+     */
     @Inject(method = "onQuickSelect", at = @At("HEAD"), cancellable = true)
     private void woldsvaults$slotQuickSelect(String id, SkillContext context, CallbackInfo ci) {
         ServerPlayer player = context.getSource().as(ServerPlayer.class).orElse(null);

@@ -6,7 +6,9 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import xyz.iwolfking.woldsvaults.spellcraft.buff.BuffGlyphs;
 
-/** Porcupine and Quill: the extra thorns share takes Intensify (Quill's count does not); the per-hit cost takes drain. */
+/**
+ * Porcupine and Quill: the extra thorns share takes Intensify (Quill's count does not); the per-hit cost takes drain.
+ */
 @Mixin(value = ShellPorcupineAbility.class, remap = false)
 public class MixinShellPorcupineBuffGlyphs {
     @ModifyReturnValue(method = "getAdditionalThornsDamagePercent", at = @At("RETURN"))

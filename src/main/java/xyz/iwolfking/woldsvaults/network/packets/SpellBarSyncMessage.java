@@ -5,13 +5,13 @@ import net.minecraft.world.InteractionHand;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.network.NetworkEvent;
-import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
-import xyz.iwolfking.woldsvaults.spellcraft.spell.PlacedGlyph;
-import xyz.iwolfking.woldsvaults.spellcraft.spell.GlyphState;
-import xyz.iwolfking.woldsvaults.spellcraft.spell.SpellcraftRules;
 import xyz.iwolfking.woldsvaults.client.spellcraft.state.ClientSpellBar;
 import xyz.iwolfking.woldsvaults.spellcraft.bar.EffectiveBar;
 import xyz.iwolfking.woldsvaults.spellcraft.bar.SpellBarData;
+import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
+import xyz.iwolfking.woldsvaults.spellcraft.spell.GlyphState;
+import xyz.iwolfking.woldsvaults.spellcraft.spell.PlacedGlyph;
+import xyz.iwolfking.woldsvaults.spellcraft.spell.SpellcraftRules;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -19,11 +19,9 @@ import java.util.List;
 import java.util.function.Supplier;
 
 /**
- * Server to client: the player's default bar, selected slot, and the effective bar the server resolved. Each slot
- * carries its occupant (item key and spell id, or the base group), the spell's name and tokens, its source item and
- * hand, priority, LOCKED state and reason, the implicit flag, the groups it holds, the overlays it shadows, and every
- * glyph's state and line. Each equipped arcana item reports its arcana, budget, budget-greyed glyphs and errors. The
- * client never resolves the bar from its own item NBT.
+ * Server to client: the player's default bar, selected slot and the effective bar the server resolved, with every
+ * equipped arcana item's arcana, budget, greyed glyphs and errors. The client never resolves the bar from its own item
+ * NBT.
  */
 public record SpellBarSyncMessage(String[] defaults, int selected, List<Entry> entries, List<Source> sources) {
     private static final int MAX_LIST = 256;
@@ -42,7 +40,6 @@ public record SpellBarSyncMessage(String[] defaults, int selected, List<Entry> e
                         List<String> groups, List<String> shadowed, List<Glyph> glyphs) {
     }
 
-    /** One equipped arcana item: its key, name, hand, budget, active arcana, budget-greyed glyphs and errors. */
     public record Source(String key, String name, int hand, int budget, int arcana, int budgetInactive, List<String> errors) {
     }
 

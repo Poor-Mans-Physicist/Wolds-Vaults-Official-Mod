@@ -12,27 +12,25 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.network.PacketDistributor;
 import xyz.iwolfking.woldsvaults.WoldsVaults;
+import xyz.iwolfking.woldsvaults.init.ModNetwork;
+import xyz.iwolfking.woldsvaults.network.packets.SpellBarSyncMessage;
+import xyz.iwolfking.woldsvaults.spellcraft.ability.AbilityLookup;
+import xyz.iwolfking.woldsvaults.spellcraft.bar.EffectiveBar;
+import xyz.iwolfking.woldsvaults.spellcraft.bar.SpellBarData;
 import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
 import xyz.iwolfking.woldsvaults.spellcraft.roll.SpellcraftRoller;
 import xyz.iwolfking.woldsvaults.spellcraft.source.EquippedSources;
-import xyz.iwolfking.woldsvaults.init.ModNetwork;
-import xyz.iwolfking.woldsvaults.network.packets.SpellBarSyncMessage;
 
 import javax.annotation.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
-import xyz.iwolfking.woldsvaults.spellcraft.bar.EffectiveBar;
-import xyz.iwolfking.woldsvaults.spellcraft.bar.SpellBarData;
-import xyz.iwolfking.woldsvaults.spellcraft.ability.AbilityLookup;
 
 /**
- * The spell bar service. Players cast slots: a slot key (or VH's cast key, for the selected slot) casts the slot's
- * spell; VH's quick-select keys and ability wheel select the slot holding that ability; scrolling with the cast key
- * held moves through filled slots. The tree's selected ability always follows the selected slot, so VH code that reads
- * it (Vein Miner, the HUD tray) keeps working. Swapping items writes no cooldown; a held key whose slot changes
- * occupant stops recasting.
+ * The spell bar service: resolves each player's effective bar, keeps the tree's selected ability on the selected slot
+ * and syncs the bar to the client. VH code that reads the tree's selection (Vein Miner, the HUD tray) keeps working
+ * because the selection follows the slot.
  */
 @Mod.EventBusSubscriber(modid = WoldsVaults.MOD_ID)
 public final class SpellBars {
@@ -72,9 +70,8 @@ public final class SpellBars {
     }
 
     /**
-     * Resolves the player's effective bar from their equipped sources, cancels held keys on slots whose occupant changed
-     * since the last resolution, keeps the selected slot and the tree's selection in step, and syncs the client when
-     * anything shown changed.
+     * Resolves the player's effective bar from their equipped sources and brings held keys, the selection and the
+     * client up to date.
      */
     public static EffectiveBar refresh(ServerPlayer player) {
         SpellBarData.PlayerBar saved = saved(player);

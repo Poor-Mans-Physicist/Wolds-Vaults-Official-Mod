@@ -17,7 +17,9 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
+import xyz.iwolfking.woldsvaults.api.cast.CastCarrier;
 import xyz.iwolfking.woldsvaults.api.cast.CastContext;
+import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
 import xyz.iwolfking.woldsvaults.api.lib.IWoldAbilityEnhancements;
 import xyz.iwolfking.woldsvaults.api.util.ElementHelper;
 import xyz.iwolfking.woldsvaults.mixins.accessors.AccessorProjectile;
@@ -25,12 +27,10 @@ import xyz.iwolfking.woldsvaults.mixins.vaulthunters.accessors.LightningOrbEntit
 import xyz.iwolfking.woldsvaults.mixins.vaulthunters.accessors.ToxicGrenadeEntityAccessor;
 import xyz.iwolfking.woldsvaults.mixins.vaulthunters.accessors.VaultDecoyProjectileInvoker;
 import xyz.iwolfking.woldsvaults.mixins.vaulthunters.accessors.VaultGrenadeAccessor;
+import xyz.iwolfking.woldsvaults.spellcraft.scope.TickingEntity;
 
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
-import xyz.iwolfking.woldsvaults.api.cast.CastCarrier;
-import xyz.iwolfking.woldsvaults.spellcraft.scope.TickingEntity;
 
 final class ProjectileDetonation {
     private static final Set<Class<?>> UNDETONATED_WARNED = ConcurrentHashMap.newKeySet();
@@ -106,7 +106,6 @@ final class ProjectileDetonation {
         }
     }
 
-    /** Projectiles that only act on contact, so the end of their orbit simply removes them. */
     private static boolean endsByRemoval(Projectile projectile) {
         return projectile instanceof LightningOrbEntity || projectile instanceof VaultBlizzardShard
                 || projectile instanceof VaultThrownJavelin || projectile instanceof VaultStormArrow

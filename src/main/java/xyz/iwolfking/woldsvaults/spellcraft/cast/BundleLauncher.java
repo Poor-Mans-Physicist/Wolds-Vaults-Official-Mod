@@ -2,21 +2,21 @@ package xyz.iwolfking.woldsvaults.spellcraft.cast;
 
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.phys.Vec3;
-import xyz.iwolfking.woldsvaults.spellcraft.scope.CastModifiers;
-import xyz.iwolfking.woldsvaults.spellcraft.ability.CastOrigin;
-import xyz.iwolfking.woldsvaults.spellcraft.projectile.ShotgunPattern;
-import xyz.iwolfking.woldsvaults.spellcraft.projectile.ProjectileSteering;
-import xyz.iwolfking.woldsvaults.spellcraft.spell.SpellModel;
 import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
+import xyz.iwolfking.woldsvaults.spellcraft.ability.CastOrigin;
 import xyz.iwolfking.woldsvaults.spellcraft.projectile.BundledSpellOrb;
+import xyz.iwolfking.woldsvaults.spellcraft.projectile.ProjectileSteering;
+import xyz.iwolfking.woldsvaults.spellcraft.projectile.ShotgunPattern;
+import xyz.iwolfking.woldsvaults.spellcraft.scope.CastModifiers;
+import xyz.iwolfking.woldsvaults.spellcraft.spell.SpellModel;
 
 import javax.annotation.Nullable;
 
 /**
  * Throws a Bundled Spell from the player, or from a landing point for a bundle inside another bundle's payload. The
- * glyphs right after it modify the orb: speed, size, Homing or Orbit, Ethereal, and Shotgun (one orb per copy, each
- * carrying the whole payload at the copies' damage). The orb flies for the Bundled Spell's rolled flight time; an
- * orbiting orb lasts its whole orbit and lands its payload where it is when the orbit ends.
+ * glyphs right after it modify the orb, and Shotgun throws one orb per copy, each carrying the whole payload at the
+ * copies' damage. The orb flies for the Bundled Spell's rolled flight time, or lands its payload where it is when its
+ * orbit ends.
  */
 public final class BundleLauncher {
     private BundleLauncher() {

@@ -12,7 +12,9 @@ import java.util.function.Supplier;
 @Mixin(value = AbilityQuickselectMessage.class, remap = false)
 public abstract class MixinAbilityQuickselectMessageSpellBar {
 
-    /** VH's per-ability quick-fire keys are retired: abilities are cast from spell slots, so the packet does nothing. */
+    /**
+     * VH's per-ability quick-fire keys are retired: abilities are cast from spell slots, so the packet does nothing.
+     */
     @Inject(method = "handle", at = @At("HEAD"), cancellable = true)
     private static void woldsvaults$retireQuickfire(AbilityQuickselectMessage message, Supplier<NetworkEvent.Context> context, CallbackInfo ci) {
         context.get().setPacketHandled(true);

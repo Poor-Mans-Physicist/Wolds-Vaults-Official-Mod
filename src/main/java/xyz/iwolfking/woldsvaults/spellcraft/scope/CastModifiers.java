@@ -2,23 +2,22 @@ package xyz.iwolfking.woldsvaults.spellcraft.scope;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
-import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
-import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphStacking;
-import xyz.iwolfking.woldsvaults.spellcraft.spell.PlacedGlyph;
 import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
+import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphStacking;
 import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphStats;
+import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
+import xyz.iwolfking.woldsvaults.spellcraft.spell.PlacedGlyph;
 
 import javax.annotation.Nullable;
 import java.util.List;
 import java.util.function.Function;
 
 /**
- * What the glyphs on one step (an ability or a Bundled Spell orb) do, from their rolled potencies: multipliers on
- * damage, area, projectile speed and size, buff intensity and duration, toggle drain and heal mana (stacked by
- * {@link GlyphStacking}), the duration upside alone (a toggle's timed part takes Extend but not Intensify's duration
- * cost); Homing (lock-on range from the table, rolled turn rate in degrees per second), Orbit and
- * Ethereal durations; Low Gravity; Shotgun copies and their per-copy damage; Echo power; and Charge's full-charge
- * bonus; and the step's active unique glyphs ({@link GlyphGrants}). Dormant glyphs are left out.
+ * What the glyphs on one step (an ability or a Bundled Spell orb) do, from their rolled potencies: stat multipliers
+ * stacked by {@link GlyphStacking}, the Homing, Orbit, Ethereal, Low Gravity, Shotgun, Echo and Charge values, and the
+ * step's active unique glyphs ({@link GlyphGrants}). {@code durationUpside} is the duration factor without Intensify's
+ * duration cost, which a toggle's timed part takes. Homing's turn rate is in degrees per second, and dormant glyphs are
+ * left out.
  */
 public record CastModifiers(float damage, float area, float speed, float scale, float intensity, float duration, float drain,
                             float healMana, float durationUpside, float homingRange, float homingTurn, float orbitSeconds, float gravityReduction,
@@ -51,8 +50,8 @@ public record CastModifiers(float damage, float area, float speed, float scale, 
     }
 
     /**
-     * The step's modifiers from its glyphs: the stacked step stats ({@link PlacedGlyph#pool}), times each Shotgun copy's damage
-     * factor, with size clamped to the table's limits.
+     * The step's modifiers from its glyphs: the stacked step stats ({@link PlacedGlyph#pool}), times each Shotgun
+     * copy's damage factor, with size clamped to the table's limits.
      */
     public static CastModifiers of(Function<GlyphType, SpellcraftConfig.GlyphDefinition> definitions, SpellcraftConfig.Tuning tuning,
                                    List<PlacedGlyph> glyphs) {
@@ -109,7 +108,9 @@ public record CastModifiers(float damage, float area, float speed, float scale, 
         return this.etherealSeconds > 0;
     }
 
-    /** The same modifiers with every hit scaled by an outside factor (Echo power, a Charge bonus, a payload's copies). */
+    /**
+     * The same modifiers with every hit scaled by an outside factor (Echo power, a Charge bonus, a payload's copies).
+     */
     public CastModifiers withDamageFactor(float factor) {
         return new CastModifiers(damage * factor, area, speed, scale, intensity, duration, drain, healMana, durationUpside, homingRange, homingTurn,
                 orbitSeconds, gravityReduction, etherealSeconds, shotgunCopies, echoPower, chargeBonus, grants);

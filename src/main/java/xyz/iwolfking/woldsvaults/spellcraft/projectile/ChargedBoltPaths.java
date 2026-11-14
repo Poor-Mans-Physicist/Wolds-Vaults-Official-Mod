@@ -9,24 +9,24 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
+import xyz.iwolfking.woldsvaults.init.ModConfigs;
+import xyz.iwolfking.woldsvaults.mixins.vaulthunters.accessors.ChargedBoltsAbilityInvoker;
+import xyz.iwolfking.woldsvaults.spellcraft.scope.CastBilling;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.CastModifiers;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.CastScope;
-import xyz.iwolfking.woldsvaults.spellcraft.scope.CastBilling;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.ShotgunShot;
-import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
-import xyz.iwolfking.woldsvaults.mixins.vaulthunters.accessors.ChargedBoltsAbilityInvoker;
-import xyz.iwolfking.woldsvaults.init.ModConfigs;
 
 import javax.annotation.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Charged Bolts cast from a spell. VH flies each bolt along a fixed straight line stepped by scheduled tasks, with no
- * entity to tag or steer, so a spell cast flies them here instead: the same fan, step length, range, hit test, damage
- * roll, repeat-hit falloff, sparks and trail, plus the step's glyphs. Accelerate lengthens each step (same range),
- * Size Up and Size Down scale the hit radius, Ethereal passes through blocks, Homing turns each bolt like a homing
- * projectile, and hits deal damage inside the cast's scope so damage glyphs, Charge and Echo power apply.
+ * Charged Bolts cast from a spell. VH flies each bolt along a fixed line stepped by scheduled tasks, with no entity to
+ * tag or steer, so a spell cast flies them here with the same fan, step length, range, hit test, damage roll,
+ * repeat-hit falloff and effects. The step's glyphs apply on top: Accelerate lengthens each step, Size Up and Size Down
+ * scale the hit radius, Ethereal passes through blocks, Homing turns each bolt, and hits land inside the cast's scope
+ * so damage glyphs, Charge and Echo power apply.
  */
 public final class ChargedBoltPaths {
     private static final double SPAWN_DROP = 0.25;

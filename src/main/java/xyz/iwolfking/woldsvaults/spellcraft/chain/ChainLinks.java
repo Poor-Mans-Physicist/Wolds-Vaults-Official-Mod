@@ -23,12 +23,10 @@ import java.util.Comparator;
 import java.util.List;
 
 /**
- * VH's on-hit chain, shared by its melee chain (through WV's replacement of its chain body) and the Chaining glyph: the
- * range (5 blocks scaled by the attacker's area of effect), the targets (nearest mobs first, without the struck mob,
- * the attacker, eternals hit by players or eternals, pets, mobs the attack ignores or mobs immune to the source) and the
- * damage step per link. The step is VH's 0.5, raised by the CHAINING_PENALTY etching to {@code 0.5 + 0.5 x reduction}
- * and by the {@code chaining_damage} affix (Chainlash's prefix) by {@code 1 + value}; the two multiply and the step
- * never exceeds 1, so a link never deals more than the one before it.
+ * VH's on-hit chain, shared by its melee chain and the Chaining glyph: the range (5 blocks scaled by the attacker's
+ * area of effect), the targets and the damage step per link. The step is VH's 0.5, raised by the CHAINING_PENALTY
+ * etching to {@code 0.5 + 0.5 x reduction} and multiplied by {@code 1 + value} of the {@code chaining_damage} affix,
+ * never above 1, so a link never deals more than the one before it.
  */
 public final class ChainLinks {
     private static final float BASE_RANGE = 5.0F;

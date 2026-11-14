@@ -11,10 +11,10 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import xyz.iwolfking.woldsvaults.api.cast.CastContext;
 import xyz.iwolfking.woldsvaults.api.cast.CastTag;
-
-import javax.annotation.Nullable;
 import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
 import xyz.iwolfking.woldsvaults.spellcraft.ability.AbilityLookup;
+
+import javax.annotation.Nullable;
 
 public final class PlacedBlockGlyphs {
     private static final String GLYPHS_KEY = "woldsvaults:spell_glyphs";
@@ -22,7 +22,9 @@ public final class PlacedBlockGlyphs {
     private PlacedBlockGlyphs() {
     }
 
-    /** Gives a block entity created during a cast that cast's tag, and keeps a spell step's glyphs in its saved data. */
+    /**
+     * Gives a block entity created during a cast that cast's tag, and keeps a spell step's glyphs in its saved data.
+     */
     public static void tagIfCasting(BlockEntity blockEntity) {
         CastTag tag = CastContext.tagIfCasting(blockEntity);
         if (tag != null && tag.glyphs() != null && keepsGlyphs(blockEntity)) {

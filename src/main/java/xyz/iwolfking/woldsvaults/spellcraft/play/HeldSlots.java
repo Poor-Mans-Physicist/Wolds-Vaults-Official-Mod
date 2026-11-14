@@ -4,8 +4,8 @@ import iskallia.vault.mana.ManaPlayer;
 import iskallia.vault.skill.ability.effect.spi.core.Ability;
 import iskallia.vault.skill.ability.effect.spi.core.InstantAbility;
 import iskallia.vault.skill.ability.effect.spi.core.InstantManaAbility;
-import iskallia.vault.util.calc.ManaCostHelper;
 import iskallia.vault.skill.tree.AbilityTree;
+import iskallia.vault.util.calc.ManaCostHelper;
 import net.minecraft.server.level.ServerPlayer;
 import xyz.iwolfking.woldsvaults.spellcraft.ability.AbilityLookup;
 import xyz.iwolfking.woldsvaults.spellcraft.bar.EffectiveBar;
@@ -37,8 +37,8 @@ final class HeldSlots {
     }
 
     /**
-     * Whether a held key keeps recasting this slot: instant abilities and instant spells without Charge. Toggles,
-     * holds and Charge spells keep their own press and release handling.
+     * Whether a held key keeps recasting this slot: instant abilities and instant spells without Charge. Toggles, holds
+     * and Charge spells keep their own press and release handling.
      */
     static boolean repeats(ServerPlayer player, EffectiveBar.Slot slot) {
         Ability trigger = AbilityLookup.ability(AbilityLookup.tree(player), slot.group());
@@ -50,8 +50,9 @@ final class HeldSlots {
 
     /**
      * Recasts held slots on the tick they are ready: the tick the last of their groups' cooldowns ends (VH ticks
-     * cooldowns at the start of the player tick, this runs at its end) when the slot is affordable. An attempt that does not start the cooldown
-     * (a curse, a suppressor, a failed cast) waits {@link #RETRY_TICKS} before the next one.
+     * cooldowns at the start of the player tick, this runs at its end) when the slot is affordable. An attempt that
+     * does not start the cooldown (a curse, a suppressor, a failed cast) waits {@link #RETRY_TICKS} before the next
+     * one.
      */
     static void recast(ServerPlayer player) {
         Map<Integer, Integer> held = HELD.get(player.getUUID());

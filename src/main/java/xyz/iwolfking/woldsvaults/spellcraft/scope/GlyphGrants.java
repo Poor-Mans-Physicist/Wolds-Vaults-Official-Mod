@@ -1,9 +1,9 @@
 package xyz.iwolfking.woldsvaults.spellcraft.scope;
 
 import net.minecraft.nbt.CompoundTag;
+import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
 import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
 import xyz.iwolfking.woldsvaults.spellcraft.spell.PlacedGlyph;
-import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
 
 import javax.annotation.Nullable;
 import java.util.Collections;
@@ -13,10 +13,10 @@ import java.util.Map;
 import java.util.function.Function;
 
 /**
- * The active unique glyphs of one step (gear glyphs such as Rime or Steel Core, and Chaining), each with the potency and
- * quality of its view line. The cast scope carries them, and so does everything the cast spawns, so the readers that
- * used to read the gear affix read the step's glyph instead. A step without unique glyphs grants nothing, which is
- * what keeps converted affixes off plain casts.
+ * The active unique glyphs of one step (gear glyphs such as Rime or Steel Core, and Chaining), each with the potency
+ * and quality of its view line. The cast scope carries them, and so does everything the cast spawns, so readers of a
+ * converted gear affix read the step's glyph. A step without unique glyphs grants nothing, which keeps converted
+ * affixes off plain casts.
  */
 public final class GlyphGrants {
     public static final GlyphGrants NONE = new GlyphGrants(Map.of());

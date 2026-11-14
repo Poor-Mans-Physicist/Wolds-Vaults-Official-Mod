@@ -23,8 +23,7 @@ public final class SpellEdits {
 
     /**
      * Creates (id 0), changes or deletes a spell on the focus or wand in the player's inventory slot. The whole item is
-     * checked against its glyph view first; a change that breaks any rule is refused with the reason. A changed spell
-     * keeps its slot and priority.
+     * checked against its glyph view first, and a changed spell keeps its slot and priority.
      */
     public static void editSpell(ServerPlayer player, int inventorySlot, int spellId, String name, List<String> tokens, boolean delete) {
         SpellcraftConfig config = ModConfigs.SPELLCRAFT;
@@ -57,8 +56,9 @@ public final class SpellEdits {
     }
 
     /**
-     * Moves a spell of the item in the player's inventory slot to a bar slot ({@link SpellcraftItemData#UNASSIGNED} takes
-     * it off the bar) and sets its priority (0 keeps it). Refused when another spell of the item already uses the slot.
+     * Moves a spell of the item in the player's inventory slot to a bar slot ({@link SpellcraftItemData#UNASSIGNED}
+     * takes it off the bar) and sets its priority (0 keeps it). Refused when another spell of the item already uses the
+     * slot.
      */
     public static void placeSpell(ServerPlayer player, int inventorySlot, int spellId, int barSlot, int prio) {
         SpellcraftConfig config = ModConfigs.SPELLCRAFT;
@@ -111,7 +111,6 @@ public final class SpellEdits {
         return stack;
     }
 
-    /** A refused edit or placement: shown in chat (the action bar is hidden behind the focus screen) and logged. */
     private static void refuse(ServerPlayer player, String message) {
         WoldLogger.warn("Spellcraft: refused a spell edit by {}: {}", player.getGameProfile().getName(), message);
         player.displayClientMessage(new TextComponent(message).withStyle(ChatFormatting.LIGHT_PURPLE), false);

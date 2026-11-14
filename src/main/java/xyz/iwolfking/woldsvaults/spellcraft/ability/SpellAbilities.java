@@ -2,6 +2,7 @@ package xyz.iwolfking.woldsvaults.spellcraft.ability;
 
 import iskallia.vault.init.ModConfigs;
 import iskallia.vault.skill.base.Skill;
+import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
 import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
 
 import javax.annotation.Nullable;
@@ -12,11 +13,10 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
 
 /**
- * The abilities recipes know, built from the focus augments table's trait list and rebuilt whenever a new table is
- * installed. An ability missing from the table cannot appear in a recipe or trigger one.
+ * The abilities spells know, built from the spellcraft table's trait list and rebuilt whenever a new table is
+ * installed. An ability missing from the table cannot appear in a spell or trigger one.
  */
 public final class SpellAbilities {
     private static final Set<String> HEALS = Set.of("Heal_Base", "Heal_Group");
@@ -51,7 +51,9 @@ public final class SpellAbilities {
         return byId;
     }
 
-    /** Whether a step casting {@code spec} bills its heal mana factor (Intensify on a heal costs mana, not duration). */
+    /**
+     * Whether a step casting {@code spec} bills its heal mana factor (Intensify on a heal costs mana, not duration).
+     */
     public static boolean isHeal(@Nullable String spec) {
         return spec != null && HEALS.contains(spec);
     }

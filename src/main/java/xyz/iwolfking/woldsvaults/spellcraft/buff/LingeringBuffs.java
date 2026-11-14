@@ -15,15 +15,15 @@ import net.minecraftforge.fml.common.Mod;
 import xyz.iwolfking.woldsvaults.WoldsVaults;
 import xyz.iwolfking.woldsvaults.api.cast.CastTag;
 import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
+import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
+import xyz.iwolfking.woldsvaults.spellcraft.ability.AbilityLookup;
 import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.CastScope;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.DeferredGlyphs;
-import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
-import xyz.iwolfking.woldsvaults.spellcraft.source.EquippedSources;
-import xyz.iwolfking.woldsvaults.spellcraft.source.GlyphViewLine;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.GlyphGrants;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.PlacedBlockGlyphs;
-import xyz.iwolfking.woldsvaults.spellcraft.ability.AbilityLookup;
+import xyz.iwolfking.woldsvaults.spellcraft.source.EquippedSources;
+import xyz.iwolfking.woldsvaults.spellcraft.source.GlyphViewLine;
 
 import javax.annotation.Nullable;
 import java.util.Iterator;
@@ -32,14 +32,11 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Notes on how lingering buffs were cast, so an etching glyph a buff reads after its cast (a toggle's lucky hit, a
- * timed buff's dodge, the damage totem's ability power) comes from the cast that made the buff, never from whatever
- * spell step is open when the buff is read or from the player's gear when a spell made it.
- * <p>
- * Every ability cast leaves a note per player and ability group: the spell step's grants when a spell cast it (an
- * empty set included), or plain when it came from the base bar, which reads the player's gear auto line. Damage totems
- * note each player they cover on VH's own totem tick, with the glyphs the spell that placed the tile carried, or plain
- * for a tile placed from the base bar, which reads the totem owner's gear auto line.
+ * Notes on how lingering buffs were cast, so an etching glyph a buff reads after its cast comes from the cast that made
+ * the buff. Every ability cast leaves a note per player and ability group: the spell step's grants, or plain for a base
+ * bar cast, which reads the player's gear auto line. Damage totems note each player they cover on VH's totem tick with
+ * the glyphs of the spell that placed them, or plain for a totem placed from the base bar, which reads its owner's gear
+ * auto line.
  */
 @Mod.EventBusSubscriber(modid = WoldsVaults.MOD_ID)
 public final class LingeringBuffs {
@@ -51,11 +48,9 @@ public final class LingeringBuffs {
     private LingeringBuffs() {
     }
 
-    /** How one buff was cast: a spell step's grants, or plain (null grants) for a base bar cast. */
     private record Source(@Nullable GlyphGrants grants) {
     }
 
-    /** A damage totem covering a player until {@code expires} (game time), with its cast's source and owner. */
     private record Cover(Source source, @Nullable UUID owner, long expires) {
     }
 
@@ -64,7 +59,6 @@ public final class LingeringBuffs {
         static final Resolution UNKNOWN = new Resolution(false, null);
     }
 
-    /** Registers the cast listener that writes the notes; called once from common setup. */
     public static void init() {
         CommonEvents.ABILITY_CAST.register(LISTENER_OWNER, data -> {
             if (data.getEntity() instanceof ServerPlayer player) {

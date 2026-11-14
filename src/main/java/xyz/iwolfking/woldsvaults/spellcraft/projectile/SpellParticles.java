@@ -9,8 +9,8 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 
 /**
- * Server-sent particle cues for spell casting, visible to every player near the caster: the blue ring
- * that circles a charging spell, the blue flare when the charge fills, and the red flare of a Power Dump.
+ * Server-sent particle cues for spell casting, visible to every player near the caster: the blue ring that circles a
+ * charging spell, the blue flare when the charge fills, and the red flare of a Power Dump.
  */
 public final class SpellParticles {
     private static final double RING_HEIGHT = 0.9D;
@@ -39,8 +39,8 @@ public final class SpellParticles {
     }
 
     /**
-     * One tick of the charge ring around {@code player}: {@link #RING_POINTS} blue dust motes that advance
-     * around the player each tick, widening and brightening as {@code progress} (0-1) fills.
+     * One tick of the charge ring around {@code player}: {@link #RING_POINTS} blue dust motes that advance around the
+     * player each tick, widening and brightening as {@code progress} (0-1) fills.
      */
     public static void chargeRing(ServerPlayer player, int heldTicks, float progress) {
         float t = Mth.clamp(progress, 0.0F, 1.0F);
@@ -59,7 +59,6 @@ public final class SpellParticles {
         }
     }
 
-    /** The one-off blue flare when a charge reaches full: soul flames bursting outward plus a puff of bright blue dust. */
     public static void chargeFull(ServerPlayer player) {
         ServerLevel level = player.getLevel();
         double y = player.getY() + FLARE_HEIGHT;
@@ -69,7 +68,6 @@ public final class SpellParticles {
                 CHARGE_FLARE_DUST, CHARGE_FLARE_SPREAD, CHARGE_FLARE_SPREAD, CHARGE_FLARE_SPREAD, 0.0D);
     }
 
-    /** The red Power Dump flare: Idona's red flames bursting outward from the player around a cloud of red dust. */
     public static void powerDump(ServerPlayer player) {
         ServerLevel level = player.getLevel();
         double y = player.getY() + FLARE_HEIGHT;

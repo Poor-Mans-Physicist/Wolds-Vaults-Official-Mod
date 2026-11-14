@@ -7,12 +7,10 @@ import net.minecraft.world.entity.projectile.Projectile;
 import javax.annotation.Nullable;
 
 /**
- * The glyph state a projectile carries in its persistent data: damage and area multipliers, size, Low Gravity, the
- * Ethereal and Orbit durations, the game tick its orbit ends on, Homing's range and turn rate, the ability spec that cast
- * it (to tell its own hits from procs) and its Shotgun volley member. Homing is kept next to Orbit so a child that leaves
- * the orbit still homes. Child projectiles a tagged projectile spawns during its own tick (Scatter javelin splits,
- * ricochets, Volley bounces) copy it, so glyphs follow the whole cast and an inherited orbit keeps its end tick; a
- * child marked with {@link #leaveOrbit} copies everything except the orbit.
+ * The glyph state a projectile carries in its persistent data. Child projectiles a tagged projectile spawns during its
+ * own tick (Scatter javelin splits, ricochets, Volley bounces) copy it, so glyphs follow the whole cast and an
+ * inherited orbit keeps its end tick. A child marked with {@link #leaveOrbit} copies everything except the orbit, and
+ * still homes.
  */
 public final class ProjectileGlyphTags {
     public static final String DAMAGE = "woldsvaults:augment_damage";

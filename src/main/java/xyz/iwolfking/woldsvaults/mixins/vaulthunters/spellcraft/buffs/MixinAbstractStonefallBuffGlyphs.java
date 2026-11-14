@@ -8,7 +8,10 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import xyz.iwolfking.woldsvaults.spellcraft.buff.BuffGlyphs;
 
-/** Stonefall: the landing window takes Extend; Intensify scales Snow's damage reduction and the base spec's knockback (VH clamps the reduction at 1). */
+/**
+ * Stonefall: the landing window takes Extend; Intensify scales Snow's damage reduction and the base spec's knockback
+ * (VH clamps the reduction at 1).
+ */
 @Mixin(value = AbstractStonefallAbility.class, remap = false)
 public class MixinAbstractStonefallBuffGlyphs {
     @ModifyReturnValue(method = "getDurationTicks", at = @At("RETURN"))

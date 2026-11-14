@@ -3,24 +3,22 @@ package xyz.iwolfking.woldsvaults.spellcraft.hit;
 import iskallia.vault.event.ActiveFlags;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
+import xyz.iwolfking.woldsvaults.api.cast.CastCarrier;
+import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
 import xyz.iwolfking.woldsvaults.events.WoldActiveFlags;
+import xyz.iwolfking.woldsvaults.spellcraft.hit.HitSources.Kind;
+import xyz.iwolfking.woldsvaults.spellcraft.hit.HitSources.Source;
 
 import javax.annotation.Nullable;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
-import xyz.iwolfking.woldsvaults.api.cast.CastCarrier;
-import xyz.iwolfking.woldsvaults.spellcraft.hit.HitSources.Kind;
-import xyz.iwolfking.woldsvaults.spellcraft.hit.HitSources.Source;
 
 /**
- * Which hurt events are an ability's own hits, so damage glyphs multiply those and nothing else (no on-hit procs, no
- * lucky-hit extras, no etching side hits). Each ability spec lists its hit sources as VH deals them in 3.21.6: the
- * damage source id, the direct entity, the exact set of VH {@link ActiveFlags} set around the hurt call, the WV flags
- * it needs, what carries it (the cast itself, a projectile's tick, or something deferred) and whether VH deals it from
- * inside another hurt call. A hit matches when all of that agrees; a nested hurt matches only a source marked nested.
+ * Which hurt events are an ability's own hits, so damage glyphs multiply those and nothing else (no on-hit procs,
+ * lucky-hit extras or etching side hits). Each spec lists its hit sources as VH deals them ({@link HitSources}). A hit
+ * matches when its damage source id, direct entity, VH flags, WV flags, carrier and nesting all agree.
  */
 public final class OwnHits {
     private static final Set<ActiveFlags> LEAKY_FLAGS = EnumSet.of(ActiveFlags.IS_THORNS_REFLECTING);
@@ -36,9 +34,8 @@ public final class OwnHits {
     }
 
     /**
-     * Whether this hurt is one of {@code spec}'s own hits. A null spec (a Bundled Spell orb's step) has none. A spec
-     * the table lacks logs an error once and gets no glyph damage. The first hit of each other kind seen inside a
-     * spec's cast is logged once, so a missing source shows up in the log.
+     * Whether this hurt is one of {@code spec}'s own hits. A null spec (a Bundled Spell orb's step) has none, and a
+     * spec the table lacks gets no glyph damage and logs an error once.
      */
     public static boolean isOwnHit(@Nullable String spec, DamageSource source) {
         if (matchesOwnHit(spec, source)) {
@@ -54,9 +51,9 @@ public final class OwnHits {
     }
 
     /**
-     * Whether this hurt, dealt later through a deferred carrier, is one of {@code spec}'s own hits: like {@link #isOwnHit}
-     * but only sources {@code carriers} delivers count. Procs that share an own hit's signature but run through another
-     * carrier (Chain Lightning's delayed strike is scheduled, its own hit is a projectile's) stay out.
+     * Whether this hurt, dealt later through a deferred carrier, is one of {@code spec}'s own hits: like {@link
+     * #isOwnHit} but only sources {@code carriers} delivers count. Procs that share an own hit's signature but run
+     * through another carrier (Chain Lightning's delayed strike is scheduled, its own hit is a projectile's) stay out.
      */
     public static boolean isOwnDeferredHit(@Nullable String spec, DamageSource source, Set<CastCarrier> carriers) {
         return matchesOwnHit(spec, source, carriers);
@@ -158,7 +155,10 @@ public final class OwnHits {
         return source.getMsgId() + "/" + (direct == null ? "none" : direct.getClass().getSimpleName()) + "/{" + flags + "}/depth " + HURT_DEPTH.get()[0];
     }
 
-    /** Called around every {@code LivingEntity.hurt}: hurts nested inside another are procs unless a source says otherwise. */
+    /**
+     * Called around every {@code LivingEntity.hurt}: hurts nested inside another are procs unless a source says
+     * otherwise.
+     */
     public static void enterHurt() {
         HURT_DEPTH.get()[0]++;
     }

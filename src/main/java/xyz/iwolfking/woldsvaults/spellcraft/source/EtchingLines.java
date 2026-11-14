@@ -10,9 +10,11 @@ import iskallia.vault.init.ModGearAttributes;
 import iskallia.vault.util.Throuple;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
+import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
+import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
+import xyz.iwolfking.woldsvaults.init.ModConfigs;
 import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
 import xyz.iwolfking.woldsvaults.spellcraft.item.GlyphLine;
-import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
 
 import javax.annotation.Nullable;
 import java.util.Arrays;
@@ -22,8 +24,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
-import xyz.iwolfking.woldsvaults.init.ModConfigs;
 
 public final class EtchingLines {
     public static final String POTENCY = "potency";
@@ -75,7 +75,9 @@ public final class EtchingLines {
         index = null;
     }
 
-    /** The glyph an item's etching grants, or null when it has no etching or its etching grants none (client tooltips). */
+    /**
+     * The glyph an item's etching grants, or null when it has no etching or its etching grants none (client tooltips).
+     */
     @Nullable
     public static GlyphType glyphOf(ItemStack stack) {
         Index current = index();
@@ -91,7 +93,10 @@ public final class EtchingLines {
         return entry == null ? null : entry.type();
     }
 
-    /** The {@link GlyphLineProviders} provider: every converted etching on the stack is a transferable auto line, whatever the source. */
+    /**
+     * The {@link GlyphLineProviders} provider: every converted etching on the stack is a transferable auto line,
+     * whatever the source.
+     */
     public static void collect(ItemStack stack, boolean arcana, List<GlyphLineProviders.SourceLine> out) {
         Index current = index();
         if (current == null || current.byAttribute().isEmpty() || stack.isEmpty() || !VaultGearData.hasData(stack)

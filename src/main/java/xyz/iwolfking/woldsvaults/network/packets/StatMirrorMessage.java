@@ -9,7 +9,7 @@ import xyz.iwolfking.woldsvaults.spellcraft.play.StatMirror;
 import java.util.UUID;
 import java.util.function.Supplier;
 
-/** Server to client: the server's values of the mirrored player stats (see {@link StatMirror}). */
+/** Server to client: the server's values of the mirrored player stats. */
 public record StatMirrorMessage(UUID player, float[] values) {
     public static void encode(StatMirrorMessage message, FriendlyByteBuf buffer) {
         buffer.writeUUID(message.player);

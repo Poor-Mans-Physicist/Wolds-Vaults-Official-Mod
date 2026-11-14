@@ -4,10 +4,9 @@ import iskallia.vault.mana.ManaAction;
 import iskallia.vault.mana.ManaPlayer;
 import net.minecraft.server.level.ServerPlayer;
 
-
 /**
- * Discount and Shotgun copy refunds. VH has no mana-cost stat event (costs come from gear, {@code ManaCostHelper}),
- * so the refund is a share of the Vault mana a cast actually took, measured around the cast.
+ * Refunds Vault mana. VH has no mana-cost stat event, so a toggle discount is refunded as a share of the mana the
+ * toggle actually took.
  */
 public final class ManaRefunds {
     private ManaRefunds() {

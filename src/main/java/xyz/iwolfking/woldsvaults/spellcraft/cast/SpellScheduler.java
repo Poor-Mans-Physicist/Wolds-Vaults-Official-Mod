@@ -15,8 +15,8 @@ import java.util.UUID;
 import java.util.function.Consumer;
 
 /**
- * Runs the later parts of a recipe (after Delay, a Charge wind-up, Echo) on the server tick. Pending parts are
- * dropped when the player logs out, dies, changes dimension or the server stops.
+ * Runs the later parts of a spell (after Delay, a Charge wind-up, Echo) on the server tick. Pending parts are dropped
+ * when the player logs out, dies, changes dimension or the server stops.
  */
 public final class SpellScheduler {
     private static final List<Task> TASKS = new ArrayList<>();

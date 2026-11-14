@@ -10,7 +10,9 @@ import xyz.iwolfking.woldsvaults.spellcraft.scope.ChainScope;
 
 @Mixin(value = PlayerLeechHelper.class, remap = false)
 public abstract class MixinPlayerLeechHelperChainScope {
-    /** A Chaining glyph link is pure damage: no on-hit proc and no attacker-side increase on its already final amount. */
+    /**
+     * A Chaining glyph link is pure damage: no on-hit proc and no attacker-side increase on its already final amount.
+     */
     @Inject(method = "onLivingHurt", at = @At("HEAD"), cancellable = true)
     private static void woldsvaults$chainScopeOnLivingHurt(LivingDamageEvent event, CallbackInfo ci) {
         if (ChainScope.active()) {

@@ -7,8 +7,8 @@ import java.util.List;
 
 /**
  * An etching that grants a glyph: the glyph's definition plus the entry that reads the etching's value into it. The
- * value maps to potency as {@code offset + value * scale}, by default the value itself; unset choices are empty and an
- * unset lingering source means the glyph is read during its own cast.
+ * value maps to potency as {@code offset + value * scale}, by default the value itself. An unset lingering source means
+ * the glyph is read during its own cast.
  */
 public final class EtchingGlyphBuilder {
     private final GlyphBuilder glyph;

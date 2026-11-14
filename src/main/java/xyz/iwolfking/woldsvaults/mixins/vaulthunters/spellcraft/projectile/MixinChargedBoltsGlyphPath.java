@@ -6,13 +6,15 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import xyz.iwolfking.woldsvaults.spellcraft.scope.CastScope;
 import xyz.iwolfking.woldsvaults.spellcraft.projectile.ChargedBoltPaths;
+import xyz.iwolfking.woldsvaults.spellcraft.scope.CastScope;
 
 @Mixin(value = ChargedBoltsAbility.class, remap = false)
 public abstract class MixinChargedBoltsGlyphPath {
 
-    /** Inside a spell cast, Charged Bolts fly the spellcraft path, which carries the step's glyphs; otherwise VH's own. */
+    /**
+     * Inside a spell cast, Charged Bolts fly the spellcraft path, which carries the step's glyphs; otherwise VH's own.
+     */
     @Inject(method = "castBolts", at = @At("HEAD"), cancellable = true)
     private void woldsvaults$glyphedBolts(ServerPlayer player, CallbackInfo ci) {
         CastScope.Active active = CastScope.forPlayer(player);

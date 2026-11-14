@@ -13,8 +13,8 @@ import xyz.iwolfking.woldsvaults.spellcraft.projectile.LightningOrbs;
 import java.util.function.Supplier;
 
 /**
- * Server to client: a steered Ball of Lightning's new direction and speed (Homing / Orbit), so the client's copy
- * moves where the server's does.
+ * Server to client: a steered Ball of Lightning's new direction and speed (Homing / Orbit), so the client's copy moves
+ * where the server's does.
  */
 public record OrbSteerMessage(int entityId, Vec3 direction, float speed) {
     public static void encode(OrbSteerMessage message, FriendlyByteBuf buffer) {

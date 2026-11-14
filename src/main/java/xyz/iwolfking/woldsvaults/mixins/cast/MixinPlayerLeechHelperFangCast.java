@@ -2,7 +2,6 @@ package xyz.iwolfking.woldsvaults.mixins.cast;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
-import iskallia.vault.util.damage.AttackScaleHelper;
 import iskallia.vault.util.PlayerLeechHelper;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.event.entity.living.LivingDamageEvent;
@@ -15,8 +14,8 @@ import xyz.iwolfking.woldsvaults.api.cast.CastTag;
 import xyz.iwolfking.woldsvaults.events.WoldActiveFlags;
 
 /**
- * Fang hits leech from gear at most once per cast, and are not blocked by the last swing's attack scale,
- * since a fang is not a swing.
+ * Fang hits leech from gear at most once per cast, and are not blocked by the last swing's attack scale, since a fang
+ * is not a swing.
  */
 @Mixin(value = PlayerLeechHelper.class, remap = false)
 public class MixinPlayerLeechHelperFangCast {

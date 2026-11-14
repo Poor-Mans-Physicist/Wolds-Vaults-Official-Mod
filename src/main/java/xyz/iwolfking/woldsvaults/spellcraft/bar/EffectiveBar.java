@@ -3,28 +3,27 @@ package xyz.iwolfking.woldsvaults.spellcraft.bar;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
+import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
+import xyz.iwolfking.woldsvaults.init.ModConfigs;
 import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
 import xyz.iwolfking.woldsvaults.spellcraft.item.StoredSpell;
-import xyz.iwolfking.woldsvaults.spellcraft.spell.SpellModel;
-import xyz.iwolfking.woldsvaults.spellcraft.spell.SpellcraftRules;
-import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
 import xyz.iwolfking.woldsvaults.spellcraft.source.EquippedSources;
 import xyz.iwolfking.woldsvaults.spellcraft.source.GlyphView;
+import xyz.iwolfking.woldsvaults.spellcraft.spell.SpellModel;
+import xyz.iwolfking.woldsvaults.spellcraft.spell.SpellcraftRules;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
-import xyz.iwolfking.woldsvaults.init.ModConfigs;
 
 /**
- * The bar a player actually casts. Every equipped arcana item lays its assigned spells over their slots; the lowest
- * priority number wins a slot, and a tie for the top is LOCKED. One ability group lives in only one slot: overlays
- * claim their groups in priority order, an overlay needing a group a higher priority already holds is LOCKED, and equal
- * priorities clashing on a group lock each other. Base slots claim last; a base slot whose group an overlay holds is
- * hidden. A base slot whose ability fits an auto glyph casts as an implicit spell. Each slot carries its occupant's
- * identity ({@code itemId:spellId} or {@code base:<group>}).
+ * The bar a player actually casts. Every equipped arcana item lays its assigned spells over their slots: the lowest
+ * priority number wins a slot and a tie for the top is LOCKED. One ability group lives in only one slot, so overlays
+ * claim their groups in priority order, an overlay needing a group a higher priority already holds is LOCKED, equal
+ * priorities clashing on a group lock each other, and base slots claim last and are hidden when an overlay holds their
+ * group. A base slot whose ability fits an auto glyph casts as an implicit spell.
  */
 public final class EffectiveBar {
     private final Slot[] slots;
@@ -61,7 +60,6 @@ public final class EffectiveBar {
         }
     }
 
-    /** One equipped arcana item: its identity, name, hand, spells and their check against its view. */
     public record ArcanaItem(String key, String name, @Nullable InteractionHand hand, ItemStack stack, List<StoredSpell> spells,
                              SpellcraftRules.ItemCheck check) {
     }
@@ -71,7 +69,6 @@ public final class EffectiveBar {
         this.items = items;
     }
 
-    /** The player's bar from their equipped sources (server). */
     public static EffectiveBar forPlayer(ServerPlayer player, String[] defaults, Function<String, String> specOf) {
         SpellcraftConfig config = ModConfigs.SPELLCRAFT;
         EquippedSources.Snapshot sources = EquippedSources.get(player);
@@ -99,7 +96,6 @@ public final class EffectiveBar {
         return List.of(this.slots);
     }
 
-    /** The equipped arcana items this bar was resolved from, with their checks. */
     public List<ArcanaItem> items() {
         return this.items;
     }
@@ -114,7 +110,6 @@ public final class EffectiveBar {
         return -1;
     }
 
-    /** Whether any slot is laid over by an item's spell. */
     public boolean hasOverlays() {
         for (Slot slot : this.slots) {
             if (slot.itemKey() != null) {

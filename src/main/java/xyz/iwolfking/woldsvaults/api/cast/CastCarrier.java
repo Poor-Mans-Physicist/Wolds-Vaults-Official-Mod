@@ -5,10 +5,9 @@ import java.util.EnumSet;
 import java.util.Set;
 
 /**
- * What delivers a hit relative to the cast. CAST and PROJECTILE are reached by the cast scope and projectile tags;
- * the others by the cast's deferred glyphs, each only through its own carrier (a scheduled task reaches SCHEDULED
- * sources, an entity's tick ENTITY and MINION sources, a block entity's tick BLOCK_ENTITY sources, a damage-over-time
- * tick DOT sources, an ability's own later window EVENT sources, a minion's hit MINION sources).
+ * What delivers a hit relative to the cast that caused it. CAST and PROJECTILE hits are reached through the cast scope
+ * and projectile tags. Every other carrier is deferred, and a spell step's deferred glyphs reach only the hit sources
+ * its delivering carrier {@link #reaches}.
  */
 public enum CastCarrier {
     CAST,
@@ -21,7 +20,7 @@ public enum CastCarrier {
     TOGGLE,
     EVENT;
 
-    /** The hit sources a deferred carrier delivers, or null for the cast itself (any source). */
+    /** The hit sources a deferred carrier delivers, or null for CAST and PROJECTILE, which reach any source. */
     @Nullable
     public Set<CastCarrier> reaches() {
         return switch (this) {

@@ -1,8 +1,8 @@
 package xyz.iwolfking.woldsvaults.spellcraft.source;
 
+import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
 import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
 import xyz.iwolfking.woldsvaults.spellcraft.item.GlyphLine;
-import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -13,11 +13,11 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * One arcana item's glyph view: for each glyph type, the line its spells use. The candidates for a type are the item's
- * own line plus every transferable line of that type on other equipped sources. Potency, quality and cost come from
- * the candidate with the highest potency (ties: higher quality, then lower cost, then source order, own line first);
- * the per-spell limit is the largest {@code min(cap, uses)} over the candidates, where the own line may carry its own
- * cap and a borrowed line always uses the type's cap. The same code builds views on the server and the client.
+ * One arcana item's glyph view: for each glyph type, the line its spells use, chosen from the item's own line and every
+ * transferable line of that type on other equipped sources. Potency, quality and cost come from the candidate with the
+ * highest potency (ties: higher quality, then lower cost, then source order, own line first), and the per-spell limit
+ * is the largest {@code min(cap, uses)} over the candidates, where only the own line may carry its own cap. The same
+ * code builds views on the server and the client.
  */
 public final class GlyphView {
     public static final GlyphView EMPTY = new GlyphView(Map.of());
@@ -28,13 +28,15 @@ public final class GlyphView {
         this.lines = lines;
     }
 
-    /** The per-spell limit of an item's own line: its cap override when it has one, else the type's cap, within its uses. */
+    /**
+     * The per-spell limit of an item's own line: its cap override when it has one, else the type's cap, within its
+     * uses.
+     */
     public static int ownLimit(SpellcraftConfig config, GlyphLine line) {
         int cap = line.cap() != null ? line.cap() : config.glyph(line.type()).capPerSpell;
         return Math.max(0, Math.min(cap, line.uses()));
     }
 
-    /** The per-spell limit a borrowed line lends: never its own cap override, only the type's cap. */
     private static int borrowedLimit(SpellcraftConfig config, GlyphLine line) {
         return Math.max(0, Math.min(config.glyph(line.type()).capPerSpell, line.uses()));
     }

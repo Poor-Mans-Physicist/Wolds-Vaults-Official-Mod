@@ -3,10 +3,10 @@ package xyz.iwolfking.woldsvaults.network.packets;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkEvent;
+import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
 import xyz.iwolfking.woldsvaults.spellcraft.play.SpellEdits;
 
 import java.util.function.Supplier;
-import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
 
 /**
  * Client to server: put a spell of the focus or wand in {@code inventorySlot} on a bar slot (-1 takes it off the bar)

@@ -9,26 +9,17 @@ import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.entity.ProjectileImpactEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import xyz.iwolfking.woldsvaults.spellcraft.scope.CastModifiers;
-import xyz.iwolfking.woldsvaults.spellcraft.ability.CastOrigin;
-import xyz.iwolfking.woldsvaults.spellcraft.scope.CastScope;
 import xyz.iwolfking.woldsvaults.mixins.accessors.ChainLightningProjectileAccessor;
-import xyz.iwolfking.woldsvaults.spellcraft.hit.OwnHits;
-import xyz.iwolfking.woldsvaults.spellcraft.scope.DeferredReach;
+import xyz.iwolfking.woldsvaults.spellcraft.ability.CastOrigin;
+import xyz.iwolfking.woldsvaults.spellcraft.scope.CastModifiers;
+import xyz.iwolfking.woldsvaults.spellcraft.scope.CastScope;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.ProjectileGlyphTags;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.TickingEntity;
 
 /**
- * Applies glyphs to what VH does during and after a cast. During a cast, Amplify Area and Strengthen's area penalty
- * multiply VH's area-of-effect multiplier ({@code 1 + AoE}, the value VH's cast-time area helper passes) before VH clamps it
- * to the player's limit (spell haste is applied by the bar). Projectiles the cast spawns
- * are tagged (and steered, resized, re-weighted); a tagged projectile's area reads and hits during its own tick count
- * as the cast's, and the children it spawns then inherit its tags. Damage is multiplied only for the ability's own hits
- * ({@link OwnHits}: its damage source and VH attack flags) made during the cast, by a tagged projectile, or while one
- * is ticking, so procs, lucky-hit extras and other damage of the same player are untouched. What the ability does
- * later (scheduled work, entities, block entities, damage over time, minions) takes the step's glyphs through the
- * deferred scope ({@link DeferredReach}): its own hits through that carrier, and area reads there when the ability
- * deals hits through it.
+ * Tags the projectiles a spell step spawns with the step's glyphs and starts their speed, size, physics and steering. A
+ * Bundled Spell payload's projectiles are relaunched from the landing point. Children a tagged projectile spawns during
+ * its own tick inherit its tags.
  */
 public final class ProjectileGlyphs {
     private ProjectileGlyphs() {
@@ -93,7 +84,6 @@ public final class ProjectileGlyphs {
         }
     }
 
-    /** Chain Lightning discards its bolt by distance from where it spawned; a relaunched bolt measures from its new start. */
     private static void restartRangeCheck(ChainLightningAbility.ChainLightningProjectile lightning, Vec3 start) {
         lightning.getEntityData().set(ChainLightningProjectileAccessor.woldsvaults$startX(), (float) start.x);
         lightning.getEntityData().set(ChainLightningProjectileAccessor.woldsvaults$startY(), (float) start.y);

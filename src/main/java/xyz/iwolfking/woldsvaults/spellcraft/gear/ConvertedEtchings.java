@@ -16,48 +16,41 @@ import net.minecraftforge.event.server.ServerStoppedEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import xyz.iwolfking.woldsvaults.WoldsVaults;
+import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
+import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
+import xyz.iwolfking.woldsvaults.spellcraft.buff.LingeringBuffs;
 import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.CastScope;
-import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
+import xyz.iwolfking.woldsvaults.spellcraft.scope.GlyphGrants;
+import xyz.iwolfking.woldsvaults.spellcraft.source.EtchingLines;
+import xyz.iwolfking.woldsvaults.spellcraft.source.GearAffixLines;
 import xyz.iwolfking.woldsvaults.spellcraft.source.GlyphLineProviders;
+import xyz.iwolfking.woldsvaults.spellcraft.source.GlyphQuality;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
-import xyz.iwolfking.woldsvaults.spellcraft.buff.LingeringBuffs;
-import xyz.iwolfking.woldsvaults.spellcraft.scope.GlyphGrants;
-import xyz.iwolfking.woldsvaults.spellcraft.source.GlyphQuality;
-import xyz.iwolfking.woldsvaults.spellcraft.source.EtchingLines;
-import xyz.iwolfking.woldsvaults.spellcraft.source.GearAffixLines;
 
 /**
  * Etchings that grant unique glyphs (the table's {@code etchingGlyphs}). An etching on any equipped source is a
- * transferable auto line of its glyph, so plain base-bar casts of the ability it is locked to carry it with no arcana
- * item, and arcana spells may take it like any other unique glyph. The etching itself no longer acts: every read of
- * the etching (VH's {@code EtchingHelper.getEtchings}, WV's {@code WoldEtchingHelper.hasEtching}) gets the active glyph
- * instead, rebuilt as an etching value from the glyph's potency and quality, or nothing when the glyph is not active.
- * The glyph in effect is the open cast scope's step, else the deferred scope of one of the player's spell steps, else
- * a toggle a spell switched on, else the player's best auto line, which covers reads that happen outside any cast
- * (a kill, a hit taken). Lingering etchings, read by a buff after its cast (the damage totem's ability power, Rampage's
- * lucky hit, an expiring Mana Shield), take the glyph from the note that buff's cast left ({@link LingeringBuffs}).
- * Etchings on the table's removed list read as absent everywhere.
+ * transferable auto line of its glyph, and every read of the etching gets the active glyph instead, rebuilt as an
+ * etching value, or nothing when the glyph is not active. Etchings on the table's removed list read as absent
+ * everywhere.
  */
 @Mod.EventBusSubscriber(modid = WoldsVaults.MOD_ID)
 public final class ConvertedEtchings {
     private ConvertedEtchings() {
     }
 
-    /** Registers the etching glyph line provider; called once from common setup. */
     public static void init() {
         GlyphLineProviders.register(EtchingLines::collect);
     }
 
     /**
-     * The etching's own description filled with the value a glyph of this potency and quality stands for, or null when
-     * the type is not an etching glyph or its etching config is missing (logged once). Used for glyph tooltips, so an
-     * etching glyph reads exactly like its etching.
+     * The etching's own description filled with the value a glyph of this potency and quality stands for, so an etching
+     * glyph's tooltip reads like its etching. Null when the type is not an etching glyph or its etching config is
+     * missing (logged once).
      */
     @Nullable
     public static String description(GlyphType type, float potency, float quality) {
@@ -109,9 +102,9 @@ public final class ConvertedEtchings {
     }
 
     /**
-     * VH's etching read with converted etchings replaced by the active glyph: one rebuilt etching value, or none. Removed
-     * etchings read as absent. Returns null when the read is left as it is (an etching that is not converted, a client
-     * or a non-player entity).
+     * VH's etching read with converted etchings replaced by the active glyph, rebuilt as one etching value, and removed
+     * etchings read as absent. Null when the read is left as it is (an etching that is not converted, a client or a
+     * non-player entity).
      */
     @Nullable
     @SuppressWarnings({"rawtypes", "unchecked"})
@@ -149,7 +142,8 @@ public final class ConvertedEtchings {
     /**
      * The glyph in effect for an etching read: the open cast scope's step, the deferred scope of a spell step, a toggle
      * a spell switched on, else the player's best auto line of the type. A lingering etching (read by a buff after its
-     * cast) is decided by its own ability's open cast step, else by the note its buff's cast left ({@link LingeringBuffs}).
+     * cast) is decided by its own ability's open cast step, else by the note its buff's cast left ({@link
+     * LingeringBuffs}).
      */
     @Nullable
     public static GlyphGrants.Grant grant(ServerPlayer player, GlyphType type) {

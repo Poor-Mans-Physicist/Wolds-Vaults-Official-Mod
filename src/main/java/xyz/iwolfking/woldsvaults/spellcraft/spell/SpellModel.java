@@ -1,11 +1,10 @@
 package xyz.iwolfking.woldsvaults.spellcraft.spell;
 
-
-import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
 import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
-import xyz.iwolfking.woldsvaults.spellcraft.source.GlyphView;
 import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphStacking;
 import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphStats;
+import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
+import xyz.iwolfking.woldsvaults.spellcraft.source.GlyphView;
 
 import javax.annotation.Nullable;
 import java.util.Collections;
@@ -17,22 +16,20 @@ import java.util.Set;
 import java.util.function.Function;
 
 /**
- * An augmented spell read against its item's glyph view and the table: the timeline of steps with each glyph's line
- * and state, the arcana it costs, its spell-wide mana, cooldown and haste factors, each step's stacked glyph stats, how
+ * An augmented spell read against its item's glyph view and the table: the timeline of steps with each glyph's line and
+ * state, the arcana it costs, its spell-wide mana, cooldown and haste factors, each step's stacked glyph stats, how
  * many ability casts one press makes, and every rule it breaks. The same model drives casting (server), the focus
  * screen and tooltips (client).
- * <p>
- * Grammar: the first token is the trigger ability; a modifier glyph changes the nearest ability or orb before it;
- * Delay pauses; Bundled Spell throws an orb, modified by the glyphs right after it, whose payload is everything from the
- * next ability on; any other ability token is a chained step. A spell-wide glyph (the table's {@code scope}) ignores
- * where it sits: its step effects reach every live ability step and active orb of the spell it fits, payload steps
- * included, and its spell effects, uses and arcana count once.
- * <p>
- * Glyph states: a glyph with no line in the view, a copy beyond the view line's per-spell limit, one that doesn't fit
- * its step (a spell-wide glyph: no step of the spell) and one greyed by the item's budget pass all do nothing and cost
- * nothing. An inactive Bundled Spell takes its orb glyphs and its whole payload with it, but not the spell-wide glyphs
- * placed after it; an inactive Delay doesn't pause. Only structural problems are errors when casting; while editing,
- * glyphs placed new beyond what the view backs are errors too.
+ * <p> Grammar: the first token is the trigger ability; a modifier glyph changes the nearest ability or orb before it;
+ * Delay pauses; Bundled Spell throws an orb, modified by the glyphs right after it, whose payload is everything from
+ * the next ability on; any other ability token is a chained step. A spell-wide glyph (the table's {@code scope})
+ * ignores where it sits: its step effects reach every live ability step and active orb of the spell it fits, payload
+ * steps included, and its spell effects, uses and arcana count once.
+ * <p> Glyph states: a glyph with no line in the view, a copy beyond the view line's per-spell limit, one that doesn't
+ * fit its step (a spell-wide glyph: no step of the spell) and one greyed by the item's budget pass all do nothing and
+ * cost nothing. An inactive Bundled Spell takes its orb glyphs and its whole payload with it, but not the spell-wide
+ * glyphs placed after it; an inactive Delay doesn't pause. Only structural problems are errors when casting; while
+ * editing, glyphs placed new beyond what the view backs are errors too.
  */
 public final class SpellModel {
     private final List<Step> steps;
@@ -168,8 +165,8 @@ public final class SpellModel {
     }
 
     /**
-     * The stacked step stats of an ability step or Bundled Spell orb of this spell (its active glyphs only), or an empty
-     * pool for a Delay or a step from another model.
+     * The stacked step stats of an ability step or Bundled Spell orb of this spell (its active glyphs only), or an
+     * empty pool for a Delay or a step from another model.
      */
     public GlyphStacking.Pool stepPool(Step step) {
         GlyphStacking.Pool pool = this.stepPools.get(step);

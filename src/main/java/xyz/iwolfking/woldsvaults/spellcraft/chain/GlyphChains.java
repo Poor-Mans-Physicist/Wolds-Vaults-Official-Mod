@@ -17,11 +17,11 @@ import xyz.iwolfking.woldsvaults.WoldsVaults;
 import xyz.iwolfking.woldsvaults.api.cast.CastContext;
 import xyz.iwolfking.woldsvaults.api.cast.CastTag;
 import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
-import xyz.iwolfking.woldsvaults.spellcraft.scope.CastScope;
-import xyz.iwolfking.woldsvaults.spellcraft.scope.DeferredReach;
 import xyz.iwolfking.woldsvaults.spellcraft.hit.OwnHits;
-import xyz.iwolfking.woldsvaults.spellcraft.scope.GlyphGrants;
+import xyz.iwolfking.woldsvaults.spellcraft.scope.CastScope;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.ChainScope;
+import xyz.iwolfking.woldsvaults.spellcraft.scope.DeferredReach;
+import xyz.iwolfking.woldsvaults.spellcraft.scope.GlyphGrants;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -31,13 +31,10 @@ import java.util.Set;
 import java.util.WeakHashMap;
 
 /**
- * The Chaining glyph (loadout spec sec. 6.2, 9.5). Every DIRECT own hit of a spell step with an active Chaining glyph
- * (cast-time hits, hits of what the step threw, its Echo and Shotgun copies) starts one chain: at HIGH priority the hurt
- * is marked, so VH's own chain on the same hit stands down, and at LOWEST priority the chain runs with the hit's final
- * amount. Links follow {@link ChainLinks} (VH's range, targets and step, with the etching and Chainlash's prefix) for
- * the player's chain count. Each link re-hurts with the same damage source inside {@code IS_CHAINING_ATTACKING} and the
- * WV chain scope, so it keeps kill credit and on-kill effects but procs nothing, never chains again and respects hurt
- * immunity. There is no 2-tick chain lockout.
+ * The Chaining glyph. Every DIRECT own hit of a spell step with an active Chaining glyph starts one chain: at HIGH
+ * priority the hurt is marked so VH's own chain on the same hit stands down, and at LOWEST priority the chain runs with
+ * the hit's final amount. Each link re-hurts with the same damage source inside {@code IS_CHAINING_ATTACKING} and the
+ * WV chain scope, so it keeps kill credit but procs nothing, never chains again and respects hurt immunity.
  */
 @Mod.EventBusSubscriber(modid = WoldsVaults.MOD_ID)
 public final class GlyphChains {
@@ -98,10 +95,6 @@ public final class GlyphChains {
         ChainLinks.particles(player, points);
     }
 
-    /**
-     * Whether the hit is a DIRECT own hit of a spell step whose glyphs hold an active Chaining: the open cast scope's
-     * step, the step that threw the hit's direct entity, or the deferred step whose carrier delivers it.
-     */
     private static boolean chainsFrom(ServerPlayer player, DamageSource source) {
         CastScope.Active scope = CastScope.forPlayer(player);
         if (scope != null) {

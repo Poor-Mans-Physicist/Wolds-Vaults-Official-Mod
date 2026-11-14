@@ -1,13 +1,11 @@
 package xyz.iwolfking.woldsvaults.datagen;
 
+import iskallia.vault.gear.attribute.VaultGearAttribute;
 import iskallia.vault.gear.attribute.ability.special.EntropyPoisonModification;
 import iskallia.vault.gear.attribute.ability.special.FrostNovaVulnerabilityModification;
-import iskallia.vault.gear.attribute.VaultGearAttribute;
 import iskallia.vault.gear.etching.EtchingGearAttributes;
 import iskallia.vault.init.ModGearAttributes;
 import net.minecraft.data.DataGenerator;
-import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
-import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphStacking;
 import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
 import xyz.iwolfking.woldsvaults.datagen.lib.AbstractWoldsTableProvider;
 import xyz.iwolfking.woldsvaults.datagen.lib.AncientGearModifiers;
@@ -18,6 +16,8 @@ import xyz.iwolfking.woldsvaults.init.ModEtchingGearAttributes;
 import xyz.iwolfking.woldsvaults.modifiers.gear.special.FireballModification;
 import xyz.iwolfking.woldsvaults.modifiers.gear.special.GlacialBlastModification;
 import xyz.iwolfking.woldsvaults.modifiers.gear.special.ImplodingJavelinModification;
+import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphStacking;
+import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -518,11 +518,6 @@ public class ModSpellcraftProvider extends AbstractWoldsTableProvider {
         gearAffix(table, cooldown, "Heal_Group", GlyphType.QUICK_MEND, 1.0F, LOWER);
     }
 
-    /**
-     * The etchings that grant unique glyphs: each glyph is locked to the specs its etching acts on, and its entry reads
-     * the etching's value into the glyph's potency (and quality, for a second number or a choice). Delays given in
-     * ticks show as seconds. Lucky Bolt is removed: existing copies grant nothing and do nothing.
-     */
     private static void etchingGlyphs(SpellcraftConfig table) {
         table.etchingGlyphs = new ArrayList<>();
         List<String> novas = List.of("Nova_Base", "Nova_Slow", "Nova_Dot");
@@ -756,10 +751,6 @@ public class ModSpellcraftProvider extends AbstractWoldsTableProvider {
         return new GlyphBuilder(type).kind("modifier");
     }
 
-    /**
-     * A gear glyph: a unique glyph locked to the specs its affix acts on, fitting any of them, weight 0 (it never rolls
-     * as a random line), one copy per spell, free on its own (the unique glyph rule) and never escalating.
-     */
     private static GlyphBuilder gearGlyph(GlyphType type, List<String> specs) {
         return glyph(type).glyphClass("unique").category("unique").weight(0).requires(List.of()).specs(specs)
                 .uses(1, List.of(100)).cap(1).cost(10, 10).noEscalation();
@@ -801,7 +792,6 @@ public class ModSpellcraftProvider extends AbstractWoldsTableProvider {
         return glyph;
     }
 
-    /** A unique set rolled from the omega row (regular) or the mythic row (ancient); refuses a draw count its list cannot fill. */
     private static void uniqueSet(SpellcraftConfig table, String uniqueId, List<SpellcraftConfig.SetGlyph> always, List<GlyphType> draw,
                                   int drawMin, int drawMax) {
         if (drawMin < 0 || drawMax < drawMin || drawMax > draw.size()) {
@@ -875,7 +865,7 @@ public class ModSpellcraftProvider extends AbstractWoldsTableProvider {
         return effect;
     }
 
-    /** Every glyph that is not an etching glyph needs a description template (etching glyphs show their etching's text). */
+    /** Etching glyphs show their etching's text, so every other glyph needs a description template. */
     private static void checkDescriptions(SpellcraftConfig table) {
         Set<String> etchings = new HashSet<>();
         table.etchingGlyphs.forEach(entry -> etchings.add(entry.glyph));
@@ -888,9 +878,8 @@ public class ModSpellcraftProvider extends AbstractWoldsTableProvider {
     }
 
     /**
-     * Refuses an effect whose direction contradicts its role: an upside must move its stat in the player's favour
-     * (a positive k on damage, a negative k on mana), a downside or cost against it. For k effects the sign of k
-     * decides; fixed and per-use effects are checked by their factor.
+     * Refuses an effect whose direction contradicts its role: an upside must move its stat in the player's favour, a
+     * downside or cost against it.
      */
     private static void checkRoles(SpellcraftConfig table) {
         for (Map.Entry<String, SpellcraftConfig.GlyphDefinition> entry : table.glyphs.entrySet()) {

@@ -7,18 +7,18 @@ import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.server.ServerStoppedEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import xyz.iwolfking.woldsvaults.spellcraft.projectile.SpellParticles;
 import xyz.iwolfking.woldsvaults.spellcraft.bar.EffectiveBar;
+import xyz.iwolfking.woldsvaults.spellcraft.projectile.SpellParticles;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
 /**
- * Charge: holding a slot key whose spell has Charge winds it up over the table's fixed charge time, like drawing a bow.
- * The player uses the spell's item in its hand meanwhile, so every client shows the bow pose and the bow's slowdown
- * applies; releasing reports how full it got. The charge belongs to the slot's occupant ({@code itemId:spellId}): it
- * ends without casting when the occupant changes, and on death, logout or dimension change.
+ * Charge: holding a slot key whose spell has Charge winds it up over the table's fixed charge time, like drawing a bow,
+ * while the player uses the spell's item so every client shows the bow pose. Releasing reports how full it got. The
+ * charge belongs to the slot's occupant and ends without casting when the occupant changes, and on death, logout or
+ * dimension change.
  */
 public final class SpellCharge {
     private static final Map<UUID, Charging> CHARGING = new HashMap<>();
@@ -29,7 +29,6 @@ public final class SpellCharge {
     private record Charging(int slot, String occupant, InteractionHand hand, int fullTicks, int[] held) {
     }
 
-    /** Starts charging the occupant {@code occupant} of bar slot {@code slot}, using the occupant item's hand. */
     public static void start(ServerPlayer player, int slot, String occupant, InteractionHand hand, int fullTicks) {
         stop(player);
         CHARGING.put(player.getUUID(), new Charging(slot, occupant, hand, Math.max(1, fullTicks), new int[1]));

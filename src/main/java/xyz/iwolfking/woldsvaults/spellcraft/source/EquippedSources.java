@@ -23,11 +23,13 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.network.PacketDistributor;
 import xyz.iwolfking.woldsvaults.WoldsVaults;
-import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
-import xyz.iwolfking.woldsvaults.spellcraft.item.GlyphLine;
+import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
 import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
+import xyz.iwolfking.woldsvaults.init.ModConfigs;
 import xyz.iwolfking.woldsvaults.init.ModNetwork;
 import xyz.iwolfking.woldsvaults.network.packets.GlyphViewSyncMessage;
+import xyz.iwolfking.woldsvaults.spellcraft.item.GlyphLine;
+import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -39,15 +41,12 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
-import xyz.iwolfking.woldsvaults.init.ModConfigs;
 
 /**
- * A player's glyph sources: the equipped items VH itself counts for the attribute snapshot (intended slot, not broken,
- * not on item cooldown, item level within the player's, curios usable), each with the lines it grants. Arcana items
- * additionally have to be identified spellcraft carriers in a slot they are meant for, so a focus in the main hand gives
- * nothing. Cached per player until VH's snapshot revision, a spellcraft edit, the player's level or the equipment
- * changes. The candidates go to the player's client whenever they change.
+ * A player's glyph sources: the equipped items VH itself counts for the attribute snapshot, each with the lines it
+ * grants. Arcana items must also be identified spellcraft carriers in a slot they are meant for, so a focus in the main
+ * hand gives nothing. Cached per player until VH's snapshot revision, a spellcraft edit, the player's level or the
+ * equipment changes.
  */
 @Mod.EventBusSubscriber(modid = WoldsVaults.MOD_ID)
 public final class EquippedSources {
@@ -68,7 +67,6 @@ public final class EquippedSources {
     private record Cached(int snapshotRevision, int editRevision, long fingerprint, Snapshot snapshot) {
     }
 
-    /** The sources at one moment and the candidates they offer. */
     public static final class Snapshot {
         private final List<Equipped> sources;
         private final List<Equipped> arcana;

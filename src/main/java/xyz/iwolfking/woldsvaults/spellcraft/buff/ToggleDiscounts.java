@@ -19,8 +19,8 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Discount on a toggle a recipe switched on: VH drains the toggle's mana every tick, so while it stays on the share
- * of that per-tick cost is refunded. Ends when the toggle goes off by any means, or the player logs out.
+ * Discount on a toggle a spell switched on: VH drains the toggle's mana every tick, so while it stays on the discounted
+ * share of that cost is refunded. Ends when the toggle goes off by any means, or the player logs out.
  */
 public final class ToggleDiscounts {
     private static final Map<UUID, Map<String, Float>> ACTIVE = new ConcurrentHashMap<>();

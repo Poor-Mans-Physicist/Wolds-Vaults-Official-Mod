@@ -18,7 +18,6 @@ public final class GlyphArea {
     private GlyphArea() {
     }
 
-    /** Registers the VH PLAYER_STAT listener; called once from common setup. */
     public static void register() {
         CommonEvents.PLAYER_STAT.register(LISTENER_OWNER, GlyphArea::onPlayerStat);
     }

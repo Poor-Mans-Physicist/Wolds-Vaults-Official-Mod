@@ -16,8 +16,8 @@ final class SpellWideBinding {
     }
 
     /**
-     * Binds the spell-wide glyphs once every step is read: each joins the glyphs of every live ability step and
-     * active orb it fits, and goes dormant when it fits none.
+     * Binds the spell-wide glyphs once every step is read: each joins the glyphs of every live ability step and active
+     * orb it fits, and goes dormant when it fits none.
      */
     static void bind(SpellParser parser) {
         if (parser.spellWide.isEmpty()) {

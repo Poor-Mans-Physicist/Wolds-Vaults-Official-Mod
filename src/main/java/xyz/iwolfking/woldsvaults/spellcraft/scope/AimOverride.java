@@ -3,15 +3,15 @@ package xyz.iwolfking.woldsvaults.spellcraft.scope;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import java.util.HashMap;
 import java.util.function.Supplier;
 
 /**
- * Turns the player's aim for one cast (Shotgun copies). VH aims ability projectiles with the player's rotation, so
- * each copy is cast with the rotation of its direction and the real rotation is restored in the same tick. Server
- * side only; nothing is sent to the client.
+ * Turns the player's aim for one cast (Shotgun copies). VH aims ability projectiles with the player's rotation, so each
+ * copy is cast with the rotation of its direction and the real rotation is restored in the same tick. Server side only;
+ * nothing is sent to the client.
  */
 public final class AimOverride {
     private static final Map<UUID, Vec3> REAL_LOOK = new HashMap<>();

@@ -9,36 +9,34 @@ import iskallia.vault.util.calc.ManaCostHelper;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.phys.Vec3;
-import xyz.iwolfking.woldsvaults.spellcraft.ability.AbilityTrait;
-import xyz.iwolfking.woldsvaults.spellcraft.ability.SpellAbilities;
-import xyz.iwolfking.woldsvaults.spellcraft.ability.SpellAbility;
-import xyz.iwolfking.woldsvaults.spellcraft.ability.CastResult;
-import xyz.iwolfking.woldsvaults.spellcraft.projectile.RailBolts;
-import xyz.iwolfking.woldsvaults.spellcraft.buff.ToggleDiscounts;
-import xyz.iwolfking.woldsvaults.spellcraft.spell.SpellModel;
 import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
-import xyz.iwolfking.woldsvaults.spellcraft.bar.EffectiveBar;
-import xyz.iwolfking.woldsvaults.spellcraft.ability.CastOrigin;
-import xyz.iwolfking.woldsvaults.spellcraft.hit.ShotgunHits;
-import xyz.iwolfking.woldsvaults.spellcraft.scope.ShotgunShot;
-import xyz.iwolfking.woldsvaults.spellcraft.projectile.ShotgunPattern;
-import xyz.iwolfking.woldsvaults.spellcraft.scope.AimOverride;
-import xyz.iwolfking.woldsvaults.spellcraft.scope.CastModifiers;
-import xyz.iwolfking.woldsvaults.spellcraft.scope.CastScope;
-import xyz.iwolfking.woldsvaults.spellcraft.scope.CastBilling;
 import xyz.iwolfking.woldsvaults.init.ModConfigs;
 import xyz.iwolfking.woldsvaults.spellcraft.ability.AbilityLookup;
+import xyz.iwolfking.woldsvaults.spellcraft.ability.AbilityTrait;
+import xyz.iwolfking.woldsvaults.spellcraft.ability.CastOrigin;
+import xyz.iwolfking.woldsvaults.spellcraft.ability.CastResult;
+import xyz.iwolfking.woldsvaults.spellcraft.ability.SpellAbilities;
+import xyz.iwolfking.woldsvaults.spellcraft.ability.SpellAbility;
+import xyz.iwolfking.woldsvaults.spellcraft.bar.EffectiveBar;
+import xyz.iwolfking.woldsvaults.spellcraft.buff.ToggleDiscounts;
+import xyz.iwolfking.woldsvaults.spellcraft.hit.ShotgunHits;
+import xyz.iwolfking.woldsvaults.spellcraft.projectile.RailBolts;
+import xyz.iwolfking.woldsvaults.spellcraft.projectile.ShotgunPattern;
+import xyz.iwolfking.woldsvaults.spellcraft.scope.AimOverride;
+import xyz.iwolfking.woldsvaults.spellcraft.scope.CastBilling;
+import xyz.iwolfking.woldsvaults.spellcraft.scope.CastModifiers;
+import xyz.iwolfking.woldsvaults.spellcraft.scope.CastScope;
+import xyz.iwolfking.woldsvaults.spellcraft.scope.ShotgunShot;
+import xyz.iwolfking.woldsvaults.spellcraft.spell.SpellModel;
 
 import javax.annotation.Nullable;
 import java.util.List;
 import java.util.function.Supplier;
 
 /**
- * Casts an augmented spell slot. The trigger step is a real key press on the player's ability, charged for the whole
- * slot (every ability's mana times the spell's mana factor, which includes heal steps' Intensify mana, and the slot
- * cooldown); if it doesn't go through, nothing
- * else casts. A toggle trigger runs the rest of the spell only when it switches on. Every later step is free: chained abilities, Delays, Bundled Spell payloads where the orb lands, Echo
- * (on-cast effects fire) and Shotgun copies (they don't). The table is re-read at every step.
+ * Casts an augmented spell slot. The trigger step is a real key press billed for the whole slot ({@link
+ * SlotManaBilling}), and when it does not go through nothing else casts. Every later step is a free extra cast, and a
+ * toggle trigger runs them only when it switches on.
  */
 public final class SpellCaster {
     private SpellCaster() {
@@ -150,10 +148,6 @@ public final class SpellCaster {
         return result;
     }
 
-    /**
-     * Casts one volley of a step: the native shot along the first Shotgun aim, its rail widening, then the copies when
-     * it succeeded. A trigger billing casts the native shot as the key press; without one it is a free extra cast.
-     */
     private static CastResult castVolley(SpellcraftConfig config, ServerPlayer player, SpellAbility ability, CastModifiers modifiers,
                                          @Nullable CastOrigin origin, @Nullable CastBilling trigger) {
         List<Vec3> aims = ShotgunPattern.fan(baseDirection(player, origin), modifiers.shotgunCopies(), config.tuning.shotgunSpreadDegrees);
@@ -174,7 +168,6 @@ public final class SpellCaster {
         return result;
     }
 
-    /** Echo on Necromancy follows each minion hit instead of recasting the curse. */
     private static boolean echoesMinionHits(ServerPlayer player, SpellAbility ability) {
         return ability.findAbility(player).filter(NecromancyAbility.class::isInstance).isPresent();
     }

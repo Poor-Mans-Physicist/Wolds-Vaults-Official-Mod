@@ -8,15 +8,15 @@ import iskallia.vault.util.calc.CooldownHelper;
 import iskallia.vault.util.calc.CooldownRefundHelper;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
-import xyz.iwolfking.woldsvaults.spellcraft.scope.CastScope;
-import xyz.iwolfking.woldsvaults.spellcraft.scope.CastBilling;
-import xyz.iwolfking.woldsvaults.spellcraft.spell.SpellModel;
 import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
-import xyz.iwolfking.woldsvaults.mixins.vaulthunters.accessors.AbilityCooldownInvoker;
-import xyz.iwolfking.woldsvaults.spellcraft.haste.SpellHaste;
-import xyz.iwolfking.woldsvaults.spellcraft.bar.EffectiveBar;
 import xyz.iwolfking.woldsvaults.init.ModConfigs;
+import xyz.iwolfking.woldsvaults.mixins.vaulthunters.accessors.AbilityCooldownInvoker;
 import xyz.iwolfking.woldsvaults.spellcraft.ability.AbilityLookup;
+import xyz.iwolfking.woldsvaults.spellcraft.bar.EffectiveBar;
+import xyz.iwolfking.woldsvaults.spellcraft.haste.SpellHaste;
+import xyz.iwolfking.woldsvaults.spellcraft.scope.CastBilling;
+import xyz.iwolfking.woldsvaults.spellcraft.scope.CastScope;
+import xyz.iwolfking.woldsvaults.spellcraft.spell.SpellModel;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -26,11 +26,9 @@ import java.util.List;
 
 /**
  * Slot cooldowns. A cast writes its cooldown on the tier objects of every ability group in it, which keeps VH's gating,
- * sync, HUD, cooldown reductions and vault-exit reset working unchanged. A group's remaining time is absolute: it
- * follows the group whatever spell or item casts it next, and a spell waits for its slowest group. Swapping items
- * writes nothing. An augmented spell's cooldown is the longest cooldown of its abilities plus a share of the others,
- * times its glyph cooldown factor, with its Quicken/Discount haste multiplier applied through spell haste. Plain casts
- * keep VH's own cooldown path.
+ * sync, HUD and vault-exit reset working, and a spell waits for its slowest group. An augmented spell's cooldown is the
+ * longest cooldown of its abilities plus a share of the others, times its glyph cooldown factor, with its glyph haste
+ * applied through spell haste.
  */
 public final class SpellCooldowns {
     private SpellCooldowns() {
@@ -68,10 +66,6 @@ public final class SpellCooldowns {
         return true;
     }
 
-    /**
-     * Starts a spell slot's cooldown on every ability group it holds, computed from the groups that cast. With
-     * {@code roll}, skip chance and Quickening apply; a skip skips every group of the cast.
-     */
     private static void start(ServerPlayer player, EffectiveBar.Slot slot, int delayTicks, boolean roll) {
         SpellcraftConfig config = ModConfigs.SPELLCRAFT;
         SpellModel model = slot.model();
@@ -120,8 +114,8 @@ public final class SpellCooldowns {
     }
 
     /**
-     * The chain with the spell's glyphs applied; shared with the client screens. Without the haste table the glyph haste
-     * divides the chain directly.
+     * The chain with the spell's glyphs applied; shared with the client screens. Without the haste table the glyph
+     * haste divides the chain directly.
      */
     public static int glyphedTicks(double chain, float cooldownBase, @Nullable Float playerFactor, @Nullable Float spellFactor, float glyphHaste) {
         double ratio = playerFactor != null && spellFactor != null ? playerFactor / spellFactor : 1.0 / Math.max(0.01F, glyphHaste);

@@ -9,8 +9,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Create attribute filter entry matching a spellcraft focus or wand whose arcana budget is at least a threshold.
- * A stack lists one entry per multiple of {@link #STEP} up to its own budget.
+ * Create attribute filter entry matching a spellcraft focus or wand whose arcana budget is at least a threshold. A
+ * stack lists one entry per multiple of {@link #STEP} up to its own budget.
  */
 public class SpellcraftArcanaAttribute implements ItemAttribute {
     public static final String KEY = "woldsvaults_spellcraft_arcana";

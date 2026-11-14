@@ -10,12 +10,11 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * How glyph effects on one stat combine (redesign/spellcraft/GLYPH_STACKING_2026-11-10.md). The upsides of common
- * glyphs add into one pool per stat; downsides and costs multiply once per copy; special and unique glyphs multiply.
- * A stat is {@code (1 + pool) x perCopy x special}. On a stat where lower is better (mana, cooldown, drain, heal mana)
- * an upside is a rate instead: each one adds {@code 1 / factor - 1} to the pool and the stat is
- * {@code perCopy x special / (1 + pool)}, so one copy keeps its written factor and no pool of reductions reaches zero.
- * Spell mana is further divided by the spell's efficiency total.
+ * How glyph effects on one stat combine. The upsides of common glyphs add into one pool per stat, downsides and costs
+ * multiply once per copy, and special and unique glyphs multiply, so a stat is {@code (1 + pool) x perCopy x special}.
+ * On a stat where lower is better (mana, cooldown, drain, heal mana) each upside adds {@code 1 / factor - 1} to the
+ * pool and the stat is {@code perCopy x special / (1 + pool)}, so one copy keeps its written factor and no pool of
+ * reductions reaches zero. Spell mana is further divided by the spell's efficiency total.
  */
 public final class GlyphStacking {
     public static final List<String> STEP_STATS = List.of(GlyphStats.DAMAGE, GlyphStats.AREA, GlyphStats.SPEED, GlyphStats.SCALE,
@@ -70,14 +69,9 @@ public final class GlyphStacking {
             return this.special;
         }
 
-        /** The product of the favourable factors among the multiplying (non-pooled) effects. */
-        private float relief() {
-            return this.relief;
-        }
-
         /**
-         * The favourable part of the total: the pooled upsides and every favourable multiplying factor. On cooldown this
-         * is the base-cooldown cut (the unique cooldown glyphs); the rest of the total is the penalty.
+         * The favourable part of the total: the pooled upsides and every favourable multiplying factor. On cooldown
+         * this is the base-cooldown cut (the unique cooldown glyphs); the rest of the total is the penalty.
          */
         public float favourable() {
             if (lowerIsBetter(this.name)) {
