@@ -27,7 +27,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
 
-/** The spell editor's local drafts of an item's spells, the selection within them, and every message sent to the server. */
+/**
+ * The spell editor's local drafts of an item's spells and the selection within them. A draft is sent to the server a
+ * moment after its last change, and only when the whole item passes the spellcraft check with it.
+ */
 final class SpellDrafts {
     static final int END = Integer.MAX_VALUE;
     private static final int SAVE_DELAY = 8;
@@ -35,7 +38,7 @@ final class SpellDrafts {
     private static final int DELETE_WINDOW = 60;
     private static final int SAVED_TEXT = 0xFF1E7A1E;
 
-    /** A spell being edited: the stored id (0 until the server stores a new spell), its name and tokens. */
+    /** A spell being edited, whose id stays 0 until the server stores it as a new spell. */
     static final class Draft {
         int id;
         String name;
@@ -159,7 +162,7 @@ final class SpellDrafts {
         this.saveIn = SAVE_DELAY;
     }
 
-    /** The name the server will store for a draft: trimmed, cut to the table's limit, the trigger's name when blank. */
+    /** The name the server will store: stripped, cut to the table's limit, and the trigger's name when blank. */
     String storedName(Draft draft) {
         String name = draft.name.strip();
         if (name.isEmpty()) {
@@ -178,7 +181,6 @@ final class SpellDrafts {
         return SpellcraftRules.withEdit(stack(), checkId, new StoredSpell(checkId, storedName(draft), List.copyOf(draft.tokens), slot, prio));
     }
 
-    /** The item's glyph view: its own lines plus the transferable lines the server last synced. */
     GlyphView view(SpellcraftConfig config) {
         return ClientGlyphViews.view(config, stack());
     }
@@ -254,8 +256,8 @@ final class SpellDrafts {
     }
 
     /**
-     * Steps the selected spell's bar slot (none, 1-16, skipping slots other spells of this item hold) or its priority
-     * (1 to the table's count) and sends it to the server.
+     * Steps the selected spell's bar slot, skipping slots that other spells of this item hold, or its priority, and
+     * sends the result to the server.
      */
     void stepPlacement(boolean slot, int direction) {
         SpellcraftConfig config = ModConfigs.SPELLCRAFT;
@@ -283,7 +285,6 @@ final class SpellDrafts {
         SpellcraftDraw.click();
     }
 
-    /** Every problem that blocks saving this draft; the draft's own name prefix is dropped. */
     List<String> errors(@Nullable Draft draft, @Nullable SpellcraftRules.ItemCheck check) {
         if (draft == null || check == null || draft.tokens.isEmpty()) {
             return List.of();
@@ -296,7 +297,6 @@ final class SpellDrafts {
         return errors;
     }
 
-    /** The draft's save state as shown on the stats panel's last row. */
     Status status(Draft draft, @Nullable SpellcraftRules.ItemCheck check) {
         if (draft.tokens.isEmpty()) {
             return new Status(SpellcraftNames.tr("screen.status.empty"), SpellcraftPalette.DARK);
@@ -369,7 +369,7 @@ final class SpellDrafts {
         markDirty(draft);
     }
 
-    /** Inserts a token after the selected weave cell; an ability goes first when the spell has no trigger yet. */
+    /** Inserts after the selected weave cell, or first when the token is an ability and the spell has no trigger. */
     void insert(String token) {
         Draft draft = draft();
         if (draft == null) {

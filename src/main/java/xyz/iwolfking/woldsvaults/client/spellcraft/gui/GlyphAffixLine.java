@@ -10,16 +10,12 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
 
-/**
- * A gear affix line that grants a glyph: the affix's own tooltip text, unchanged, with the glyph's rune drawn to its
- * right.
- */
+/** A gear affix line that grants a glyph, drawn as the affix's own text with the glyph's rune to its right. */
 public record GlyphAffixLine(Component text, GlyphType type) implements TooltipComponent {
 
     private static final int RUNE = 8;
     private static final int GAP = 3;
 
-    /** Client side of the line. */
     public static final class Client implements ClientTooltipComponent {
         private final GlyphAffixLine line;
 

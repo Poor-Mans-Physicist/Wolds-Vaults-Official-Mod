@@ -11,8 +11,8 @@ import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
 import java.util.List;
 
 /**
- * One drawn row of a focus's spellcraft tooltip block (the rows that carry runes, icons or the arcana bar; plain text
- * rows stay text). Rows of one block share {@code width} so their right-hand numbers line up.
+ * A drawn row of an item's spellcraft tooltip block, for the rows that carry runes, icons or the arcana bar. Rows of
+ * one block share {@code width} so their right-hand numbers line up.
  */
 public record SpellcraftTooltipRow(Kind kind, String text, String right, String extra, List<Rune> runes, List<String> icons, int color,
                                    float used, float budget, int[] width) implements TooltipComponent {
@@ -25,7 +25,6 @@ public record SpellcraftTooltipRow(Kind kind, String text, String right, String 
         SPELL_ROW
     }
 
-    /** A rune in a row. */
     public record Rune(GlyphType type) {
     }
 
@@ -34,7 +33,6 @@ public record SpellcraftTooltipRow(Kind kind, String text, String right, String 
     private static final int RUNE_PITCH = 9;
     private static final int INDENT = 10;
 
-    /** The row's own width; the block's width is the widest row. */
     public int naturalWidth(Font font) {
         return switch (this.kind) {
             case HEAD -> font.width(this.text) + 6 + BAR_W + 6 + font.width(this.right);
@@ -49,7 +47,6 @@ public record SpellcraftTooltipRow(Kind kind, String text, String right, String 
         return this.kind == Kind.GLYPH || this.kind == Kind.SPELL ? String.valueOf(Math.round(this.used)) : "";
     }
 
-    /** Client side of a row: draws it at the tooltip's position. */
     public static final class Client implements ClientTooltipComponent {
         private final SpellcraftTooltipRow row;
 

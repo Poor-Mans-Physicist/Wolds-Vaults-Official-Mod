@@ -16,6 +16,7 @@ import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
 import xyz.iwolfking.woldsvaults.WoldsVaults;
+import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
 import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
 
 import javax.annotation.Nullable;
@@ -24,13 +25,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
-import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
 
-/**
- * Shared drawing for the spellcraft screens, the skill menu's spell bar and the focus tooltip: the H-menu window,
- * inset and slot textures, glyph runes (category tinted, 16 px textures drawn at any size), ability icons, bordered
- * small text, the arcana bar and the weave's starfield.
- */
 public final class SpellcraftDraw {
     private static final Map<GlyphType, ResourceLocation> RUNES = new EnumMap<>(GlyphType.class);
     private static final Set<String> MISSING_ICONS = new HashSet<>();
@@ -60,7 +55,7 @@ public final class SpellcraftDraw {
         ScreenTextures.INSET_DARK_GREY_BACKGROUND.blit(pose, x0, y0, 0, x1 - x0, y1 - y0);
     }
 
-    /** An item-slot cell whose 16x16 content area starts at (x, y); the frame covers x-1 to x+17. */
+    /** (x, y) is the top left of the 16x16 content area, with the frame one pixel outside it. */
     public static void slot(PoseStack pose, int x, int y, boolean disabled) {
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
         (disabled ? ScreenTextures.INSET_DISABLED_ITEM_SLOT_BACKGROUND : ScreenTextures.INSET_ITEM_SLOT_BACKGROUND).blit(pose, x - 1, y - 1);
@@ -73,7 +68,6 @@ public final class SpellcraftDraw {
         GuiComponent.fill(pose, x1 - 1, y0, x1, y1, color);
     }
 
-    /** A glyph rune at any size; dimmed runes are greyed and faded (spent or dormant). */
     public static void rune(PoseStack pose, GlyphType type, int x, int y, int size, boolean dim) {
         RenderSystem.setShader(GameRenderer::getPositionTexShader);
         RenderSystem.setShaderTexture(0, RUNES.get(type));
@@ -88,7 +82,6 @@ public final class SpellcraftDraw {
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
     }
 
-    /** The icon of an ability group's specialization, or of the group's first specialization. */
     @Nullable
     private static TextureAtlasRegion abilityIcon(@Nullable String specOrGroup) {
         if (specOrGroup == null || specOrGroup.isEmpty()) {
@@ -116,7 +109,7 @@ public final class SpellcraftDraw {
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
     }
 
-    /** Bordered text at a scale, drawn like a stack count; returns its scaled width. */
+    /** Draws bordered text at a scale and returns its scaled width. */
     public static float smallText(PoseStack pose, Font font, String text, float x, float y, int color, float scale) {
         pose.pushPose();
         pose.translate(x, y, 0.0);
@@ -126,7 +119,10 @@ public final class SpellcraftDraw {
         return font.width(text) * scale;
     }
 
-    /** The inset arcana bar: committed arcana dim, the edited spell bright, red when over budget. */
+    /**
+     * Draws {@code used} arcana dim and the edited spell's {@code pending} arcana bright, tinted red when their sum
+     * exceeds {@code total}.
+     */
     public static void arcanaBar(PoseStack pose, int x, int y, int w, int h, float used, float pending, float total) {
         insetBlack(pose, x, y, x + w, y + h);
         int inner = w - 2;
@@ -148,7 +144,7 @@ public final class SpellcraftDraw {
         }
     }
 
-    /** The weave inset: deep violet with faint stars, laid out from a fixed seed so it doesn't flicker. */
+    /** The stars come from a fixed seed so they stay put from frame to frame. */
     public static void starfield(PoseStack pose, int x0, int y0, int x1, int y1) {
         GuiComponent.fill(pose, x0, y0, x1, y1, SpellcraftPalette.ARCANE_DEEP);
         Random random = new Random(11L);
@@ -163,7 +159,6 @@ public final class SpellcraftDraw {
         }
     }
 
-    /** The corner star of an augmented spell's cell. */
     public static void spellStar(PoseStack pose, int x, int y) {
         GuiComponent.fill(pose, x + 11, y, x + 16, y + 5, 0xFF2A1840);
         GuiComponent.fill(pose, x + 13, y, x + 14, y + 5, SpellcraftPalette.ARCANE_GLOW);
@@ -184,7 +179,7 @@ public final class SpellcraftDraw {
         }
     }
 
-    /** A vanilla button at any height: the texture's top rows plus its bottom edge row, label centred. */
+    /** A vanilla button at any height, drawn from the texture's top rows plus its bottom edge row. */
     public static void button(PoseStack pose, Font font, int x, int y, int w, int h, String label, boolean hovered) {
         RenderSystem.setShader(GameRenderer::getPositionTexShader);
         RenderSystem.setShaderTexture(0, AbstractWidget.WIDGETS_LOCATION);

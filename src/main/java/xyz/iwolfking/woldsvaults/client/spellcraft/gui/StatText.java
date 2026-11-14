@@ -9,7 +9,7 @@ public final class StatText {
     private StatText() {
     }
 
-    /** A number in at most four characters plus a suffix: 7.5, 85, 850, 1.2k, 34.6k, 560k, 3.4M, 1.1B, 2T. */
+    /** A number in at most four characters plus a suffix such as k or M. */
     public static String compact(double value) {
         String[] units = {"", "k", "M", "B", "T"};
         double scaled = value;
@@ -31,7 +31,6 @@ public final class StatText {
         return text.endsWith(".0") ? text.substring(0, text.length() - 2) : text;
     }
 
-    /** A hit in compact form, as "min-max" when it is a range. */
     public static String hit(StepStats.Hit hit) {
         return hit.isRange() ? SpellcraftNames.tr("fmt.range", compact(hit.min()), compact(hit.max())) : compact(hit.max());
     }

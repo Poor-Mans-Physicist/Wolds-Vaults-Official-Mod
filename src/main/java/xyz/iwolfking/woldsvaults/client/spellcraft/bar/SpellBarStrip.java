@@ -12,29 +12,24 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
-import xyz.iwolfking.woldsvaults.init.ModNetwork;
-import xyz.iwolfking.woldsvaults.network.packets.SpellPlaceMessage;
-import xyz.iwolfking.woldsvaults.spellcraft.play.SpellCooldowns;
 import xyz.iwolfking.woldsvaults.client.spellcraft.gui.SpellcraftDraw;
 import xyz.iwolfking.woldsvaults.client.spellcraft.gui.SpellcraftNames;
 import xyz.iwolfking.woldsvaults.client.spellcraft.gui.SpellcraftPalette;
 import xyz.iwolfking.woldsvaults.client.spellcraft.state.ClientSpellBar;
+import xyz.iwolfking.woldsvaults.init.ModNetwork;
+import xyz.iwolfking.woldsvaults.network.packets.SpellPlaceMessage;
 import xyz.iwolfking.woldsvaults.spellcraft.ability.AbilityLookup;
+import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
+import xyz.iwolfking.woldsvaults.spellcraft.play.SpellCooldowns;
 
 import javax.annotation.Nullable;
 import java.util.List;
 import java.util.function.Function;
 
 /**
- * The spell bar window (skill menu and focus screen): a picker for the default bar and the equipped bar, the 16 slots
- * with their key labels, and a Keys button. Slot states: augmented (violet frame, corner star, the source item as a
- * badge), implicit (gold frame: a base ability with auto glyphs from gear), LOCKED (red, padlock), hidden (struck
- * red), unlearned (red X), and darkened while any of the slot's ability groups is cooling down.
- * <p>
- * Clicks: on the default bar a slot takes the host's selected ability (the skill menu's dialog) or, without one, opens
- * a chooser of learned abilities; right-click clears it. The equipped bar is read-only: spells choose their slots and
- * priorities on their item.
+ * The spell bar window of the skill menu and the spell editor, with a picker between the default and the effective bar.
+ * A left click on a slot assigns the host's selected ability to the default bar or opens the chooser, and a right click
+ * clears the slot or unassigns its spell.
  */
 public final class SpellBarStrip {
     public static final int HEIGHT = 24;
@@ -51,18 +46,16 @@ public final class SpellBarStrip {
     static final int IMPLICIT_RING = 0xFFE0B040;
     private static final int BADGE = 8;
 
-    /** What the strip needs from its screen. */
     public interface Host {
         AbilityTree tree();
 
-        /** The default bar view. */
         SpellBarView defaultView();
 
-        /** The focus bar view, or null when there is none to show. */
+        /** The effective bar, or null when there is none to show. */
         @Nullable
         SpellBarView effectiveView();
 
-        /** The ability group a default-bar click assigns, or null to open the ability chooser instead. */
+        /** The ability group a slot click assigns, or null to open the ability chooser instead. */
         @Nullable
         String selectedGroup();
 
@@ -82,14 +75,13 @@ public final class SpellBarStrip {
         this.showEffective = showEffective;
     }
 
-    /** Places the window; (x0, y0) is its top left and x1 its right edge, {@link #HEIGHT} tall. */
+    /** (x0, y0) is the window's top left and x1 its right edge. */
     public void layout(int x0, int y0, int x1) {
         this.x0 = x0;
         this.y0 = y0;
         this.x1 = x1;
     }
 
-    /** The view drawn this frame: the focus bar when it is picked and available, else the default bar. */
     public SpellBarView refreshView() {
         SpellBarView item = this.showEffective ? this.host.effectiveView() : null;
         this.view = item != null ? item : this.host.defaultView();
@@ -112,7 +104,7 @@ public final class SpellBarStrip {
         return this.y0;
     }
 
-    /** Whether the player last picked the focus bar (kept while no focus bar is available). */
+    /** Whether the player last picked the effective bar, which is remembered while no effective bar is available. */
     boolean prefersEffective() {
         return this.showEffective;
     }
@@ -147,7 +139,7 @@ public final class SpellBarStrip {
             int x = slotX(this.x0, i);
             int y = this.y0 + 4;
             SpellBarView.Slot slot = view.slot(i);
-            drawSlot(pose, view, slot, specOf, x, y);
+            drawSlot(pose, slot, specOf, x, y);
             drawBadge(slot, x, y);
             if (SpellcraftDraw.inside(mouseX, mouseY, x, y, 16, 16) && !this.chooser.popupOpen()) {
                 GuiComponent.fill(pose, x, y, x + 16, y + 16, HOVER);
@@ -186,7 +178,7 @@ public final class SpellBarStrip {
         }
     }
 
-    private void drawSlot(PoseStack pose, SpellBarView view, SpellBarView.Slot slot, Function<String, String> specOf, int x, int y) {
+    private void drawSlot(PoseStack pose, SpellBarView.Slot slot, Function<String, String> specOf, int x, int y) {
         SpellcraftDraw.slot(pose, x, y, false);
         String spec = slot.group().isEmpty() ? null : specOf.apply(slot.group());
         String icon = spec != null ? spec : slot.group();
@@ -226,7 +218,6 @@ public final class SpellBarStrip {
         }
     }
 
-    /** The item a synced spell slot comes from, drawn at half size in the slot's bottom right corner. */
     private static void drawBadge(SpellBarView.Slot slot, int x, int y) {
         if (slot.state() != SpellBarView.State.SPELL || slot.itemKey().isEmpty()) {
             return;
@@ -245,7 +236,6 @@ public final class SpellBarStrip {
         RenderSystem.applyModelViewMatrix();
     }
 
-    /** The chooser and the hover tooltip, drawn above everything. */
     public void renderOverlay(PoseStack pose, Screen screen, int mouseX, int mouseY) {
         if (this.view == null) {
             return;

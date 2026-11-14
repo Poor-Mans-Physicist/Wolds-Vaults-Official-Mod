@@ -24,11 +24,19 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import xyz.iwolfking.woldsvaults.spellcraft.scope.CastModifiers;
+import xyz.iwolfking.woldsvaults.client.spellcraft.gui.SpellcraftNames;
+import xyz.iwolfking.woldsvaults.client.spellcraft.gui.SpellcraftPalette;
+import xyz.iwolfking.woldsvaults.client.spellcraft.gui.StatText;
+import xyz.iwolfking.woldsvaults.client.spellcraft.stats.MainEffectTable.Effects;
+import xyz.iwolfking.woldsvaults.client.spellcraft.stats.MainEffectTable.Factor;
+import xyz.iwolfking.woldsvaults.client.spellcraft.stats.MainEffectTable.Format;
+import xyz.iwolfking.woldsvaults.client.spellcraft.stats.MainEffectTable.Main;
+import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
+import xyz.iwolfking.woldsvaults.spellcraft.ability.AbilityLookup;
 import xyz.iwolfking.woldsvaults.spellcraft.buff.BuffGlyphs;
 import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphStacking;
+import xyz.iwolfking.woldsvaults.spellcraft.scope.CastModifiers;
 import xyz.iwolfking.woldsvaults.spellcraft.spell.SpellModel;
-import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -36,27 +44,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import xyz.iwolfking.woldsvaults.client.spellcraft.gui.SpellcraftNames;
-import xyz.iwolfking.woldsvaults.client.spellcraft.gui.SpellcraftPalette;
-import xyz.iwolfking.woldsvaults.client.spellcraft.gui.StatText;
-import xyz.iwolfking.woldsvaults.spellcraft.ability.AbilityLookup;
-import xyz.iwolfking.woldsvaults.client.spellcraft.stats.MainEffectTable.Effects;
-import xyz.iwolfking.woldsvaults.client.spellcraft.stats.MainEffectTable.Factor;
-import xyz.iwolfking.woldsvaults.client.spellcraft.stats.MainEffectTable.Format;
-import xyz.iwolfking.woldsvaults.client.spellcraft.stats.MainEffectTable.Main;
 
 /**
- * What one press of a slot does at a training dummy, for the spell bar tooltip and the focus screen. The per-ability
- * numbers are VH's own description labels ({@code AbilityLabelBindingRegistry}, the values behind {@code $damage},
- * {@code $radius} ...), read against the player's live stats the way VH's label factory reads them; the step's glyphs
- * are then applied as the caster applies them.
- * <p>
- * Damage per hit is flat + attack damage x percent x (1 + Damage Increase) + ability power x percent + current mana x
- * percent. Damage Increase is counted because every attack-damage ability hit receives it (baked into the ability or in
- * the hurt event) and no ability-power hit does. Target-dependent multipliers (mob type, gods, armour, crits, distance
- * falloff) and temporary buffs are left out. Radius is VH's area-of-effect radius for the ability, with the step's area
- * factor multiplied into the AoE factor before VH's AoE limit clamps it; velocity is VH's throw power (blocks per tick,
- * shown per second) times the step's speed; duration is VH's effect-duration-adjusted duration.
+ * What one press of a slot does at a training dummy, read from Vault Hunters' ability description labels against the
+ * player's live stats, with the step's glyphs applied. Damage per hit is flat + attack damage x percent x (1 + Damage
+ * Increase) + ability power x percent + current mana x percent, leaving out target-dependent multipliers and temporary
+ * buffs. Damage Increase is counted because every attack-damage ability hit receives it and no ability-power hit does.
  */
 public final class StepStats {
     private static final String[] AREA_KEYS = {"adjustedRadius", "radius"};
@@ -83,32 +76,27 @@ public final class StepStats {
         }
     }
 
-    /**
-     * One more number VH labels for the ability: the line's lang key (under {@code bar.stat.}), its formatted value and
-     * the value's colour.
-     */
+    /** An extra stat line, whose {@code key} is a lang key under {@code bar.stat.}. */
     public record Extra(String key, String value, int color) {
     }
 
-    /** A main effect's raw label value: a fraction for percents, ticks for times, else the number. */
+    /** {@code raw} is a fraction for percents, ticks for times, else the plain number. */
     private record MainValue(Main main, float raw) {
     }
 
-    /** An ability's numbers before glyphs; negative radius, velocity or duration means the ability has none. */
+    /** An ability's numbers before glyphs, where a negative radius, velocity or duration means the ability has none. */
     private record Base(@Nullable Hit hit, @Nullable Hit splinter, @Nullable Hit splash, float radius, boolean aoe, float splashRadius,
                        float velocity, int durationTicks, List<Extra> extras, @Nullable Effects effects, List<MainValue> mains) {
     }
 
-    /** A row of the spell's stats: an ability step or a Bundled Spell orb, at its payload depth. */
     public sealed interface Row permits Step, Orb {
         int depth();
     }
 
     /**
-     * One ability step after its glyphs. {@code casts} counts Shotgun copies and the orbs carrying it; {@code total} is
-     * one hit from every cast plus the Echo replay, or null when the step casts once with no Echo; the charged values are
-     * at full Charge, or null without Charge. {@code mains} are the ability's main effect lines after the step's buff
-     * glyphs; {@code relevance} says which of the step's glyph stats apply to it.
+     * One ability step after its glyphs, where {@code casts} counts Shotgun copies and the orbs carrying it. The
+     * {@code total} is one hit from every cast plus the Echo replay, null when the step casts once with no Echo, and
+     * the charged values assume full Charge and are null when the step cannot be charged.
      */
     public record Step(String group, int depth, @Nullable Hit hit, @Nullable Hit charged, @Nullable Hit splinter, @Nullable Hit splash,
                        int casts, float echoPower, @Nullable Hit total, @Nullable Hit chargedTotal, float radius, float splashRadius,
@@ -116,12 +104,12 @@ public final class StepStats {
                        GlyphRelevance.Filter relevance) implements Row {
     }
 
-    /** A Bundled Spell orb: how many orbs fly, their velocity in blocks per second, and the flight time in seconds. */
+    /** A Bundled Spell orb, with velocity in blocks per second and flight time in seconds. */
     public record Orb(int depth, int copies, float velocity, float flightSeconds, GlyphStacking.Pool glyphs,
                       GlyphRelevance.Filter relevance) implements Row {
     }
 
-    /** Every row of a spell, and the whole press's damage when more than one step deals damage (else null). */
+    /** {@code total} is the whole press's damage, null unless more than one step deals damage. */
     public record SpellStats(List<Row> rows, @Nullable Hit total) {
     }
 
@@ -130,7 +118,6 @@ public final class StepStats {
         return Minecraft.getInstance().player;
     }
 
-    /** A plain ability's stats as one step without glyphs, or null when it isn't learned or there is no player. */
     @Nullable
     public static Step plain(AbilityTree tree, String group) {
         LocalPlayer player = player();
@@ -143,7 +130,6 @@ public final class StepStats {
                 GlyphRelevance.ALL);
     }
 
-    /** An augmented spell's rows: each ability step with its glyphs, each Bundled Spell orb and its payload. */
     @Nullable
     public static SpellStats spell(SpellcraftConfig config, AbilityTree tree, SpellModel model) {
         LocalPlayer player = player();
@@ -228,7 +214,7 @@ public final class StepStats {
         };
     }
 
-    /** A main effect line at a factor, rounded as the server rounds it (integer stats and ticks to nearest, minimum 1). */
+    /** Integer and tick values go through {@code BuffGlyphs.scale} so they round as the server rounds them. */
     private static Extra format(MainValue main, float factor) {
         Main def = main.main();
         int color = def.format() == Format.TICKS || def.factor() == Factor.DRAIN ? SpellcraftPalette.STAT_YELLOW : SpellcraftPalette.STAT_INTENSITY;
@@ -243,7 +229,6 @@ public final class StepStats {
         return new Extra(def.key(), value, color);
     }
 
-    /** VH's numbers for one ability against the player's current stats, before any glyph; {@code spec} picks its main effects. */
     private static Base base(LocalPlayer player, Ability ability, @Nullable String spec) {
         AttributeSnapshot snapshot = AttributeSnapshotHelper.getInstance().getSnapshot(player);
         float damageIncrease = snapshot.getAttributeValue(ModGearAttributes.DAMAGE_INCREASE, VaultGearAttributeTypeMerger.floatSum());
@@ -400,8 +385,8 @@ public final class StepStats {
     }
 
     /**
-     * The step's area factor as VH would apply it: the AoE factor (1 + Area of Effect, after VH's area stat listeners)
-     * times the glyph factor, clamped to VH's AoE limit, relative to the same factor without the glyph.
+     * The glyph area factor's effect on the radius once Vault Hunters' AoE limit clamps the player's AoE factor with
+     * and without it.
      */
     private static float areaRatio(LocalPlayer player, float factor) {
         if (factor == 1.0F || player.hasEffect(ModEffects.NULLIFY_AREA_OF_EFFECT)) {

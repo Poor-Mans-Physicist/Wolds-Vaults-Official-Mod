@@ -1,21 +1,19 @@
 package xyz.iwolfking.woldsvaults.client.events;
 
-import java.util.Set;
-import java.util.HashSet;
-import net.minecraft.ChatFormatting;
-import net.minecraft.network.chat.Component;
-import iskallia.vault.config.gear.VaultEtchingConfig;
-import iskallia.vault.gear.data.VaultGearData;
-import xyz.iwolfking.woldsvaults.client.spellcraft.gui.GlyphAffixLine;
 import com.mojang.datafixers.util.Either;
 import iskallia.vault.client.data.ClientAbilityData;
+import iskallia.vault.config.gear.VaultEtchingConfig;
+import iskallia.vault.gear.data.VaultGearData;
 import iskallia.vault.gear.etching.EtchingHelper;
 import iskallia.vault.init.ModConfigs;
 import iskallia.vault.init.ModGearAttributes;
 import iskallia.vault.skill.tree.AbilityTree;
+import iskallia.vault.util.TextUtil;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.TextComponent;
@@ -28,47 +26,47 @@ import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import xyz.iwolfking.woldsvaults.WoldsVaults;
-import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
-import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
-import xyz.iwolfking.woldsvaults.spellcraft.item.GlyphLine;
-import xyz.iwolfking.woldsvaults.spellcraft.item.StoredSpell;
-import xyz.iwolfking.woldsvaults.spellcraft.spell.SpellModel;
-import xyz.iwolfking.woldsvaults.spellcraft.spell.SpellcraftRules;
-import xyz.iwolfking.woldsvaults.client.spellcraft.stats.SlotCostStats;
+import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
+import xyz.iwolfking.woldsvaults.client.spellcraft.gui.GlyphAffixLine;
 import xyz.iwolfking.woldsvaults.client.spellcraft.gui.GlyphText;
 import xyz.iwolfking.woldsvaults.client.spellcraft.gui.SpellcraftNames;
 import xyz.iwolfking.woldsvaults.client.spellcraft.gui.SpellcraftPalette;
-import xyz.iwolfking.woldsvaults.client.spellcraft.gui.StatText;
 import xyz.iwolfking.woldsvaults.client.spellcraft.gui.SpellcraftTooltipRow;
+import xyz.iwolfking.woldsvaults.client.spellcraft.gui.StatText;
 import xyz.iwolfking.woldsvaults.client.spellcraft.state.ClientGlyphViews;
+import xyz.iwolfking.woldsvaults.client.spellcraft.stats.SlotCostStats;
 import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
+import xyz.iwolfking.woldsvaults.spellcraft.ability.AbilityLookup;
+import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
+import xyz.iwolfking.woldsvaults.spellcraft.item.GlyphLine;
+import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
+import xyz.iwolfking.woldsvaults.spellcraft.item.StoredSpell;
 import xyz.iwolfking.woldsvaults.spellcraft.source.EtchingLines;
 import xyz.iwolfking.woldsvaults.spellcraft.source.GearAffixLines;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.Function;
-import iskallia.vault.util.TextUtil;
-import javax.annotation.Nullable;
-import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
-import xyz.iwolfking.woldsvaults.spellcraft.ability.AbilityLookup;
 import xyz.iwolfking.woldsvaults.spellcraft.source.GlyphView;
+import xyz.iwolfking.woldsvaults.spellcraft.spell.SpellModel;
+import xyz.iwolfking.woldsvaults.spellcraft.spell.SpellcraftRules;
+
+import javax.annotation.Nullable;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.function.Function;
 
 /**
- * The spellcraft block at the bottom of a focus's or wand's tooltip. Normally four lines: arcana used of the budget with
- * a bar, a rune per glyph line (spent lines dimmed) and the depth, the spell names, and the Alt hint. With Alt held:
- * every glyph line (rune, name, potency, uses left of rolled, arcana cost, side effects) and every spell (trigger icon,
- * name, arcana, runes, chained abilities, mana and cooldown at the player's haste). Runes and icons are tooltip
- * components ({@link SpellcraftTooltipRow}).
+ * Spellcraft additions to item tooltips: the rune beside each glyph-granting affix or etching line, and the spellcraft
+ * block of an item that carries spells. The block is gathered at low priority, after the rune pass and other
+ * normal-priority additions.
  */
 @Mod.EventBusSubscriber(modid = WoldsVaults.MOD_ID, value = Dist.CLIENT)
 public class SpellcraftTooltipEvents {
     private static final Set<String> MISSING_AFFIX_LINES = new HashSet<>();
 
     /**
-     * A gear affix or etching that grants a glyph keeps its own tooltip line and gets the glyph's rune drawn to its
-     * right. The line is found by its text (the same calls VH's tooltip makes: an affix's {@code getDisplay}, the
-     * etching's formatted description); if it can't be found, the line is added at the end and a warning is logged once.
+     * A gear affix or etching that grants a glyph keeps its own tooltip line, found by matching the text Vault Hunters'
+     * tooltip shows, with the glyph's rune drawn to its right. A line that cannot be found is added at the end with an
+     * error logged once.
      */
     @SubscribeEvent(priority = EventPriority.NORMAL)
     public static void onGatherGrants(RenderTooltipEvent.GatherComponents event) {

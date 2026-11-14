@@ -1,13 +1,18 @@
 package xyz.iwolfking.woldsvaults.client.spellcraft.gui;
 
 import iskallia.vault.gear.etching.EtchingHelper;
+import iskallia.vault.util.TextUtil;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.TextComponent;
-import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
+import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
 import xyz.iwolfking.woldsvaults.client.spellcraft.stats.GlyphRelevance;
-import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphStacking;
 import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
+import xyz.iwolfking.woldsvaults.spellcraft.gear.ConvertedEtchings;
+import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphStacking;
+import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
+import xyz.iwolfking.woldsvaults.spellcraft.source.GlyphQuality;
+import xyz.iwolfking.woldsvaults.spellcraft.spell.PlacedGlyph;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -17,11 +22,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
-import iskallia.vault.util.TextUtil;
-import xyz.iwolfking.woldsvaults.spellcraft.gear.ConvertedEtchings;
-import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
-import xyz.iwolfking.woldsvaults.spellcraft.spell.PlacedGlyph;
-import xyz.iwolfking.woldsvaults.spellcraft.source.GlyphQuality;
 
 public final class GlyphText {
     private static final String LABEL_TAG = "<gray>";
@@ -32,7 +32,7 @@ public final class GlyphText {
     private GlyphText() {
     }
 
-    /** Why a glyph does nothing right now, for tooltips; a dormant spell-wide glyph fits no step of the spell. */
+    /** A tooltip line saying why a glyph does nothing right now, empty for an active glyph. */
     public static String inactiveReason(@Nullable SpellcraftConfig config, PlacedGlyph glyph) {
         if (glyph.dependent()) {
             return SpellcraftNames.tr("glyph_state.dependent");
@@ -58,8 +58,8 @@ public final class GlyphText {
     }
 
     /**
-     * A glyph's description at a potency and quality, coloured with VH's tags: an etching glyph shows its etching's own
-     * text; every other glyph fills its table template. Without either (logged once) it falls back to the potency text.
+     * An etching glyph shows its etching's own text and every other glyph fills its table template. A glyph with
+     * neither logs an error once and shows its potency text.
      */
     public static MutableComponent describe(SpellcraftConfig config, GlyphType type, float potency, float quality) {
         String text = ConvertedEtchings.description(type, potency, quality);
@@ -78,7 +78,6 @@ public final class GlyphText {
         return TextUtil.applyColorTags(SpellcraftNames.capitalize(text));
     }
 
-    /** Replaces each {@code {name}} in a description template with the glyph's linked value of that name at the quality, as a whole percent. */
     private static String fillLinked(SpellcraftConfig config, GlyphType type, String template, float quality) {
         SpellcraftConfig.GlyphDefinition glyph = config.glyph(type);
         if (glyph.potency == null || glyph.potency.linked == null) {
@@ -92,7 +91,6 @@ public final class GlyphText {
         return out;
     }
 
-    /** A line's potency in its table format (percent, seconds, blocks), labelled from the table. */
     public static String potency(SpellcraftConfig config, GlyphType type, float p) {
         return SpellcraftNames.capitalize(rawPotency(config, type, p));
     }
@@ -112,16 +110,13 @@ public final class GlyphText {
     }
 
     /**
-     * The glyph's side effects at a potency, e.g. "+18% dmg, 0.93x area, 1.13x mana", every number coloured by its stat
-     * and every label grey (VH colour tags, for {@link #tagged}): each step and spell effect except the potency's own
-     * stat (the effect with k = +-1 and no base). Common upsides, which add into the step's pool, read as a percentage;
-     * everything that multiplies reads as a factor. Without an ability, every effect is listed.
+     * The glyph's side effects at a potency, skipping the potency's own stat (the effect with k of plus or minus 1 and
+     * no base). Effects that add into the step's pool read as a percentage and the rest as a factor.
      */
     public static String sideEffects(SpellcraftConfig config, GlyphType type, float p) {
         return sideEffects(config, type, p, GlyphRelevance.ALL);
     }
 
-    /** The glyph's side effects that apply where {@code relevance} says, coloured as {@link #sideEffects}. */
     public static String sideEffects(SpellcraftConfig config, GlyphType type, float p, GlyphRelevance.Filter relevance) {
         SpellcraftConfig.GlyphDefinition glyph = config.glyph(type);
         List<String> parts = new ArrayList<>();
@@ -150,9 +145,8 @@ public final class GlyphText {
     }
 
     /**
-     * A step's stacked glyph stats, e.g. "+48% dmg, +22% area; 0.86x area", coloured as {@link #sideEffects}: first each
-     * stat's pool of common upsides, then each stat's multiplied part (downsides, costs and special factors), each only
-     * where {@code relevance} says it applies. Empty when no glyph moves a stat that applies.
+     * A step's stacked glyph stats, each stat's pooled upsides first and then each stat's multiplied part, listing only
+     * the stats {@code relevance} says apply. Empty when no glyph moves a stat that applies.
      */
     public static String poolSummary(GlyphStacking.Pool pool, GlyphRelevance.Filter relevance) {
         List<String> pooled = new ArrayList<>();
@@ -182,12 +176,10 @@ public final class GlyphText {
         return String.join(separator, pooled) + LABEL_TAG + "; " + String.join(separator, multiplied);
     }
 
-    /** Text with VH colour tags as a component; untagged text starts grey. */
     public static MutableComponent tagged(String text) {
         return TextUtil.applyColorTags(LABEL_TAG + text);
     }
 
-    /** The colour tag of a glyph stat's numbers, matching the glyph descriptions and the spell bar's stat lines. */
     private static String statTag(String stat) {
         String tag = SpellcraftPalette.STAT_TAGS.get(stat);
         if (tag == null) {

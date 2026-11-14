@@ -1,12 +1,13 @@
 package xyz.iwolfking.woldsvaults.client.spellcraft.keys;
 
 import com.mojang.blaze3d.platform.InputConstants;
+import iskallia.vault.init.ModKeybinds;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
-import iskallia.vault.init.ModKeybinds;
+import xyz.iwolfking.woldsvaults.mixins.accessors.OptionsKeyMappingsAccessor;
+
 import java.util.ArrayList;
 import java.util.List;
-import xyz.iwolfking.woldsvaults.mixins.accessors.OptionsKeyMappingsAccessor;
 
 final class QuickfireKeys {
     private static boolean retired;
@@ -19,8 +20,8 @@ final class QuickfireKeys {
     }
 
     /**
-     * Retires VH's per-ability quick-fire keys: they are unbound and taken out of the Controls list, since abilities
-     * are cast from spell slots now (the server ignores their packet too).
+     * Unbinds Vault Hunters' quick-fire keys and removes them from the Controls list, since abilities are cast from
+     * spell slots.
      */
     static void hide(Minecraft minecraft) {
         retired = true;

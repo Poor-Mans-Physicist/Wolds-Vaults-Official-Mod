@@ -2,11 +2,11 @@ package xyz.iwolfking.woldsvaults.client.spellcraft.stats;
 
 import iskallia.vault.skill.ability.component.AbilityLabelBindingRegistry;
 import iskallia.vault.skill.ability.effect.spi.core.Ability;
+import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
 
 import javax.annotation.Nullable;
 import java.util.HashSet;
 import java.util.Set;
-import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
 
 final class VhAbilityLabels {
     private static final String NO_BINDING = "NO BINDING";
@@ -59,8 +59,8 @@ final class VhAbilityLabels {
     }
 
     /**
-     * A VH time label ("1.5s") in ticks. Only {@code adjustedDuration} also takes a bare number as seconds, as VH's label
-     * factory does; any other form (VH binds some "duration" labels to percentages) counts as no duration.
+     * A Vault Hunters time label such as "1.5s" in ticks, or null for any other form. Only {@code adjustedDuration}
+     * also accepts a bare number of seconds.
      */
     @Nullable
     static Integer ticks(Ability ability, String key) {

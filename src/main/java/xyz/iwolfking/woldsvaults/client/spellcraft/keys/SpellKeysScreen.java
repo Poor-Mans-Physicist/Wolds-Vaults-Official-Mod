@@ -9,9 +9,8 @@ import net.minecraft.client.gui.screens.controls.ControlsScreen;
 import javax.annotation.Nullable;
 
 /**
- * Vanilla Controls, opened from a spell bar's Keys button. From the skill menu it has no parent screen (the skill menu
- * is a server container, closed before this opens) and asks the server to reopen the Abilities tab once it closes
- * to the game (not when it opens its own sub-screens); from the focus screen it returns to that screen.
+ * Vanilla Controls opened from a spell bar's Keys button. Opened from the skill menu, which is a server container
+ * closed before this opens, it asks the server to reopen the Abilities tab once it closes to the game.
  */
 public class SpellKeysScreen extends ControlsScreen {
     private final boolean reopenAbilities;
@@ -21,7 +20,7 @@ public class SpellKeysScreen extends ControlsScreen {
         this.reopenAbilities = reopenAbilities;
     }
 
-    /** Opens the key binds from the skill menu: closes its container first so client and server stay in step. */
+    /** Closes the skill menu's container first so client and server stay in step. */
     public static void openFromSkillMenu() {
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.player != null) {

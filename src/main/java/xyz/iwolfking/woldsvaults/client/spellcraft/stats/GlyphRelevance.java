@@ -1,32 +1,27 @@
 package xyz.iwolfking.woldsvaults.client.spellcraft.stats;
 
-import xyz.iwolfking.woldsvaults.spellcraft.buff.BuffGlyphs;
-import xyz.iwolfking.woldsvaults.spellcraft.hit.HitSources;
+import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
 import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
+import xyz.iwolfking.woldsvaults.spellcraft.ability.SpellAbilities;
+import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphStacking;
+import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphStats;
+import xyz.iwolfking.woldsvaults.spellcraft.hit.HitSources;
+import xyz.iwolfking.woldsvaults.spellcraft.spell.PlacedGlyph;
+import xyz.iwolfking.woldsvaults.spellcraft.spell.SpellModel;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
-import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphStacking;
-import xyz.iwolfking.woldsvaults.spellcraft.spell.SpellModel;
-import xyz.iwolfking.woldsvaults.spellcraft.spell.PlacedGlyph;
-import xyz.iwolfking.woldsvaults.spellcraft.ability.SpellAbilities;
-import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphStats;
 
 /**
- * Which glyph stats do anything on a given step, so tooltips list only the side effects that apply
- * (redesign/spellcraft/REFINEMENT_PASS_2026-11-10.md sec. 2.1). Damage needs the spec's own hit sources; area the AREA
- * trait; speed a projectile, a path or a Bundled Spell orb; size a projectile, path or bolt; the buff stats follow
- * {@link BuffGlyphs#factorsOf} (a toggle takes intensity, the duration upside and drain; a heal intensity and heal
- * mana; any other buff intensity and duration), on specs whose INTENSIFY trait (intensity) or EXTEND trait (duration)
- * says something reads them; mana and efficiency need a step that costs mana; cooldown and haste
- * always apply. A glyph with no ability context keeps every stat ({@link #ALL}).
+ * Which glyph stats do anything on a given step, so tooltips list only the side effects that apply. A step stat applies
+ * by the traits of the step's spec, mana and efficiency apply when any step costs mana, and cooldown and haste always
+ * apply.
  */
 public final class GlyphRelevance {
 
-    /** Whether a stat does anything here; {@code pooled} marks a common upside, which adds into the step's pool. */
+    /** Whether a stat does anything here, where {@code pooled} marks a common upside that adds into the step's pool. */
     @FunctionalInterface
     public interface Filter {
         boolean applies(String stat, boolean pooled);
@@ -38,8 +33,8 @@ public final class GlyphRelevance {
     }
 
     /**
-     * The filter for the steps the glyph at {@code token} modifies (a stat applies when it applies on any of them; a
-     * spell-wide glyph modifies every step it fits), or for the spell alone when no step holds it.
+     * The filter for every step that holds the glyph at {@code token}, where a stat applies if it applies on any of
+     * them, or for the spell alone when no step holds it.
      */
     public static Filter forToken(SpellcraftConfig config, SpellModel model, int token) {
         List<SpellModel.Step> owners = new ArrayList<>();
@@ -51,10 +46,7 @@ public final class GlyphRelevance {
         return (stat, pooled) -> filters.stream().anyMatch(filter -> filter.applies(stat, pooled));
     }
 
-    /**
-     * The filter for one step of a spell: an ability step, a Bundled Spell orb, or null (a glyph outside any step, such
-     * as a Delay), which decides only the spell stats and keeps every step stat.
-     */
+    /** A null step stands for a glyph outside any step, such as a Delay, and keeps every step stat. */
     public static Filter of(SpellcraftConfig config, SpellModel model, @Nullable SpellModel.Step step) {
         boolean costsMana = costsMana(config, model.steps());
         return (stat, pooled) -> {
@@ -86,7 +78,6 @@ public final class GlyphRelevance {
         };
     }
 
-    /** Whether a step stat applies to an ability step casting {@code spec}. */
     private static boolean castApplies(SpellcraftConfig config, @Nullable String spec, String stat, boolean pooled) {
         if (spec == null) {
             WoldLogger.errorOnce("GlyphRelevance:spec:null", "Glyph relevance: an ability step has no specialization; every glyph stat is listed for it");
@@ -110,7 +101,6 @@ public final class GlyphRelevance {
         };
     }
 
-    /** Adds every step whose glyphs hold the glyph at {@code token}: ability steps and Bundled Spells (their orbs). */
     private static void ownersOf(List<SpellModel.Step> steps, int token, List<SpellModel.Step> owners) {
         for (SpellModel.Step step : steps) {
             if (step instanceof SpellModel.Cast cast && holds(cast.glyphs(), token)) {

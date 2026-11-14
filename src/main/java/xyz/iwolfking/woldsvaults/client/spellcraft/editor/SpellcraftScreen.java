@@ -13,31 +13,25 @@ import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.world.item.ItemStack;
-import xyz.iwolfking.woldsvaults.spellcraft.item.StoredSpell;
-import xyz.iwolfking.woldsvaults.spellcraft.spell.SpellModel;
-import xyz.iwolfking.woldsvaults.spellcraft.spell.SpellcraftRules;
-import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
-
-import javax.annotation.Nullable;
-import java.util.List;
 import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
 import xyz.iwolfking.woldsvaults.client.spellcraft.bar.SpellBarStrip;
 import xyz.iwolfking.woldsvaults.client.spellcraft.bar.SpellBarView;
 import xyz.iwolfking.woldsvaults.client.spellcraft.gui.SpellcraftDraw;
 import xyz.iwolfking.woldsvaults.client.spellcraft.gui.SpellcraftNames;
 import xyz.iwolfking.woldsvaults.client.spellcraft.keys.SpellKeysScreen;
+import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
 import xyz.iwolfking.woldsvaults.init.ModConfigs;
+import xyz.iwolfking.woldsvaults.spellcraft.item.StoredSpell;
+import xyz.iwolfking.woldsvaults.spellcraft.spell.SpellModel;
+import xyz.iwolfking.woldsvaults.spellcraft.spell.SpellcraftRules;
+
+import javax.annotation.Nullable;
+import java.util.List;
 
 /**
- * The focus spellcraft screen, opened by right-clicking a focus or wand in the inventory. Bands: the title (item,
- * arcana bar, depth); the glyph pouch (Glyphs / Abilities) beside the spell tabs, name field, weave and spell stats;
- * the item's spell bar at the bottom.
- * <p>
- * Each spell is edited as a local draft. Clicking a pouch glyph or ability inserts it after the selected weave cell
- * (the end by default; an ability goes first when the spell has no trigger yet); right-clicking a cell removes it.
- * A draft is sent to the server a moment after its last change, and only when the whole item passes the strict
- * spellcraft check with it; otherwise the stats panel lists what is wrong. Shift+right-click a spell tab twice to
- * delete that spell.
+ * The spell editor, opened by right-clicking a spellcraft item in the inventory. The spell bar strip gets first refusal
+ * on clicks and scrolls because its slot chooser draws over the other panels. A panel's hover tooltip wins over the
+ * strip's, except while the chooser is open.
  */
 public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
     private static final int NAME_TEXT = 0xFFE0D0FF;
@@ -183,7 +177,6 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
         return null;
     }
 
-
     @Override
     public void openKeys() {
         Minecraft.getInstance().setScreen(new SpellKeysScreen(this, false));
@@ -277,7 +270,6 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
         return super.mouseScrolled(mouseX, mouseY, delta);
     }
 
-    /** Opens the screen for the focus or wand in a player inventory slot. */
     public static void open(@Nullable Screen parent, int inventorySlot) {
         if (ModConfigs.SPELLCRAFT == null) {
             WoldLogger.error("Spellcraft screen: the focus augments table is not loaded on this client; the screen stays closed");

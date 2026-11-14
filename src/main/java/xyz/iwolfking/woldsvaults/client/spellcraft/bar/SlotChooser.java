@@ -11,14 +11,14 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
-import xyz.iwolfking.woldsvaults.spellcraft.item.StoredSpell;
-import xyz.iwolfking.woldsvaults.init.ModNetwork;
-import xyz.iwolfking.woldsvaults.network.packets.SpellPlaceMessage;
 import xyz.iwolfking.woldsvaults.client.spellcraft.gui.SpellcraftDraw;
 import xyz.iwolfking.woldsvaults.client.spellcraft.gui.SpellcraftNames;
 import xyz.iwolfking.woldsvaults.client.spellcraft.gui.SpellcraftPalette;
+import xyz.iwolfking.woldsvaults.init.ModNetwork;
+import xyz.iwolfking.woldsvaults.network.packets.SpellPlaceMessage;
 import xyz.iwolfking.woldsvaults.spellcraft.ability.AbilityLookup;
+import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
+import xyz.iwolfking.woldsvaults.spellcraft.item.StoredSpell;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -31,7 +31,6 @@ final class SlotChooser {
     private static final int POPUP_BG = 0xF0100010;
     private static final int POPUP_HOVER = 0x405000FF;
 
-    /** One chooser entry: the value sent for the slot, its label, an ability icon (or none) and its colour. */
     private static final String SPELL_CHOICE = "spell:";
 
     private record Choice(String value, String label, @Nullable String icon, int color) {
@@ -87,7 +86,7 @@ final class SlotChooser {
         }
     }
 
-    /** The chooser's left, top, width and visible rows: above the slot, inside the screen. */
+    /** The chooser's left, top, width and visible row count, placed above the slot and inside the screen. */
     private int[] popupBox(Screen screen) {
         Font font = Minecraft.getInstance().font;
         int w = 60;
@@ -119,7 +118,6 @@ final class SlotChooser {
         return false;
     }
 
-    /** A chooser pick: a spell of an equipped focus or wand goes onto the slot, anything else sets the default bar. */
     private void pick(int index, String value) {
         if (value.startsWith(SPELL_CHOICE)) {
             String[] parts = value.substring(SPELL_CHOICE.length()).split(":");
@@ -129,10 +127,6 @@ final class SlotChooser {
         this.strip.lastView().send(index, value);
     }
 
-    /**
-     * The saved spells of the focus or wand in the off hand (the one item whose spells reach the bar), listed first in
-     * the slot chooser so a spell is placed the same way an ability is.
-     */
     private static List<Choice> spellChoices(AbilityTree tree) {
         List<Choice> choices = new ArrayList<>();
         Player player = Minecraft.getInstance().player;

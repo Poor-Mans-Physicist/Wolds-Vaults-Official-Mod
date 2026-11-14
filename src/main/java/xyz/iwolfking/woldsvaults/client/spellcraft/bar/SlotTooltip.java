@@ -8,27 +8,27 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.TextColor;
+import net.minecraft.network.chat.TextComponent;
 import net.minecraft.network.chat.TranslatableComponent;
-import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
-import xyz.iwolfking.woldsvaults.client.spellcraft.stats.GlyphRelevance;
-import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphStacking;
-import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
-import xyz.iwolfking.woldsvaults.spellcraft.play.SpellCooldowns;
 import xyz.iwolfking.woldsvaults.client.spellcraft.gui.GlyphText;
 import xyz.iwolfking.woldsvaults.client.spellcraft.gui.SpellcraftDraw;
 import xyz.iwolfking.woldsvaults.client.spellcraft.gui.SpellcraftNames;
 import xyz.iwolfking.woldsvaults.client.spellcraft.gui.SpellcraftPalette;
 import xyz.iwolfking.woldsvaults.client.spellcraft.gui.StatText;
 import xyz.iwolfking.woldsvaults.client.spellcraft.state.ClientSpellBar;
+import xyz.iwolfking.woldsvaults.client.spellcraft.stats.GlyphRelevance;
 import xyz.iwolfking.woldsvaults.client.spellcraft.stats.SlotCostStats;
 import xyz.iwolfking.woldsvaults.client.spellcraft.stats.StepStats;
+import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
 import xyz.iwolfking.woldsvaults.init.ModConfigs;
+import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphStacking;
+import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
+import xyz.iwolfking.woldsvaults.spellcraft.play.SpellCooldowns;
 
 import java.util.ArrayList;
 import java.util.List;
-import net.minecraft.network.chat.Style;
 
 final class SlotTooltip {
     private static final int WRAP = 200;
@@ -149,10 +149,6 @@ final class SlotTooltip {
         return lines;
     }
 
-    /**
-     * "Augmented: Ice Bolt 21 + Nova 9": the prefix and the separators grey, each ability name gold as in plain ability
-     * tooltips, each tier yellow.
-     */
     private static Component spellTitle(AbilityTree tree, List<String> groups) {
         MutableComponent names = new TextComponent("");
         for (int i = 0; i < groups.size(); i++) {
@@ -170,13 +166,11 @@ final class SlotTooltip {
                 .withStyle(style -> style.withColor(TextColor.fromRgb(SpellcraftPalette.GREY & 0xFFFFFF)));
     }
 
-    /** Adds {@code text} split into lines of at most {@link #WRAP} px, so long reasons stay inside narrow screens. */
     private static void wrapped(List<Component> lines, String text, int color) {
         Minecraft.getInstance().font.getSplitter().splitLines(text, WRAP, Style.EMPTY)
                 .forEach(line -> lines.add(SpellcraftNames.colored(line.getString(), color)));
     }
 
-    /** Mana (blue), cooldown (gold) and spell haste (violet) lines, the label grey and the numbers coloured. */
     private static List<Component> numberLines(SlotCostStats.Numbers numbers) {
         List<Component> lines = new ArrayList<>();
         if (numbers.hasMana()) {
@@ -197,10 +191,6 @@ final class SlotTooltip {
         return lines;
     }
 
-    /**
-     * A spell's stat lines: with one row, that step's lines; with more, each ability step and Bundled Spell orb under its
-     * own header, indented by payload depth, then the whole press's damage when several steps deal damage.
-     */
     private static List<Component> spellLines(AbilityTree tree, StepStats.SpellStats stats) {
         List<Component> lines = new ArrayList<>();
         if (stats.rows().size() == 1 && stats.rows().get(0) instanceof StepStats.Step step) {
@@ -231,10 +221,6 @@ final class SlotTooltip {
         return lines;
     }
 
-    /**
-     * One step's stats, one per line: damage (and total, splinter, splash), the ability's main effects after its buff
-     * glyphs, radius, velocity, duration, then VH's other numbers.
-     */
     private static List<Component> statLines(StepStats.Step step, String indent) {
         List<Component> lines = new ArrayList<>();
         if (step.hit() != null) {
@@ -291,10 +277,6 @@ final class SlotTooltip {
         return lines;
     }
 
-    /**
-     * The step's stacked glyph stats ("+48% dmg, +22% area; 0.86x area"), numbers coloured by stat, listing only the stats
-     * that apply to the step; nothing when no glyph moves one.
-     */
     private static void glyphLine(GlyphStacking.Pool pool, GlyphRelevance.Filter relevance, String indent, List<Component> lines) {
         String summary = GlyphText.poolSummary(pool, relevance);
         if (!summary.isEmpty()) {

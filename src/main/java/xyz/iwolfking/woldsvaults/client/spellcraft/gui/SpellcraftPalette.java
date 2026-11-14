@@ -1,8 +1,8 @@
 package xyz.iwolfking.woldsvaults.client.spellcraft.gui;
 
-import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
 import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
 import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphStats;
+import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
 
 import javax.annotation.Nullable;
 import java.util.Locale;

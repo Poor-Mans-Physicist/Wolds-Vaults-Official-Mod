@@ -13,9 +13,8 @@ import xyz.iwolfking.woldsvaults.WoldsVaults;
 import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
 
 /**
- * Right-clicking a focus or wand with spellcraft in a player-inventory slot of any container screen, with nothing on
- * the cursor, opens the focus spellcraft screen for that inventory slot. The creative inventory is skipped: its slots
- * don't map to player inventory indices.
+ * Opens the spell editor when a spellcraft item in a player inventory slot is right-clicked with nothing on the cursor.
+ * The creative inventory is skipped because its slots do not map to player inventory indices.
  */
 @Mod.EventBusSubscriber(modid = WoldsVaults.MOD_ID, value = Dist.CLIENT)
 public final class SpellcraftScreenOpener {

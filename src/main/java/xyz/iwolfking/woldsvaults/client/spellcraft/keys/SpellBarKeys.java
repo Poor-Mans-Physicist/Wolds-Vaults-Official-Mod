@@ -11,19 +11,20 @@ import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import xyz.iwolfking.woldsvaults.WoldsVaults;
-import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
-import xyz.iwolfking.woldsvaults.init.ModNetwork;
-import xyz.iwolfking.woldsvaults.network.packets.SpellSlotKeyMessage;
-import java.util.Arrays;
-import xyz.iwolfking.woldsvaults.spellcraft.play.StatMirror;
+import xyz.iwolfking.woldsvaults.client.spellcraft.bar.SkillMenuSpellBar;
 import xyz.iwolfking.woldsvaults.client.spellcraft.state.ClientGlyphViews;
 import xyz.iwolfking.woldsvaults.client.spellcraft.state.ClientSpellBar;
-import xyz.iwolfking.woldsvaults.client.spellcraft.bar.SkillMenuSpellBar;
+import xyz.iwolfking.woldsvaults.init.ModNetwork;
+import xyz.iwolfking.woldsvaults.network.packets.SpellSlotKeyMessage;
+import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
+import xyz.iwolfking.woldsvaults.spellcraft.play.StatMirror;
+
+import java.util.Arrays;
 
 /**
- * The 16 spell slot keys (unbound by default, category "Spell Bar"). Each sends a press when it goes down and a
- * release when it comes up; instants cast on release so Charge can use the hold. Opening a screen releases any held
- * slot so holds and charges end cleanly.
+ * The 16 spell slot keys, each sending a press when it goes down and a release when it comes up. Opening a screen
+ * releases any held slot. The client tick also retires Vault Hunters' quick-fire keys and counts cooldowns down, and
+ * logging out clears the client spellcraft caches.
  */
 @Mod.EventBusSubscriber(modid = WoldsVaults.MOD_ID, value = Dist.CLIENT)
 public final class SpellBarKeys {
@@ -33,7 +34,6 @@ public final class SpellBarKeys {
     private SpellBarKeys() {
     }
 
-    /** Registers the slot keys; called from client setup. */
     public static void register() {
         for (int i = 0; i < KEYS.length; i++) {
             KEYS[i] = new SlotKeyMapping(i, "key." + WoldsVaults.MOD_ID + ".spell_slot_" + (i + 1),
@@ -42,7 +42,7 @@ public final class SpellBarKeys {
         }
     }
 
-    /** A slot key that sorts by slot number in the Controls list instead of by name (1, 2 ... 16, not 1, 10, 11). */
+    /** A slot key that sorts by slot number in the Controls list, so 2 comes before 10. */
     private static final class SlotKeyMapping extends KeyMapping {
         private final int slot;
 

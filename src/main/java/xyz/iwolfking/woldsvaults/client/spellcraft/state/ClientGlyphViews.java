@@ -1,9 +1,9 @@
 package xyz.iwolfking.woldsvaults.client.spellcraft.state;
 
 import net.minecraft.world.item.ItemStack;
-import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
 import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
 import xyz.iwolfking.woldsvaults.network.packets.GlyphViewSyncMessage;
+import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
 import xyz.iwolfking.woldsvaults.spellcraft.source.GlyphCandidate;
 import xyz.iwolfking.woldsvaults.spellcraft.source.GlyphLineProviders;
 import xyz.iwolfking.woldsvaults.spellcraft.source.GlyphView;
@@ -12,13 +12,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * The client's copy of the glyph candidates the server last synced. An arcana item's view is its own lines (read from
- * the stack, the same providers as the server) plus these shared candidates, built by the same {@link GlyphView} code,
- * so the screens and tooltips match what the server casts.
+ * The shared glyph candidates the server last synced, cleared on logout. An item's view is built from its own lines
+ * plus these candidates with the same {@link GlyphView} code the server uses, so screens and tooltips match what the
+ * server casts.
  */
 public final class ClientGlyphViews {
     private static final List<GlyphCandidate> SHARED = new ArrayList<>();
-    private static final List<GlyphCandidate> AUTO = new ArrayList<>();
 
     private ClientGlyphViews() {
     }
@@ -26,8 +25,6 @@ public final class ClientGlyphViews {
     public static void update(GlyphViewSyncMessage message) {
         SHARED.clear();
         SHARED.addAll(message.shared());
-        AUTO.clear();
-        AUTO.addAll(message.auto());
     }
 
     public static GlyphView view(SpellcraftConfig config, ItemStack stack) {
@@ -36,6 +33,5 @@ public final class ClientGlyphViews {
 
     public static void reset() {
         SHARED.clear();
-        AUTO.clear();
     }
 }

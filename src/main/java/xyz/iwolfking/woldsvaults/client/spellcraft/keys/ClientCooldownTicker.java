@@ -8,11 +8,7 @@ final class ClientCooldownTicker {
     private ClientCooldownTicker() {
     }
 
-    /**
-     * Counts the client's copy of ability cooldowns down every tick. VH only syncs them on casts and every half second
-     * for the selected ability, so without this the HUD sat on stale values (a 1 s cooldown stuck at "1s", or coming
-     * back after it had already ended); every server sync still overwrites the local count.
-     */
+    /** Counts the client's copy of ability cooldowns down every tick, between the server syncs that overwrite it. */
     static void tick() {
         AbilityTree tree = ClientAbilityData.getTree();
         if (tree == null) {

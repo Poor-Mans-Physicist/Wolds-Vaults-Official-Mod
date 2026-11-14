@@ -5,8 +5,8 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.Constant;
 import org.spongepowered.asm.mixin.injection.ModifyConstant;
-import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
 import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
+import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
 import xyz.iwolfking.woldsvaults.init.ModConfigs;
 import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
 
@@ -16,9 +16,8 @@ public abstract class MixinLocalPlayerSpellChargeSlow {
     private static boolean woldsvaults$loggedMissingTable;
 
     /**
-     * While a spell charges (the server is using the spell's focus or wand), movement is slowed by the table's
-     * {@code tuning.chargeMoveFactor} instead of vanilla's item-use 0.2. Without the table the vanilla slow stays and an
-     * error is logged once.
+     * While a spell charges, movement is slowed by the table's {@code tuning.chargeMoveFactor} instead of vanilla's
+     * item-use 0.2. Without the table the vanilla slow stays and an error is logged once.
      */
     @ModifyConstant(method = "aiStep", constant = @Constant(floatValue = 0.2F), require = 2)
     private float woldsvaults$spellChargeSlow(float slow) {

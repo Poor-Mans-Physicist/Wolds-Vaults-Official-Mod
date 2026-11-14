@@ -130,7 +130,7 @@ final class StatsPanel {
         font.draw(pose, cutValue, x + width - font.width(cutValue), y, valueColor);
     }
 
-    /** Default-bar slots this spell would hide: abilities it casts that sit on another default slot. */
+    /** The default-bar slots this spell would hide: the slots other than its own that hold an ability it casts. */
     private String hides(AbilityTree tree, @Nullable SpellDrafts.Draft draft, SpellModel model) {
         StoredSpell stored = this.drafts.stored(draft);
         int own = stored == null ? -1 : stored.slot();
@@ -182,7 +182,6 @@ final class StatsPanel {
         return SpellcraftDraw.inside(mouseX, mouseY, x0 + 2, y, mid - x0 - 4, EditorLayout.STAT_PITCH);
     }
 
-    /** One row per ability step and Bundled Spell orb, labelled by name, valued by {@link #stepValue}. */
     private List<String[]> stepRows(SpellcraftConfig config, AbilityTree tree, SpellModel model) {
         List<String[]> rows = new ArrayList<>();
         StepStats.SpellStats stats = StepStats.spell(config, tree, model);
@@ -205,10 +204,7 @@ final class StatsPanel {
         return rows;
     }
 
-    /**
-     * A step's numbers in one short cell, most important first since the row cuts the end: the hit, the casts, the
-     * radius, then Echo; without damage, the radius, velocity and duration.
-     */
+    /** A step's numbers in one short cell, most important first because the row cuts off the end. */
     private static String stepValue(StepStats.Step step) {
         List<String> parts = new ArrayList<>();
         if (step.hit() != null) {

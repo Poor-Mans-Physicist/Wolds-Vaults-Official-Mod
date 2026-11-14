@@ -5,22 +5,22 @@ import iskallia.vault.skill.base.SpecializedSkill;
 import iskallia.vault.skill.tree.AbilityTree;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.item.ItemStack;
-import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
-import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
-import xyz.iwolfking.woldsvaults.spellcraft.item.GlyphLine;
-import xyz.iwolfking.woldsvaults.spellcraft.item.StoredSpell;
-import xyz.iwolfking.woldsvaults.spellcraft.spell.SpellModel;
-import xyz.iwolfking.woldsvaults.spellcraft.spell.GlyphState;
-import xyz.iwolfking.woldsvaults.spellcraft.spell.ReadMode;
+import xyz.iwolfking.woldsvaults.client.spellcraft.state.ClientSpellBar;
 import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
+import xyz.iwolfking.woldsvaults.init.ModConfigs;
 import xyz.iwolfking.woldsvaults.init.ModNetwork;
 import xyz.iwolfking.woldsvaults.network.packets.SpellBarEditMessage;
 import xyz.iwolfking.woldsvaults.network.packets.SpellBarSyncMessage;
-import xyz.iwolfking.woldsvaults.spellcraft.source.GlyphView;
-import xyz.iwolfking.woldsvaults.client.spellcraft.state.ClientSpellBar;
-import xyz.iwolfking.woldsvaults.init.ModConfigs;
 import xyz.iwolfking.woldsvaults.spellcraft.ability.AbilityLookup;
 import xyz.iwolfking.woldsvaults.spellcraft.bar.EffectiveBar;
+import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
+import xyz.iwolfking.woldsvaults.spellcraft.item.GlyphLine;
+import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
+import xyz.iwolfking.woldsvaults.spellcraft.item.StoredSpell;
+import xyz.iwolfking.woldsvaults.spellcraft.source.GlyphView;
+import xyz.iwolfking.woldsvaults.spellcraft.spell.GlyphState;
+import xyz.iwolfking.woldsvaults.spellcraft.spell.ReadMode;
+import xyz.iwolfking.woldsvaults.spellcraft.spell.SpellModel;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -30,10 +30,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * One bar as the spell bar strip draws it: the default bar (editable), or the effective bar exactly as the server last
- * resolved it (read-only; items no longer hold bars). Each slot knows what it shows (ability, spell, hidden, empty),
- * whether it is unlearned, LOCKED or implicit, where its spell comes from, and which ability groups it holds. A synced
- * spell's model is rebuilt from the server's tokens, glyph lines and glyph states, never from the client's item NBT.
+ * One bar as the spell bar strip draws it: the default bar, or the effective bar as the server last resolved it. A
+ * synced spell's model is rebuilt from the server's tokens, glyph lines and glyph states, never from the client's item
+ * NBT.
  */
 public final class SpellBarView {
     public enum State {
@@ -43,10 +42,6 @@ public final class SpellBarView {
         HIDDEN
     }
 
-    /**
-     * One displayed slot; {@code spell} and {@code model} are set for spells. {@code itemKey}/{@code spellId} identify the
-     * spell's item and spell; {@code sourceName} names the item.
-     */
     public record Slot(int index, State state, String group, String spellName, boolean unlearned, @Nullable StoredSpell spell,
                        @Nullable SpellModel model, List<String> groups, String itemKey, int spellId, String sourceName,
                        int prio, boolean locked, String lockReason, boolean implicit, List<String> shadowed) {
@@ -69,7 +64,6 @@ public final class SpellBarView {
         this.badge = badge;
     }
 
-    /** The default bar as last synced. */
     public static SpellBarView ofDefaults(AbilityTree tree) {
         Slot[] slots = new Slot[SpellcraftItemData.SLOTS];
         for (int i = 0; i < slots.length; i++) {
@@ -80,7 +74,10 @@ public final class SpellBarView {
         return new SpellBarView(slots, false, ItemStack.EMPTY);
     }
 
-    /** The effective bar as the server last synced it, or null when no item lays a spell over it. */
+    /**
+     * The effective bar as the server last synced it, or null before the first sync or when no item lays a spell over
+     * it.
+     */
     @Nullable
     public static SpellBarView ofSynced(AbilityTree tree) {
         if (!ClientSpellBar.isSynced() || !ClientSpellBar.hasOverlays()) {
@@ -108,8 +105,8 @@ public final class SpellBarView {
     }
 
     /**
-     * Rebuilds a synced spell's model: a view made of the server's glyph lines, and the server's states forced on every
-     * glyph it did not find active for a reason the client can't see (sources, uses, budget).
+     * Forces the server's state onto each independent glyph it found neither active nor dormant, since the client
+     * cannot see why.
      */
     private static SpellModel model(SpellcraftConfig config, AbilityTree tree, SpellBarSyncMessage.Entry entry) {
         Map<GlyphType, GlyphLine> lines = new LinkedHashMap<>();
@@ -134,7 +131,6 @@ public final class SpellBarView {
                 forced, Map.of());
     }
 
-    /** The first synced arcana item found in the player's hands, for the strip's picker icon. */
     private static ItemStack badgeStack() {
         for (SpellBarSyncMessage.Source source : ClientSpellBar.sources()) {
             ItemStack stack = ClientSpellBar.stackOf(source.key());
@@ -158,7 +154,7 @@ public final class SpellBarView {
         return this.item;
     }
 
-    /** The item shown on the strip's picker for this view (empty for the default bar). */
+    /** The item shown on the strip's picker for this view, empty for the default bar. */
     public ItemStack stack() {
         return this.badge;
     }
@@ -173,7 +169,7 @@ public final class SpellBarView {
         return -1;
     }
 
-    /** The filled slot that hides a hidden slot (it casts the same ability), or -1. */
+    /** The filled slot that hides the hidden slot at {@code index} by casting the same ability, or -1. */
     int hiddenBy(int index) {
         Slot hidden = this.slots[index];
         if (hidden.state() != State.HIDDEN) {
@@ -187,7 +183,7 @@ public final class SpellBarView {
         return -1;
     }
 
-    /** Sets a default-bar slot to an ability group, or clears it with an empty value (from either view). */
+    /** Sets a default-bar slot to an ability group, or clears it with an empty value, whichever view this is. */
     public void send(int index, String value) {
         ModNetwork.sendToServer(new SpellBarEditMessage(index, value));
     }

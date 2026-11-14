@@ -4,15 +4,14 @@ import iskallia.vault.client.gui.screen.player.AbilitiesElementContainerScreen;
 import iskallia.vault.skill.base.Skill;
 import iskallia.vault.skill.tree.AbilityTree;
 import net.minecraft.client.Minecraft;
+import xyz.iwolfking.woldsvaults.client.spellcraft.keys.SpellKeysScreen;
 
 import javax.annotation.Nullable;
 import java.util.function.Supplier;
-import xyz.iwolfking.woldsvaults.client.spellcraft.keys.SpellKeysScreen;
 
 /**
- * The skill menu's spell bar: the strip under the Abilities tab, its views for this frame (the default bar and, while
- * items lay spells over it, the effective bar as last synced), and the ability selected in the tree, which a default-bar click
- * assigns. The tree's slot tags and the dialog heading read the shown view from here.
+ * The skill menu's spell bar under the Abilities tab. It holds this frame's default and effective views and the ability
+ * selected in the tree, which a slot click assigns to the default bar.
  */
 public final class SkillMenuSpellBar implements SpellBarStrip.Host {
     @Nullable
@@ -33,10 +32,7 @@ public final class SkillMenuSpellBar implements SpellBarStrip.Host {
         this.strip = new SpellBarStrip(this, showEffective);
     }
 
-    /**
-     * The menu for this Abilities screen, made on first use and dropped when another screen asks. {@code selectedSpec}
-     * gives the specialization the dialog shows.
-     */
+    /** Returns the menu of this Abilities screen, replacing a cached menu that belongs to another screen. */
     public static SkillMenuSpellBar of(AbilitiesElementContainerScreen screen, Supplier<String> selectedSpec) {
         if (current == null || current.screen != screen) {
             current = new SkillMenuSpellBar(screen, selectedSpec);
@@ -44,7 +40,6 @@ public final class SkillMenuSpellBar implements SpellBarStrip.Host {
         return current;
     }
 
-    /** Drops the menu once its screen is no longer open, so a closed skill menu is not kept alive. */
     public static void forgetClosed() {
         if (current != null && Minecraft.getInstance().screen != current.screen) {
             current = null;
@@ -60,13 +55,13 @@ public final class SkillMenuSpellBar implements SpellBarStrip.Host {
         return current != null && Minecraft.getInstance().screen == current.screen ? current : null;
     }
 
-    /** True while VH draws the Abilities tree of the open skill menu, so its nodes get slot tags. */
+    /** True while Vault Hunters draws the open skill menu's ability tree, so its nodes get slot tags. */
     public static boolean isRenderingTree() {
         SkillMenuSpellBar menu = current();
         return menu != null && menu.renderingTree;
     }
 
-    /** Rebuilds this frame's views and places the strip in the band the pan and dialog gave up. */
+    /** Rebuilds this frame's views and lays the strip out in the band the pan region and dialog leave free. */
     public void beginFrame() {
         AbilityTree tree = tree();
         this.defaultView = SpellBarView.ofDefaults(tree);
@@ -86,7 +81,6 @@ public final class SkillMenuSpellBar implements SpellBarStrip.Host {
         return this.strip;
     }
 
-    /** The bar the strip shows this frame. */
     public SpellBarView shown() {
         return this.strip.refreshView();
     }
@@ -118,7 +112,6 @@ public final class SkillMenuSpellBar implements SpellBarStrip.Host {
         Skill group = skill == null ? null : skill.getParent();
         return group == null ? null : group.getId();
     }
-
 
     @Override
     public void openKeys() {

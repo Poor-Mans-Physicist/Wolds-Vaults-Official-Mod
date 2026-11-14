@@ -1,7 +1,6 @@
 package xyz.iwolfking.woldsvaults.mixins.vaulthunters.spellcraft.client;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-
 import com.mojang.blaze3d.vertex.PoseStack;
 import iskallia.vault.client.gui.screen.player.AbilitiesElementContainerScreen;
 import iskallia.vault.client.gui.screen.player.legacy.LegacySkillTreeElementContainerScreen;
@@ -46,7 +45,7 @@ public abstract class MixinLegacySkillTreeScreenSpellBar {
         return null;
     }
 
-    /** Builds the spell bar's views before VH draws the tree, so the tree's slot tags match the bar. */
+    /** Builds the spell bar's views before Vault Hunters draws the tree, so the tree's slot tags match the bar. */
     @Inject(method = "render", at = @At("HEAD"), remap = true)
     private void woldsvaults$beginSpellBar(PoseStack poseStack, int mouseX, int mouseY, float partialTicks, CallbackInfo ci) {
         SkillMenuSpellBar menu = woldsvaults$spellBar();
@@ -55,7 +54,7 @@ public abstract class MixinLegacySkillTreeScreenSpellBar {
         }
     }
 
-    /** Draws the spell bar in the band under the Abilities tab, after the tree and dialog and before their tooltips. */
+    /** Draws the spell bar under the Abilities tab after the tree and dialog and before the point overlay. */
     @Inject(method = "render", at = @At(value = "INVOKE", remap = false,
             target = "Liskallia/vault/client/gui/screen/player/legacy/LegacySkillTreeElementContainerScreen;renderPointOverlay(Lcom/mojang/blaze3d/vertex/PoseStack;)V"),
             remap = true)
@@ -69,7 +68,7 @@ public abstract class MixinLegacySkillTreeScreenSpellBar {
         RenderSystem.enableDepthTest();
     }
 
-    /** The spell bar's chooser or slot tooltip, above everything else. */
+    /** Draws the spell bar's chooser or slot tooltip last, above everything else. */
     @Inject(method = "render", at = @At("TAIL"), remap = true)
     private void woldsvaults$renderSpellBarOverlay(PoseStack poseStack, int mouseX, int mouseY, float partialTicks, CallbackInfo ci) {
         SkillMenuSpellBar menu = woldsvaults$spellBar();
@@ -78,7 +77,7 @@ public abstract class MixinLegacySkillTreeScreenSpellBar {
         }
     }
 
-    /** The spell bar (and its open chooser) takes clicks before the tree and dialog. */
+    /** The spell bar gets first refusal on clicks so its open chooser is not clicked through to the tree and dialog. */
     @Inject(method = "mouseClicked", at = @At("HEAD"), cancellable = true, remap = true)
     private void woldsvaults$clickSpellBar(double mouseX, double mouseY, int button, CallbackInfoReturnable<Boolean> cir) {
         SkillMenuSpellBar menu = woldsvaults$spellBar();

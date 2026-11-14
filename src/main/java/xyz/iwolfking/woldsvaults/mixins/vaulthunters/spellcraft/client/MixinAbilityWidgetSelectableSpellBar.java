@@ -1,7 +1,6 @@
 package xyz.iwolfking.woldsvaults.mixins.vaulthunters.spellcraft.client;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-
 import com.mojang.blaze3d.vertex.PoseStack;
 import iskallia.vault.client.gui.screen.player.legacy.widget.AbilityWidget;
 import iskallia.vault.client.gui.screen.player.legacy.widget.AbilityWidgetSelectable;
@@ -23,10 +22,8 @@ public class MixinAbilityWidgetSelectableSpellBar {
     private static final float TAG_SCALE = 0.5F;
 
     /**
-     * Tags an ability's base node, bottom right like a stack count, with its slot number on the bar the skill menu shows
-     * (gold for the default bar, violet for a focus bar). It sits in the node's own space, so it shrinks with the node
-     * when the tree is zoomed out. Text drawing leaves the depth test off; it is turned back on, as VH does after its
-     * level numbers, or later lines draw over the nodes.
+     * Tags an ability's base node in Vault Hunters' tree with its slot number on the bar the skill menu shows. Text
+     * drawing leaves the depth test off, so it is turned back on or later lines draw over the nodes.
      */
     @Inject(method = "render", at = @At("TAIL"), remap = true)
     private void woldsvaults$slotTag(PoseStack poseStack, int mouseX, int mouseY, float partialTicks, CallbackInfo ci) {

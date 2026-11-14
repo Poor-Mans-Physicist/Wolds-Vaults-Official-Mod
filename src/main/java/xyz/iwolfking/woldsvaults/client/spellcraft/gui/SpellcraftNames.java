@@ -21,15 +21,10 @@ public final class SpellcraftNames {
     private SpellcraftNames() {
     }
 
-    /** A translated UI string under {@code woldsvaults.spellcraft.}. */
     public static String tr(String key, Object... args) {
         return I18n.get(LANG + key, args);
     }
 
-    /**
-     * A short label for a spell slot key, at most {@code room} font pixels wide: mouse buttons as {@code M4}, other keys
-     * by their name, cut to fit; empty when unbound.
-     */
     public static String keyLabel(int slot, Font font, int room) {
         KeyMapping key = SpellBarKeys.KEYS[slot];
         if (key == null || key.isUnbound()) {
@@ -41,7 +36,6 @@ public final class SpellcraftNames {
         return font.plainSubstrByWidth(label, room);
     }
 
-    /** The key's full name for tooltips, or empty when unbound. */
     public static String keyName(int slot) {
         KeyMapping key = SpellBarKeys.KEYS[slot];
         if (key == null || key.isUnbound()) {
@@ -50,7 +44,7 @@ public final class SpellcraftNames {
         return key.getTranslatedKeyMessage().getString();
     }
 
-    /** An ability group as players read it: its current specialization's name, else the id with spaces. */
+    /** An ability group named by its current specialization. */
     public static String abilityName(@Nullable AbilityTree tree, String group) {
         if (tree != null) {
             Skill skill = tree.getForId(group).orElse(null);
@@ -62,7 +56,7 @@ public final class SpellcraftNames {
         return AbilityLookup.groupName(group);
     }
 
-    /** The group's own name (no specialization), for compact lists such as "Stonefall + Nova". */
+    /** An ability group's own name, ignoring its specialization. */
     public static String groupName(@Nullable AbilityTree tree, String group) {
         if (tree != null) {
             Skill skill = tree.getForId(group).orElse(null);
@@ -73,7 +67,7 @@ public final class SpellcraftNames {
         return AbilityLookup.groupName(group);
     }
 
-    /** The text with its first letter upper-cased, skipping leading colour tags, signs and digits. */
+    /** Upper-cases the first letter after leading colour tags, unless a digit, sign or space comes first. */
     public static String capitalize(String text) {
         int i = 0;
         while (i < text.length()) {

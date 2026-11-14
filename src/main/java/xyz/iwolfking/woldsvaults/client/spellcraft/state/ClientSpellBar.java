@@ -4,20 +4,16 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
 import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
-import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
 import xyz.iwolfking.woldsvaults.network.packets.SpellBarSyncMessage;
 import xyz.iwolfking.woldsvaults.spellcraft.bar.EffectiveBar;
+import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * The client's copy of the player's spell bar, as last synced: the default bar, the selected slot, the effective bar
- * the server resolved and the equipped arcana items it came from. Read by the HUD tray, the skill menu's bar and the
- * focus screen. Empty until the first sync.
- */
+/** The client's copy of the player's spell bar as last synced, empty until the first sync and cleared on logout. */
 public final class ClientSpellBar {
     private static final String[] DEFAULTS = new String[SpellcraftItemData.SLOTS];
     private static final List<SpellBarSyncMessage.Entry> ENTRIES = new ArrayList<>();
@@ -69,7 +65,6 @@ public final class ClientSpellBar {
         return selected;
     }
 
-    /** The equipped arcana items the bar was resolved from, with their arcana, budget-greyed glyphs and errors. */
     public static List<SpellBarSyncMessage.Source> sources() {
         return SOURCES;
     }
@@ -84,7 +79,7 @@ public final class ClientSpellBar {
         return null;
     }
 
-    /** Whether any slot holds an item's spell (or a LOCKED clash of them). */
+    /** Whether any slot holds an item's spell, a locked clash included. */
     public static boolean hasOverlays() {
         for (SpellBarSyncMessage.Entry entry : ENTRIES) {
             if (!entry.itemKey().isEmpty()) {
@@ -94,7 +89,6 @@ public final class ClientSpellBar {
         return false;
     }
 
-    /** The stack in the player's hands whose spellcraft key is {@code key}, or empty. */
     public static ItemStack stackOf(String key) {
         if (Minecraft.getInstance().player == null || key.isEmpty()) {
             return ItemStack.EMPTY;
@@ -108,7 +102,7 @@ public final class ClientSpellBar {
         return ItemStack.EMPTY;
     }
 
-    /** The filled slot before or after {@code index} in bar order, or -1. */
+    /** The next filled slot from {@code index} in {@code direction} (1 or -1), wrapping around, or -1. */
     public static int neighbour(int index, int direction) {
         if (!isSynced()) {
             return -1;

@@ -1,7 +1,6 @@
 package xyz.iwolfking.woldsvaults.mixins.vaulthunters.spellcraft.client;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-
 import com.mojang.blaze3d.vertex.PoseStack;
 import iskallia.vault.client.gui.screen.player.legacy.tab.split.dialog.AbilityDialog;
 import iskallia.vault.client.gui.screen.player.legacy.widget.AbilityWidget;
@@ -17,15 +16,15 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import xyz.iwolfking.woldsvaults.client.spellcraft.stats.SlotCostStats;
 import xyz.iwolfking.woldsvaults.client.spellcraft.bar.SkillMenuSpellBar;
 import xyz.iwolfking.woldsvaults.client.spellcraft.bar.SpellBarView;
 import xyz.iwolfking.woldsvaults.client.spellcraft.gui.SpellcraftNames;
 import xyz.iwolfking.woldsvaults.client.spellcraft.gui.SpellcraftPalette;
 import xyz.iwolfking.woldsvaults.client.spellcraft.gui.StatText;
+import xyz.iwolfking.woldsvaults.client.spellcraft.stats.SlotCostStats;
 import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
-import xyz.iwolfking.woldsvaults.mixins.vaulthunters.accessors.AbstractDialogAccessor;
 import xyz.iwolfking.woldsvaults.init.ModConfigs;
+import xyz.iwolfking.woldsvaults.mixins.vaulthunters.accessors.AbstractDialogAccessor;
 import xyz.iwolfking.woldsvaults.spellcraft.ability.AbilityLookup;
 
 import java.awt.Rectangle;
@@ -43,7 +42,11 @@ public class MixinAbilityDialogSpellBar {
     @Unique private String woldsvaults$slotLine;
     @Unique private int woldsvaults$slotColor;
 
-    /** Works out the heading's third line: the slot and key on the shown spell bar, then mana and cooldown when they fit. */
+    /**
+     * Adds a third line to Vault Hunters' ability dialog heading: the ability's slot and key on the shown spell bar,
+     * then mana and cooldown when they fit. It is worked out before the heading draws so the name lines can be raised
+     * for it.
+     */
     @Inject(method = "renderHeading", at = @At("HEAD"))
     private void woldsvaults$prepareSlotLine(PoseStack poseStack, int mouseX, int mouseY, float partialTicks, CallbackInfo ci) {
         this.woldsvaults$slotLine = null;
@@ -100,7 +103,7 @@ public class MixinAbilityDialogSpellBar {
         this.woldsvaults$slotColor = slot >= 0 && view.isEffective() ? SpellcraftPalette.ARCANE_GLOW : SpellcraftPalette.WHITE;
     }
 
-    /** Raises VH's name and level lines to make room for the third line. */
+    /** Raises Vault Hunters' name and level lines to make room for the third line. */
     @ModifyArg(method = "renderHeading", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/vertex/PoseStack;translate(DDD)V",
             ordinal = 1, remap = true), index = 1)
     private double woldsvaults$raiseHeading(double y) {

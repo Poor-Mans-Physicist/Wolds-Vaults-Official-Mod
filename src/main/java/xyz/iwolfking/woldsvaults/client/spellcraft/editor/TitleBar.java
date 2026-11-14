@@ -22,7 +22,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-/** The editor's title band: the item, its level, the arcana bar and the spell's depth. */
 final class TitleBar {
     private static final int ARCANA_BAR_W = 72;
     private static final int TITLE_NAME_FALLBACK = 0xFF1E6E1E;

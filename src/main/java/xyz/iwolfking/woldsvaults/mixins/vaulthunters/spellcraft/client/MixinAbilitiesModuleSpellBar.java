@@ -19,7 +19,7 @@ public abstract class MixinAbilitiesModuleSpellBar {
     @Shadow
     private Ability nextAbilityNode;
 
-    /** The HUD tray's previous and next icons follow the spell bar's order of filled slots, not VH's ability order. */
+    /** The HUD tray's previous and next icons follow the spell bar's filled slots, not Vault Hunters' ability order. */
     @Inject(method = "update", at = @At("TAIL"))
     private void woldsvaults$barNeighbours(CallbackInfo ci) {
         if (!ClientSpellBar.isSynced()) {

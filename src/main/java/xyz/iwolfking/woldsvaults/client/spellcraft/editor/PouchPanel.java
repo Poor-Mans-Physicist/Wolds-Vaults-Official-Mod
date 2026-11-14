@@ -120,10 +120,6 @@ final class PouchPanel {
         return draft == null ? 0 : (int) draft.tokens.stream().filter(token -> token.equals(type.id())).count();
     }
 
-    /**
-     * One glyph of the item's view: rune, name, uses left of the per-spell limit, potency and cost. A violet corner marks a
-     * line borrowed from another item, a green one the item's own transferable line.
-     */
     private void renderGlyphRow(PoseStack pose, SpellcraftConfig config, GlyphViewLine line, int lx0, int y, int right) {
         Font font = this.screen.font();
         int left = usesLeft(line);

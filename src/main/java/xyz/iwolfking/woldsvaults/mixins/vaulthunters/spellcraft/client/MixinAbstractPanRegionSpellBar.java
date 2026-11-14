@@ -12,7 +12,7 @@ import java.awt.Rectangle;
 
 @Mixin(value = AbstractPanRegion.class, remap = false)
 public class MixinAbstractPanRegionSpellBar {
-    /** Ends the Abilities tree pan higher so the spell bar fits under it; subclasses (the Armory's pan) are left alone. */
+    /** Ends the Abilities tree pan higher so the spell bar fits under it, leaving the Armory's pan subclass alone. */
     @Inject(method = "getBounds", at = @At("RETURN"), cancellable = true)
     private void woldsvaults$makeRoomForSpellBar(CallbackInfoReturnable<Rectangle> cir) {
         if (((Object) this).getClass() != AbilityPanRegion.class) {

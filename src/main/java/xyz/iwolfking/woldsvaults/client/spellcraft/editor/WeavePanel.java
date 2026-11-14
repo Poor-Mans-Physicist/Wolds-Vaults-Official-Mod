@@ -73,7 +73,6 @@ final class WeavePanel {
         }
         int payload = draft == null ? -1 : payloadStart(draft);
         if (payload >= 0) {
-            Integer firstRowY = null;
             int minX = Integer.MAX_VALUE;
             int maxX = Integer.MIN_VALUE;
             int rowY = Integer.MIN_VALUE;
@@ -87,9 +86,6 @@ final class WeavePanel {
                     }
                     rowY = cell.y();
                     minX = cell.x();
-                    if (firstRowY == null) {
-                        firstRowY = rowY;
-                    }
                 }
                 maxX = cell.x();
             }

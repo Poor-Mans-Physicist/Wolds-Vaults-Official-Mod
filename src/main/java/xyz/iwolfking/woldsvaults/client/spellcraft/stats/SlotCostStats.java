@@ -8,13 +8,13 @@ import iskallia.vault.snapshot.AttributeSnapshotHelper;
 import iskallia.vault.util.calc.CooldownHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
-import xyz.iwolfking.woldsvaults.spellcraft.spell.SpellModel;
 import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
 import xyz.iwolfking.woldsvaults.init.ModConfigs;
 import xyz.iwolfking.woldsvaults.mixins.vaulthunters.gods.idona.ManaCostHelperAccessor;
-import xyz.iwolfking.woldsvaults.spellcraft.play.SpellCooldowns;
-import xyz.iwolfking.woldsvaults.spellcraft.haste.SpellHaste;
 import xyz.iwolfking.woldsvaults.spellcraft.ability.AbilityLookup;
+import xyz.iwolfking.woldsvaults.spellcraft.haste.SpellHaste;
+import xyz.iwolfking.woldsvaults.spellcraft.play.SpellCooldowns;
+import xyz.iwolfking.woldsvaults.spellcraft.spell.SpellModel;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -23,16 +23,15 @@ import java.util.Comparator;
 import java.util.List;
 
 /**
- * Mana and cooldown numbers for the client screens, from the client's ability tree and attribute snapshot. Mana is VH's
- * cost after the per-ability mana attributes (Idona's Power Dump is server-only and not shown). An augmented spell's
- * cooldown follows {@code SpellCooldowns.spellCooldownTicks}: the longest ability cooldown plus the chain share of the
- * others, times the base-cooldown cut and the ratio of the player's haste factor to the spell's, at least one tick.
+ * Mana and cooldown numbers for the client screens, computed from the client's ability tree and attribute snapshot.
+ * Mana is Vault Hunters' cost after the per-ability mana attributes. An augmented spell's cooldown repeats the server's
+ * chain from {@code SpellCooldowns.spellCooldownTicks} and shares its {@code glyphedTicks} step.
  */
 public final class SlotCostStats {
     private SlotCostStats() {
     }
 
-    /** Mana and cooldown before glyphs and after; mana is negative when no step pays mana up front. */
+    /** Mana is negative when no step pays mana up front. */
     public record Numbers(float manaBefore, float manaAfter, int cooldownBefore, int cooldownAfter) {
         public boolean hasMana() {
             return this.manaBefore >= 0.0F;
@@ -44,7 +43,7 @@ public final class SlotCostStats {
         return Minecraft.getInstance().player;
     }
 
-    /** An instant ability's mana cost after VH's mana attributes, or -1 for toggles and holds. */
+    /** An instant ability's mana cost after the mana attributes, or -1 when it is not an instant mana ability. */
     private static float mana(Ability ability) {
         LocalPlayer player = player();
         if (player == null || !(ability instanceof InstantManaAbility instant)) {
@@ -55,13 +54,12 @@ public final class SlotCostStats {
                 instant.getManaCost());
     }
 
-    /** An ability's cooldown in ticks after the player's haste and per-ability cooldown attributes. */
     private static int cooldown(Ability ability) {
         LocalPlayer player = player();
         return player == null ? ability.getCooldownTicks() : CooldownHelper.adjustCooldown(player, ability, ability.getCooldownTicks());
     }
 
-    /** A plain spell: VH's mana, and the cooldown before and after haste. Null when the ability isn't learned. */
+    /** A plain ability's mana and cooldown before and after the player's adjustments, or null without the ability. */
     @Nullable
     public static Numbers plain(AbilityTree tree, String group) {
         Ability ability = AbilityLookup.ability(tree, group);
@@ -72,7 +70,7 @@ public final class SlotCostStats {
         return new Numbers(mana, mana, ability.getCooldownTicks(), cooldown(ability));
     }
 
-    /** An augmented spell: summed mana before and after the spell's mana factor, cooldown without and with glyphs. */
+    /** An augmented spell's summed mana before and after its mana factor, and its cooldown without and with glyphs. */
     @Nullable
     public static Numbers spell(SpellcraftConfig config, AbilityTree tree, SpellModel model) {
         LocalPlayer player = player();

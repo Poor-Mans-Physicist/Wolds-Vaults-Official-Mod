@@ -8,7 +8,6 @@ final class MainEffectTable {
     private MainEffectTable() {
     }
 
-    /** Which buff factor of a step a value takes, as the WV buff mixins apply it on the server. */
     enum Factor {
         NONE,
         INTENSITY,
@@ -17,7 +16,6 @@ final class MainEffectTable {
         DRAIN
     }
 
-    /** How a VH label reads and how its value is shown. */
     enum Format {
         PERCENT,
         NUMBER,
@@ -27,24 +25,16 @@ final class MainEffectTable {
         PER_SECOND
     }
 
-    /** One main effect line: the VH label it reads, the line's lang key, the label's format and the factor it takes. */
     record Main(String label, String key, Format format, Factor factor) {
     }
 
     /**
-     * What a spec's glyphs change beyond damage, area and speed: its main effect lines (shown first), the factor on its
-     * hit and on its duration, and whether VH binds its duration as a percent label (Mana Shield).
+     * {@code percentDuration} marks a spec whose duration Vault Hunters binds as a percent label, such as Mana Shield.
      */
     record Effects(List<Main> mains, Factor hit, Factor duration, boolean percentDuration) {
     }
 
-    /**
-     * The main effect table (redesign/spellcraft/REFINEMENT_PASS_2026-11-10.md sec. 2.3): per spec, the VH labels its
-     * buff glyphs reach and the factor each takes, transcribed from the WV buff mixins
-     * ({@code mixins/vaulthunters/skills/buffs}, {@code MixinAbstractRampageAbility}, {@code BloodlustSpeed} and the WV
-     * Colossus, Sneaky Getaway and Concentrate abilities). The label getters themselves read factor 1 on the client, so
-     * the step's factors are applied here.
-     */
+    /** Per spec, the Vault Hunters labels its buff glyphs reach and the factor each takes. */
     static Map<String, Effects> effects() {
         Map<String, Effects> table = new HashMap<>();
         Main speed = new Main("speed", "buff_speed", Format.PERCENT, Factor.INTENSITY);
