@@ -17,7 +17,6 @@ import net.minecraft.util.Tuple;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.server.ServerStoppedEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -52,7 +51,7 @@ import xyz.iwolfking.woldsvaults.init.ModConfigs;
  */
 @Mod.EventBusSubscriber(modid = WoldsVaults.MOD_ID)
 public final class EquippedSources {
-    private static final int SYNC_TICKS = 4;
+    public static final int SYNC_TICKS = 4;
     private static final Map<UUID, Cached> CACHE = new HashMap<>();
     private static final Map<UUID, String> SENT = new HashMap<>();
 
@@ -250,20 +249,13 @@ public final class EquippedSources {
     }
 
     /** Sends the player's glyph candidates to their client when they changed since the last send. */
-    private static void sync(ServerPlayer player) {
+    public static void sync(ServerPlayer player) {
         Snapshot snapshot = get(player);
         GlyphViewSyncMessage message = new GlyphViewSyncMessage(snapshot.shared(), snapshot.auto());
         String signature = message.signature();
         if (!signature.equals(SENT.get(player.getUUID()))) {
             SENT.put(player.getUUID(), signature);
             ModNetwork.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), message);
-        }
-    }
-
-    @SubscribeEvent
-    public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
-        if (event.phase == TickEvent.Phase.END && event.player instanceof ServerPlayer player && player.tickCount % SYNC_TICKS == 0) {
-            sync(player);
         }
     }
 

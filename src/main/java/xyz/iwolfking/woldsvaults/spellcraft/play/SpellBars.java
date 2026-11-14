@@ -14,6 +14,7 @@ import net.minecraftforge.network.PacketDistributor;
 import xyz.iwolfking.woldsvaults.WoldsVaults;
 import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
 import xyz.iwolfking.woldsvaults.spellcraft.roll.SpellcraftRoller;
+import xyz.iwolfking.woldsvaults.spellcraft.source.EquippedSources;
 import xyz.iwolfking.woldsvaults.init.ModNetwork;
 import xyz.iwolfking.woldsvaults.network.packets.SpellBarSyncMessage;
 
@@ -144,6 +145,9 @@ public final class SpellBars {
     public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
         if (event.phase != TickEvent.Phase.END || !(event.player instanceof ServerPlayer player)) {
             return;
+        }
+        if (player.tickCount % EquippedSources.SYNC_TICKS == 0) {
+            EquippedSources.sync(player);
         }
         HeldSlots.recast(player);
         if (player.tickCount % STAT_SYNC_TICKS == 0) {
