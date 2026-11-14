@@ -33,6 +33,7 @@ import xyz.iwolfking.woldsvaults.client.init.ModKeybinds;
 import xyz.iwolfking.woldsvaults.client.screens.SpeedCapConfigScreen;
 import xyz.iwolfking.woldsvaults.effect.trinkets.SpeedLimitTrinketEffect;
 import xyz.iwolfking.woldsvaults.client.screens.PouchScreen;
+import xyz.iwolfking.woldsvaults.client.spellcraft.editor.SpellcraftScreenOpener;
 import xyz.iwolfking.woldsvaults.api.util.PouchHelper;
 import xyz.iwolfking.woldsvaults.init.ModNetwork;
 import xyz.iwolfking.woldsvaults.items.trinket_pouch.menu.PouchMenu;
@@ -109,6 +110,9 @@ public class KeyInputEvents {
 
     @SubscribeEvent
     public static void onGuiMouseClicked(ScreenEvent.MouseClickedEvent.Pre event) {
+        if (SpellcraftScreenOpener.tryOpen(event)) {
+            return;
+        }
         Minecraft minecraft = Minecraft.getInstance();
         if (event.getButton() != 1 || Screen.hasShiftDown() || minecraft.player == null
                 || !(event.getScreen() instanceof AbstractContainerScreen<?> screen)

@@ -18,6 +18,7 @@ import net.minecraft.network.chat.TextComponent;
 import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.client.event.RenderTooltipEvent;
 import net.minecraftforge.event.entity.player.ItemTooltipEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -31,6 +32,7 @@ import xyz.iwolfking.woldsvaults.api.util.BackpackUtils;
 import xyz.iwolfking.woldsvaults.api.util.PouchHelper;
 import xyz.iwolfking.woldsvaults.api.util.client.ClientBackpackUtil;
 import xyz.iwolfking.woldsvaults.client.init.ModKeybinds;
+import xyz.iwolfking.woldsvaults.client.spellcraft.gui.SpellcraftTooltips;
 import xyz.iwolfking.woldsvaults.effect.trinkets.SpeedLimitTrinketEffect;
 import xyz.iwolfking.woldsvaults.extraction.jobs.AncientCrystalFlag;
 import xyz.iwolfking.woldsvaults.items.CombinedTrinketItem;
@@ -54,6 +56,16 @@ import xyz.iwolfking.woldsvaults.init.ModGearAttributes;
 @Mod.EventBusSubscriber(modid = WoldsVaults.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public class TooltipEvents {
     private static boolean loggedInsertFallback = false;
+
+    @SubscribeEvent(priority = EventPriority.NORMAL)
+    public static void onGatherSpellcraftGrants(RenderTooltipEvent.GatherComponents event) {
+        SpellcraftTooltips.onGatherGrants(event);
+    }
+
+    @SubscribeEvent(priority = EventPriority.LOW)
+    public static void onGatherSpellcraftComponents(RenderTooltipEvent.GatherComponents event) {
+        SpellcraftTooltips.onGatherComponents(event);
+    }
 
     @SubscribeEvent
     public static void onTrinketPouchTooltip(ItemTooltipEvent event) {

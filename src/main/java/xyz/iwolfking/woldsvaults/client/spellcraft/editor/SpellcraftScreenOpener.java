@@ -5,37 +5,33 @@ import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.ScreenEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import xyz.iwolfking.woldsvaults.WoldsVaults;
 import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
 
 /**
  * Opens the spell editor when a spellcraft item in a player inventory slot is right-clicked with nothing on the cursor.
  * The creative inventory is skipped because its slots do not map to player inventory indices.
  */
-@Mod.EventBusSubscriber(modid = WoldsVaults.MOD_ID, value = Dist.CLIENT)
 public final class SpellcraftScreenOpener {
     private SpellcraftScreenOpener() {
     }
 
-    @SubscribeEvent
-    public static void onMouseClicked(ScreenEvent.MouseClickedEvent.Pre event) {
+    /** Cancels the click and opens the editor when it is a right-click on a spellcraft item; returns whether it did. */
+    public static boolean tryOpen(ScreenEvent.MouseClickedEvent.Pre event) {
         if (event.getButton() != 1 || !(event.getScreen() instanceof AbstractContainerScreen<?> screen)
                 || screen instanceof CreativeModeInventoryScreen) {
-            return;
+            return false;
         }
         Slot slot = screen.getSlotUnderMouse();
         if (slot == null || !(slot.container instanceof Inventory) || !screen.getMenu().getCarried().isEmpty()) {
-            return;
+            return false;
         }
         ItemStack stack = slot.getItem();
         if (!SpellcraftItemData.canCarry(stack) || !SpellcraftItemData.has(stack)) {
-            return;
+            return false;
         }
         event.setCanceled(true);
         SpellcraftScreen.open(screen, slot.getContainerSlot());
+        return true;
     }
 }
