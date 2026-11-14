@@ -13,7 +13,7 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
- * Spellcraft glyphs, generated as {@code vault_configs/focus_augments/focus_augments.json}: every glyph's rolls, cost,
+ * Spellcraft glyphs, generated as {@code vault_configs/spellcraft/spellcraft.json}: every glyph's rolls, cost,
  * effects and limits; how focuses and wands roll their arcana, glyph lines and depth; the spell cost rules; the
  * mechanics tuning; and which abilities take which glyphs. Ability mana costs and cooldowns stay VH's; glyphs only
  * multiply them.
@@ -336,7 +336,7 @@ public class SpellcraftConfig extends Config implements WoldsTable {
 
     @Override
     public String getName() {
-        return "focus_augments";
+        return "spellcraft";
     }
 
     @Override

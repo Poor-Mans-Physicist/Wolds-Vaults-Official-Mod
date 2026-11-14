@@ -64,7 +64,7 @@ public final class WoldsTables {
     public static final WoldsTableLoader<GreedMilestonesConfig> GREED_MILESTONES = new WoldsTableLoader<>(new GreedMilestonesConfig(), "greed/milestones");
     public static final WoldsTableLoader<GreedMedallionsConfig> GREED_MEDALLIONS = new WoldsTableLoader<>(new GreedMedallionsConfig(), "greed/medallions");
     public static final WoldsTableLoader<GreedChampionConfig> GREED_CHAMPION = new WoldsTableLoader<>(new GreedChampionConfig(), "greed/champion");
-    public static final WoldsTableLoader<SpellcraftConfig> SPELLCRAFT = new WoldsTableLoader<>(new SpellcraftConfig(), "focus_augments");
+    public static final WoldsTableLoader<SpellcraftConfig> SPELLCRAFT = new WoldsTableLoader<>(new SpellcraftConfig(), "spellcraft");
     public static final WoldsTableLoader<SpellHasteConfig> SPELL_HASTE = new WoldsTableLoader<>(new SpellHasteConfig(), "spell_haste");
     public static final WoldsTableLoader<StatScreenConfig> STAT_SCREEN = new WoldsTableLoader<>(new StatScreenConfig(), "gui/stat_screen");
 
@@ -118,7 +118,7 @@ public final class WoldsTables {
         }
         installExtraction();
         ModConfigs.SPELL_HASTE = require(SPELL_HASTE, "spell_haste");
-        ModConfigs.SPELLCRAFT = require(SPELLCRAFT, "focus_augments");
+        ModConfigs.SPELLCRAFT = require(SPELLCRAFT, "spellcraft");
         ModConfigs.STAT_SCREEN = require(STAT_SCREEN, "player_stats");
         WoldLogger.info("Installed the generated Wold's Vaults tables");
     }

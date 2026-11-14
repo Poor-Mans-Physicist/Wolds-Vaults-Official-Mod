@@ -44,7 +44,7 @@ public class ModSpellcraftProvider extends AbstractWoldsTableProvider {
     public static final float RAIL_SIZE_MIN = 1.1F;
 
     public ModSpellcraftProvider(DataGenerator generator) {
-        super(generator, "focus_augments");
+        super(generator, "spellcraft");
     }
 
     @Override
@@ -455,7 +455,7 @@ public class ModSpellcraftProvider extends AbstractWoldsTableProvider {
         table.abilityTraits = traits;
         table.disabledAbilities = new ArrayList<>();
 
-        table("focus_augments", table);
+        table("spellcraft", table);
     }
 
     private static void glyph(SpellcraftConfig table, GlyphType type, String kind, String glyphClass, String category, int minLevel,
