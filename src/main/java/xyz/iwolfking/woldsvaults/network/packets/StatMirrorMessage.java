@@ -1,6 +1,8 @@
 package xyz.iwolfking.woldsvaults.network.packets;
 
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.network.NetworkEvent;
 import xyz.iwolfking.woldsvaults.spellcraft.play.StatMirror;
 
@@ -27,7 +29,7 @@ public record StatMirrorMessage(UUID player, float[] values) {
     }
 
     public static void handle(StatMirrorMessage message, Supplier<NetworkEvent.Context> context) {
-        context.get().enqueueWork(() -> StatMirror.receive(message.player, message.values));
+        context.get().enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> StatMirror.receive(message.player, message.values)));
         context.get().setPacketHandled(true);
     }
 }
