@@ -1,4 +1,4 @@
-package xyz.iwolfking.woldsvaults.client.events;
+package xyz.iwolfking.woldsvaults.client.spellcraft.gui;
 
 import com.mojang.datafixers.util.Either;
 import iskallia.vault.client.data.ClientAbilityData;
@@ -20,19 +20,8 @@ import net.minecraft.network.chat.TextComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RenderTooltipEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import xyz.iwolfking.woldsvaults.WoldsVaults;
 import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
-import xyz.iwolfking.woldsvaults.client.spellcraft.gui.GlyphAffixLine;
-import xyz.iwolfking.woldsvaults.client.spellcraft.gui.GlyphText;
-import xyz.iwolfking.woldsvaults.client.spellcraft.gui.SpellcraftNames;
-import xyz.iwolfking.woldsvaults.client.spellcraft.gui.SpellcraftPalette;
-import xyz.iwolfking.woldsvaults.client.spellcraft.gui.SpellcraftTooltipRow;
-import xyz.iwolfking.woldsvaults.client.spellcraft.gui.StatText;
 import xyz.iwolfking.woldsvaults.client.spellcraft.state.ClientGlyphViews;
 import xyz.iwolfking.woldsvaults.client.spellcraft.stats.SlotCostStats;
 import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
@@ -59,8 +48,7 @@ import java.util.function.Function;
  * block of an item that carries spells. The block is gathered at low priority, after the rune pass and other
  * normal-priority additions.
  */
-@Mod.EventBusSubscriber(modid = WoldsVaults.MOD_ID, value = Dist.CLIENT)
-public class SpellcraftTooltipEvents {
+public class SpellcraftTooltips {
     private static final Set<String> MISSING_AFFIX_LINES = new HashSet<>();
 
     /**
@@ -68,7 +56,6 @@ public class SpellcraftTooltipEvents {
      * tooltip shows, with the glyph's rune drawn to its right. A line that cannot be found is added at the end with an
      * error logged once.
      */
-    @SubscribeEvent(priority = EventPriority.NORMAL)
     public static void onGatherGrants(RenderTooltipEvent.GatherComponents event) {
         ItemStack stack = event.getItemStack();
         List<GearAffixLines.Grant> grants = GearAffixLines.grants(stack);
@@ -127,7 +114,6 @@ public class SpellcraftTooltipEvents {
                 .withStyle(ChatFormatting.DARK_GRAY);
     }
 
-    @SubscribeEvent(priority = EventPriority.LOW)
     public static void onGatherComponents(RenderTooltipEvent.GatherComponents event) {
         ItemStack stack = event.getItemStack();
         SpellcraftConfig config = xyz.iwolfking.woldsvaults.init.ModConfigs.SPELLCRAFT;

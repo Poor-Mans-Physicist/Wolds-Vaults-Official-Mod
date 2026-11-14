@@ -10,7 +10,7 @@ import net.minecraft.client.resources.language.I18n;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.TextColor;
 import net.minecraft.network.chat.TextComponent;
-import xyz.iwolfking.woldsvaults.client.spellcraft.keys.SpellBarKeys;
+import xyz.iwolfking.woldsvaults.client.init.ModKeybinds;
 import xyz.iwolfking.woldsvaults.spellcraft.ability.AbilityLookup;
 
 import javax.annotation.Nullable;
@@ -26,7 +26,7 @@ public final class SpellcraftNames {
     }
 
     public static String keyLabel(int slot, Font font, int room) {
-        KeyMapping key = SpellBarKeys.KEYS[slot];
+        KeyMapping key = ModKeybinds.spellSlots[slot];
         if (key == null || key.isUnbound()) {
             return "";
         }
@@ -37,7 +37,7 @@ public final class SpellcraftNames {
     }
 
     public static String keyName(int slot) {
-        KeyMapping key = SpellBarKeys.KEYS[slot];
+        KeyMapping key = ModKeybinds.spellSlots[slot];
         if (key == null || key.isUnbound()) {
             return "";
         }

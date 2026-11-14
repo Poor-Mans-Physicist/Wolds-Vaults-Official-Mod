@@ -8,7 +8,8 @@ import net.minecraftforge.client.settings.KeyConflictContext;
 import net.minecraftforge.client.settings.KeyModifier;
 import org.lwjgl.glfw.GLFW;
 import xyz.iwolfking.woldsvaults.WoldsVaults;
-import xyz.iwolfking.woldsvaults.client.spellcraft.keys.SpellBarKeys;
+import xyz.iwolfking.woldsvaults.client.spellcraft.keys.SlotKeyMapping;
+import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
 
 public class ModKeybinds {
     public static KeyMapping isFeatherFixed;
@@ -19,6 +20,7 @@ public class ModKeybinds {
     public static KeyMapping toggleCharmBlessing;
     public static KeyMapping openTrinketPouch;
     public static KeyMapping depositBackpack;
+    public static final KeyMapping[] spellSlots = new KeyMapping[SpellcraftItemData.SLOTS];
 
     public static void registerKeyBinds() {
         isFeatherFixed = registerKeyMapping("is_feather_fixed", -1);
@@ -29,7 +31,11 @@ public class ModKeybinds {
         toggleCharmBlessing = registerKeyMapping("toggle_charm_blessing", GLFW.GLFW_KEY_J, KeyConflictContext.IN_GAME);
         openTrinketPouch = registerKeyMapping("open_trinket_pouch", GLFW.GLFW_KEY_T, KeyConflictContext.IN_GAME, KeyModifier.CONTROL);
         depositBackpack = registerKeyMapping("deposit_backpack", GLFW.GLFW_KEY_D, KeyConflictContext.GUI, KeyModifier.SHIFT);
-        SpellBarKeys.register();
+        for (int i = 0; i < spellSlots.length; i++) {
+            spellSlots[i] = new SlotKeyMapping(i, "key." + WoldsVaults.MOD_ID + ".spell_slot_" + (i + 1),
+                    "key.category." + WoldsVaults.MOD_ID + ".spell_bar");
+            ClientRegistry.registerKeyBinding(spellSlots[i]);
+        }
     }
 
     private static KeyMapping registerKeyMapping(String name, int keyCode) {

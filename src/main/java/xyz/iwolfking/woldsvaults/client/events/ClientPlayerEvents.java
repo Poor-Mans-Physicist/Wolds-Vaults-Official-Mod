@@ -6,6 +6,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import xyz.iwolfking.woldsvaults.WoldsVaults;
 import xyz.iwolfking.woldsvaults.client.champion.ClientChampionHud;
+import xyz.iwolfking.woldsvaults.client.spellcraft.keys.SpellBarKeys;
 import xyz.iwolfking.woldsvaults.gods.ActiveGodResolver;
 import xyz.iwolfking.woldsvaults.gods.ClientGodAlignmentData;
 import xyz.iwolfking.woldsvaults.gods.ClientGodNodePreviews;
@@ -29,5 +30,6 @@ public final class ClientPlayerEvents {
         ClientRampageCdm.clear();
         ClientChampionHud.clear();
         ActiveGodResolver.invalidateAll();
+        SpellBarKeys.reset();
     }
 }
