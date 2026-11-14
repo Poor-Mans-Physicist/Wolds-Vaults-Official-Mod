@@ -82,7 +82,7 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
     protected void init() {
         SpellcraftConfig config = ModConfigs.SPELLCRAFT;
         int nx = EditorLayout.nameX(this.width, this.drafts.size());
-        this.nameBox = new EditBox(this.font, nx + 4, EditorLayout.bodyTop() + 4 + 6, this.width - 21 - EditorLayout.PAD - nx - 8, 10, new TextComponent(""));
+        this.nameBox = new EditBox(this.font, nx + 4, EditorLayout.bodyTop() + 4 + 6, Math.max(10, this.width - 21 - EditorLayout.PAD - nx - 8), 10, new TextComponent(""));
         this.nameBox.setBordered(false);
         this.nameBox.setTextColor(NAME_TEXT);
         if (config != null) {

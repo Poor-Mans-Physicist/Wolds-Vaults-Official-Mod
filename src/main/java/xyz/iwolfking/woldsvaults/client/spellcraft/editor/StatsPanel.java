@@ -248,7 +248,7 @@ final class StatsPanel {
                 if (ClientSpellBar.source(SpellcraftItemData.key(this.drafts.stack())) == null) {
                     lines.add(SpellcraftNames.colored(SpellcraftNames.tr("screen.not_equipped"), SpellcraftPalette.BAD));
                 }
-                SpellModel model = check == null ? null : check.models().get(draft.id);
+                SpellModel model = check == null ? null : check.models().get(draft.id > 0 ? draft.id : StoredSpell.UNSAVED_ID);
                 if (slot && model != null) {
                     lines.add(SpellcraftNames.colored(SpellcraftNames.tr("screen.stat.hides") + ": " + hides(this.screen.tree(), draft, model), HIDES_TEXT));
                 }
