@@ -167,7 +167,7 @@ final class SpellDrafts {
             name = trigger.isEmpty() ? SpellcraftNames.tr("screen.new_spell") : SpellcraftNames.groupName(this.tree.get(), trigger);
         }
         SpellcraftConfig config = ModConfigs.SPELLCRAFT;
-        return config != null && name.length() > config.rules.maxNameLength ? name.substring(0, config.rules.maxNameLength) : name;
+        return config != null && name.length() > config.rules.maxNameLength ? name.substring(0, config.rules.maxNameLength).strip() : name;
     }
 
     private List<StoredSpell> withDraft(Draft draft) {
@@ -352,8 +352,12 @@ final class SpellDrafts {
             this.drafts.add(new Draft(0, "", List.of()));
         }
         this.deleteArmed = -1;
+        if (index < this.selected) {
+            this.selected--;
+        }
         this.selected = Math.min(this.selected, this.drafts.size() - 1);
         this.insertAt = END;
+        this.weaveScroll = 0;
         this.reloadName.run();
     }
 

@@ -3,6 +3,7 @@ package xyz.iwolfking.woldsvaults.client.spellcraft.state;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
+import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
 import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
 import xyz.iwolfking.woldsvaults.network.packets.SpellBarSyncMessage;
 import xyz.iwolfking.woldsvaults.spellcraft.bar.EffectiveBar;
@@ -54,7 +55,14 @@ public final class ClientSpellBar {
     }
 
     public static EffectiveBar.Kind kind(int index) {
-        return EffectiveBar.Kind.values()[ENTRIES.get(index).kind()];
+        int kind = ENTRIES.get(index).kind();
+        EffectiveBar.Kind[] kinds = EffectiveBar.Kind.values();
+        if (kind < 0 || kind >= kinds.length) {
+            WoldLogger.errorOnce("ClientSpellBar:kind:" + kind, "Spell bar sync: slot kind {} is out of range (0 to {}); the slot is drawn as empty",
+                    kind, kinds.length - 1);
+            return EffectiveBar.Kind.EMPTY;
+        }
+        return kinds[kind];
     }
 
     public static int selected() {
