@@ -280,7 +280,7 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
     }
 
     private List<StoredSpell> withDraft(Draft draft) {
-        int checkId = draft.id > 0 ? draft.id : Integer.MAX_VALUE;
+        int checkId = draft.id > 0 ? draft.id : StoredSpell.UNSAVED_ID;
         StoredSpell stored = draft.id > 0 ? SpellcraftItemData.spell(stack(), draft.id).orElse(null) : null;
         int slot = stored == null ? SpellcraftItemData.UNASSIGNED : stored.slot();
         int prio = stored == null ? 0 : stored.prio();
@@ -428,7 +428,7 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
         this.effectiveView = SpellBarView.ofSynced(tree);
         Draft draft = draft();
         SpellcraftRules.ItemCheck check = draft == null ? null : check(draft);
-        SpellModel model = draft == null || check == null ? null : check.models().get(draft.id > 0 ? draft.id : Integer.MAX_VALUE);
+        SpellModel model = draft == null || check == null ? null : check.models().get(draft.id > 0 ? draft.id : StoredSpell.UNSAVED_ID);
         RenderSystem.enableBlend();
         renderTitle(pose, config, stack, check, draft);
         renderPouch(pose, config, check, mouseX, mouseY);
@@ -459,7 +459,7 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
         if (check == null) {
             return 0.0F;
         }
-        int editing = draft == null ? Integer.MIN_VALUE : draft.id > 0 ? draft.id : Integer.MAX_VALUE;
+        int editing = draft == null ? Integer.MIN_VALUE : draft.id > 0 ? draft.id : StoredSpell.UNSAVED_ID;
         float total = 0.0F;
         for (Map.Entry<Integer, SpellModel> entry : check.models().entrySet()) {
             if (entry.getKey() != editing) {
@@ -1139,7 +1139,7 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
                 String token = draft.tokens.get(cell.index());
                 GlyphType type = GlyphType.byId(token);
                 if (type != null) {
-                    SpellModel model = check == null ? null : check.models().get(draft.id > 0 ? draft.id : Integer.MAX_VALUE);
+                    SpellModel model = check == null ? null : check.models().get(draft.id > 0 ? draft.id : StoredSpell.UNSAVED_ID);
                     PlacedGlyph glyph = model == null ? null : model.glyphAt(cell.index());
                     GlyphViewLine line = view(config).get(type);
                     GlyphRelevance.Filter relevance = model == null ? GlyphRelevance.ALL : GlyphRelevance.forToken(config, model, cell.index());
@@ -1149,7 +1149,7 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
                     }
                 } else {
                     lines.add(colored(SpellcraftGui.abilityName(tree(), token), SpellcraftGui.NAME_GOLD));
-                    SpellModel model = check == null ? null : check.models().get(draft.id > 0 ? draft.id : Integer.MAX_VALUE);
+                    SpellModel model = check == null ? null : check.models().get(draft.id > 0 ? draft.id : StoredSpell.UNSAVED_ID);
                     SpellModel.Cast cast = model == null ? null : castOf(model.steps(), token);
                     String summary = cast == null ? "" : SpellcraftGui.poolSummary(model.stepPool(cast), GlyphRelevance.of(config, model, cast));
                     if (!summary.isEmpty()) {

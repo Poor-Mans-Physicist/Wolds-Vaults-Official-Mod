@@ -22,7 +22,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import xyz.iwolfking.woldsvaults.mixins.accessors.OptionsKeyMappingsAccessor;
-import xyz.iwolfking.woldsvaults.spellcraft.StatMirror;
+import xyz.iwolfking.woldsvaults.spellcraft.play.StatMirror;
 import xyz.iwolfking.woldsvaults.client.spellcraft.state.ClientGlyphViews;
 import xyz.iwolfking.woldsvaults.client.spellcraft.state.ClientSpellBar;
 

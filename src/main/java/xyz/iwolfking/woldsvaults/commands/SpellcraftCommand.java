@@ -11,7 +11,6 @@ import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
-import xyz.iwolfking.woldsvaults.spellcraft.Spellcraft;
 import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
 import xyz.iwolfking.woldsvaults.spellcraft.item.GlyphLine;
 import xyz.iwolfking.woldsvaults.spellcraft.item.StoredSpell;
@@ -20,7 +19,9 @@ import xyz.iwolfking.woldsvaults.spellcraft.spell.SpellModel;
 import xyz.iwolfking.woldsvaults.spellcraft.spell.PlacedGlyph;
 import xyz.iwolfking.woldsvaults.spellcraft.spell.SpellcraftRules;
 import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
+import xyz.iwolfking.woldsvaults.spellcraft.play.DefaultBar;
 import xyz.iwolfking.woldsvaults.spellcraft.play.SpellBars;
+import xyz.iwolfking.woldsvaults.spellcraft.play.SpellEdits;
 import xyz.iwolfking.woldsvaults.spellcraft.source.EquippedSources;
 import xyz.iwolfking.woldsvaults.spellcraft.source.GlyphView;
 import xyz.iwolfking.woldsvaults.spellcraft.source.GlyphViewLine;
@@ -160,7 +161,7 @@ public final class SpellcraftCommand {
     private static int setSlot(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         ServerPlayer player = context.getSource().getPlayerOrException();
         int slot = IntegerArgumentType.getInteger(context, "slot");
-        Spellcraft.placeSpell(player, OFFHAND_SLOT, IntegerArgumentType.getInteger(context, "spell"), slot - 1, 0);
+        SpellEdits.placeSpell(player, OFFHAND_SLOT, IntegerArgumentType.getInteger(context, "spell"), slot - 1, 0);
         return show(context.getSource());
     }
 
@@ -172,14 +173,14 @@ public final class SpellcraftCommand {
             context.getSource().sendFailure(new TextComponent("No spell #" + spellId + " on the off-hand item"));
             return 0;
         }
-        Spellcraft.placeSpell(player, OFFHAND_SLOT, spellId, spell.slot(), IntegerArgumentType.getInteger(context, "priority"));
+        SpellEdits.placeSpell(player, OFFHAND_SLOT, spellId, spell.slot(), IntegerArgumentType.getInteger(context, "priority"));
         return show(context.getSource());
     }
 
     private static int setDefault(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         ServerPlayer player = context.getSource().getPlayerOrException();
         String ability = StringArgumentType.getString(context, "ability");
-        String error = SpellBars.editDefault(player, IntegerArgumentType.getInteger(context, "slot") - 1,
+        String error = DefaultBar.editDefault(player, IntegerArgumentType.getInteger(context, "slot") - 1,
                 ability.equalsIgnoreCase("clear") ? "" : ability);
         return report(context.getSource(), error);
     }
@@ -187,13 +188,13 @@ public final class SpellcraftCommand {
     private static int addSpell(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         ServerPlayer player = context.getSource().getPlayerOrException();
         List<String> tokens = Arrays.asList(StringArgumentType.getString(context, "tokens").trim().split("\\s+"));
-        Spellcraft.editSpell(player, OFFHAND_SLOT, 0, tokens.get(0).replace('_', ' '), tokens, false);
+        SpellEdits.editSpell(player, OFFHAND_SLOT, 0, tokens.get(0).replace('_', ' '), tokens, false);
         return show(context.getSource());
     }
 
     private static int removeSpell(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         ServerPlayer player = context.getSource().getPlayerOrException();
-        Spellcraft.editSpell(player, OFFHAND_SLOT, IntegerArgumentType.getInteger(context, "id"), "", List.of(), true);
+        SpellEdits.editSpell(player, OFFHAND_SLOT, IntegerArgumentType.getInteger(context, "id"), "", List.of(), true);
         return show(context.getSource());
     }
 

@@ -4,6 +4,7 @@ import iskallia.vault.gear.VaultGearRarity;
 import iskallia.vault.gear.VaultGearState;
 import iskallia.vault.gear.data.VaultGearData;
 import iskallia.vault.item.gear.WandItem;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
 import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
@@ -79,6 +80,17 @@ public final class SpellcraftRoller {
         SpellcraftConfig config = ModConfigs.SPELLCRAFT;
         if (uniqueSets != null && config != null && data.getRarity() == VaultGearRarity.UNIQUE) {
             uniqueSets.convert(config, stack, data, random);
+        }
+    }
+
+    /**
+     * Gives spellcraft implicits to any identified focus or wand in the inventory that has none (identified before
+     * spellcraft existed, uniques identified through a path that skips the roll hook, any other route that bypasses
+     * it), and lets the unique-set hook convert old uniques.
+     */
+    public static void rollMissingSpellcraft(ServerPlayer player) {
+        for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
+            upkeep(player.getInventory().getItem(i), player.getRandom());
         }
     }
 

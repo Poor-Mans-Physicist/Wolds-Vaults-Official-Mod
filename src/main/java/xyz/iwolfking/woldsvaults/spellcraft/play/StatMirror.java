@@ -1,4 +1,4 @@
-package xyz.iwolfking.woldsvaults.spellcraft;
+package xyz.iwolfking.woldsvaults.spellcraft.play;
 
 import iskallia.vault.util.calc.AbilityPowerHelper;
 import iskallia.vault.util.calc.AreaOfEffectHelper;

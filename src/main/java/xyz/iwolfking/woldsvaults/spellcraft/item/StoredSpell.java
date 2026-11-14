@@ -7,6 +7,8 @@ import java.util.List;
  * ({@link SpellcraftItemData#UNASSIGNED} for none) and its priority (0 for the table's default).
  */
 public record StoredSpell(int id, String name, List<String> tokens, int slot, int prio) {
+    public static final int UNSAVED_ID = Integer.MAX_VALUE;
+
     public StoredSpell(int id, String name, List<String> tokens) {
         this(id, name, tokens, SpellcraftItemData.UNASSIGNED, 0);
     }

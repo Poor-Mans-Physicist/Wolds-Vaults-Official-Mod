@@ -3,7 +3,7 @@ package xyz.iwolfking.woldsvaults.network.packets;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkEvent;
-import xyz.iwolfking.woldsvaults.spellcraft.play.SpellBars;
+import xyz.iwolfking.woldsvaults.spellcraft.play.SpellBarInput;
 
 import java.util.function.Supplier;
 
@@ -22,7 +22,7 @@ public record SpellSlotKeyMessage(int slot, boolean down) {
         context.get().enqueueWork(() -> {
             ServerPlayer player = context.get().getSender();
             if (player != null) {
-                SpellBars.onSlotKey(player, message.slot, message.down);
+                SpellBarInput.onSlotKey(player, message.slot, message.down);
             }
         });
         context.get().setPacketHandled(true);

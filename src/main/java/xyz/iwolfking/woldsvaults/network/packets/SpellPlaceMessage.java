@@ -3,7 +3,7 @@ package xyz.iwolfking.woldsvaults.network.packets;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkEvent;
-import xyz.iwolfking.woldsvaults.spellcraft.Spellcraft;
+import xyz.iwolfking.woldsvaults.spellcraft.play.SpellEdits;
 
 import java.util.function.Supplier;
 import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
@@ -29,7 +29,7 @@ public record SpellPlaceMessage(int inventorySlot, int spellId, int slot, int pr
             ServerPlayer player = context.get().getSender();
             if (player != null) {
                 try {
-                    Spellcraft.placeSpell(player, message.inventorySlot, message.spellId, message.slot, message.prio);
+                    SpellEdits.placeSpell(player, message.inventorySlot, message.spellId, message.slot, message.prio);
                 } catch (RuntimeException e) {
                     WoldLogger.error("Spellcraft: placing spell {} failed", message.spellId, e);
                 }

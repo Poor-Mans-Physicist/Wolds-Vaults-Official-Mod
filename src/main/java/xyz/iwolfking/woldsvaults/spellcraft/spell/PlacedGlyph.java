@@ -20,6 +20,14 @@ public record PlacedGlyph(GlyphType type, float potency, float quality, int cost
         return this.state != GlyphState.DORMANT;
     }
 
+    static int countActive(List<PlacedGlyph> glyphs, GlyphType type) {
+        return (int) glyphs.stream().filter(glyph -> glyph.type() == type && glyph.active()).count();
+    }
+
+    static int countPotential(List<PlacedGlyph> glyphs, GlyphType type) {
+        return (int) glyphs.stream().filter(glyph -> glyph.type() == type && glyph.potential()).count();
+    }
+
     /** The stacked step stats of a step's active glyphs, before Shotgun's per-copy damage and the size clamp. */
     public static GlyphStacking.Pool pool(Function<GlyphType, SpellcraftConfig.GlyphDefinition> definitions, List<PlacedGlyph> glyphs) {
         GlyphStacking.Pool pool = new GlyphStacking.Pool();
