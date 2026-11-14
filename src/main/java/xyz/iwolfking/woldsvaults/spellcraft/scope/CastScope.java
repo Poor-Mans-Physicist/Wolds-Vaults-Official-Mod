@@ -1,6 +1,7 @@
 package xyz.iwolfking.woldsvaults.spellcraft.scope;
 
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
 import xyz.iwolfking.woldsvaults.spellcraft.ability.CastOrigin;
 
 import javax.annotation.Nullable;
@@ -33,6 +34,11 @@ public final class CastScope {
 
     public static Optional<Active> current() {
         return Optional.ofNullable(current);
+    }
+
+    @Nullable
+    public static Active forPlayer(@Nullable Entity player) {
+        return current != null && current.player() == player ? current : null;
     }
 
     /** The billing of the scope open for this player, or null outside a slot cast. */

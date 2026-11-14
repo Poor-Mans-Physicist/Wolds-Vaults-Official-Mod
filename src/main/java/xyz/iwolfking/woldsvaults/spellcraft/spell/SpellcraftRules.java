@@ -1,8 +1,5 @@
 package xyz.iwolfking.woldsvaults.spellcraft.spell;
 
-import iskallia.vault.skill.base.Skill;
-import iskallia.vault.skill.base.SpecializedSkill;
-import iskallia.vault.skill.tree.AbilityTree;
 import net.minecraft.world.item.ItemStack;
 import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
 import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
@@ -40,17 +37,6 @@ public final class SpellcraftRules {
         public boolean isValid() {
             return this.errors.isEmpty();
         }
-    }
-
-    /** Maps an ability group to the tree's current specialization id, or null when the tree has no such group. */
-    public static Function<String, String> specOf(AbilityTree tree) {
-        return group -> {
-            Skill skill = tree.getForId(group).orElse(null);
-            if (skill instanceof SpecializedSkill specialized && specialized.getSpecialization() != null) {
-                return specialized.getSpecialization().getId();
-            }
-            return null;
-        };
     }
 
     /** A spell's priority, with 0 read as the table's default. */
@@ -158,7 +144,7 @@ public final class SpellcraftRules {
     }
 
     /** The glyph copies of each type a stored spell holds, by spell id. */
-    public static Map<Integer, Map<GlyphType, Integer>> savedCounts(List<StoredSpell> spells) {
+    private static Map<Integer, Map<GlyphType, Integer>> savedCounts(List<StoredSpell> spells) {
         Map<Integer, Map<GlyphType, Integer>> saved = new HashMap<>();
         for (StoredSpell spell : spells) {
             Map<GlyphType, Integer> counts = new EnumMap<>(GlyphType.class);

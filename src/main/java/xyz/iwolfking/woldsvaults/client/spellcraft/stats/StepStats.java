@@ -29,9 +29,7 @@ import xyz.iwolfking.woldsvaults.spellcraft.scope.CastModifiers;
 import xyz.iwolfking.woldsvaults.spellcraft.buff.BuffGlyphs;
 import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphStacking;
 import xyz.iwolfking.woldsvaults.spellcraft.spell.SpellModel;
-import xyz.iwolfking.woldsvaults.spellcraft.spell.SpellcraftRules;
 import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
-import xyz.iwolfking.woldsvaults.spellcraft.play.SpellCooldowns;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -43,6 +41,7 @@ import java.util.Map;
 import java.util.Set;
 import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
 import xyz.iwolfking.woldsvaults.client.spellcraft.gui.SpellcraftGui;
+import xyz.iwolfking.woldsvaults.spellcraft.ability.AbilityLookup;
 
 /**
  * What one press of a slot does at a training dummy, for the spell bar tooltip and the focus screen. The per-ability
@@ -145,10 +144,6 @@ public final class StepStats {
                        int casts, float echoPower, @Nullable Hit total, @Nullable Hit chargedTotal, float radius, float splashRadius,
                        float velocity, int durationTicks, List<Extra> mains, List<Extra> extras, @Nullable GlyphStacking.Pool glyphs,
                        GlyphRelevance.Filter relevance) implements Row {
-        public boolean hasStats() {
-            return this.hit != null || this.splinter != null || this.splash != null || this.radius >= 0.0F || this.splashRadius >= 0.0F
-                    || this.velocity >= 0.0F || this.durationTicks >= 0 || !this.mains.isEmpty() || !this.extras.isEmpty();
-        }
     }
 
     /** A Bundled Spell orb: how many orbs fly, their velocity in blocks per second, and the flight time in seconds. */
@@ -169,11 +164,11 @@ public final class StepStats {
     @Nullable
     public static Step plain(AbilityTree tree, String group) {
         LocalPlayer player = player();
-        Ability ability = SpellCooldowns.ability(tree, group);
+        Ability ability = AbilityLookup.ability(tree, group);
         if (player == null || ability == null) {
             return null;
         }
-        String spec = SpellcraftRules.specOf(tree).apply(group);
+        String spec = AbilityLookup.specOf(tree).apply(group);
         return step(player, group, base(player, ability, spec), CastModifiers.NONE, BuffGlyphs.Factors.NONE, 1.0F, 1, false, 0, null,
                 GlyphRelevance.ALL);
     }
@@ -203,7 +198,7 @@ public final class StepStats {
                              float damageFactor, int multiplicity, boolean root, int depth, List<Row> rows) {
         for (SpellModel.Step step : steps) {
             if (step instanceof SpellModel.Cast cast) {
-                Ability ability = SpellCooldowns.ability(tree, cast.group());
+                Ability ability = AbilityLookup.ability(tree, cast.group());
                 Base base = ability == null ? null : base(player, ability, cast.spec());
                 CastModifiers modifiers = CastModifiers.of(config, cast.glyphs());
                 BuffGlyphs.Factors factors = ability == null ? BuffGlyphs.Factors.NONE : BuffGlyphs.factorsOf(ability, modifiers);
@@ -279,7 +274,7 @@ public final class StepStats {
     }
 
     /** VH's numbers for one ability against the player's current stats, before any glyph; {@code spec} picks its main effects. */
-    public static Base base(LocalPlayer player, Ability ability, @Nullable String spec) {
+    private static Base base(LocalPlayer player, Ability ability, @Nullable String spec) {
         AttributeSnapshot snapshot = AttributeSnapshotHelper.getInstance().getSnapshot(player);
         float damageIncrease = snapshot.getAttributeValue(ModGearAttributes.DAMAGE_INCREASE, VaultGearAttributeTypeMerger.floatSum());
         float attackDamage = (float) player.getAttributeValue(Attributes.ATTACK_DAMAGE) * (1.0F + damageIncrease);

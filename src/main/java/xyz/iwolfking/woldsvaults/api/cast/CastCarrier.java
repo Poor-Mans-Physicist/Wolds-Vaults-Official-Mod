@@ -21,11 +21,6 @@ public enum CastCarrier {
     TOGGLE,
     EVENT;
 
-    /** Whether the hit happens after the cast's own call and outside a tagged projectile's tick. */
-    public boolean deferred() {
-        return this != CAST && this != PROJECTILE;
-    }
-
     /** The hit sources a deferred carrier delivers, or null for the cast itself (any source). */
     @Nullable
     public Set<CastCarrier> reaches() {

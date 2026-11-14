@@ -4,6 +4,7 @@ import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
 import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphStacking;
 import xyz.iwolfking.woldsvaults.spellcraft.spell.PlacedGlyph;
 import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
+import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphStats;
 
 import java.util.List;
 import java.util.function.Function;
@@ -27,12 +28,12 @@ public record CastModifiers(float damage, float area, float speed, float scale, 
     }
 
     /**
-     * The step's modifiers from its glyphs: the stacked step stats ({@link #pool}), times each Shotgun copy's damage
+     * The step's modifiers from its glyphs: the stacked step stats ({@link PlacedGlyph#pool}), times each Shotgun copy's damage
      * factor, with size clamped to the table's limits.
      */
     public static CastModifiers of(Function<GlyphType, SpellcraftConfig.GlyphDefinition> definitions, SpellcraftConfig.Tuning tuning,
                                    List<PlacedGlyph> glyphs) {
-        GlyphStacking.Pool pool = pool(definitions, glyphs);
+        GlyphStacking.Pool pool = PlacedGlyph.pool(definitions, glyphs);
         float shotgunDamage = 1.0F;
         float homingRange = 0.0F;
         float homingTurn = 0.0F;
@@ -64,24 +65,13 @@ public record CastModifiers(float damage, float area, float speed, float scale, 
                 }
             }
         }
-        float scale = Math.max(tuning.sizeDownMinScale, Math.min(tuning.sizeUpMaxScale, pool.total("scale")));
-        GlyphStacking.Stat duration = pool.stat("duration");
+        float scale = Math.max(tuning.sizeDownMinScale, Math.min(tuning.sizeUpMaxScale, pool.total(GlyphStats.SCALE)));
+        GlyphStacking.Stat duration = pool.stat(GlyphStats.DURATION);
         float durationUpside = duration == null ? 1.0F : 1.0F + Math.max(0.0F, duration.pool());
-        return new CastModifiers(pool.total("damage") * shotgunDamage, pool.total("area"), pool.total("speed"), scale,
-                pool.total("intensity"), pool.total("duration"), pool.total("drain"), pool.total("heal_mana"), durationUpside, homingRange, homingTurn,
+        return new CastModifiers(pool.total(GlyphStats.DAMAGE) * shotgunDamage, pool.total(GlyphStats.AREA), pool.total(GlyphStats.SPEED), scale,
+                pool.total(GlyphStats.INTENSITY), pool.total(GlyphStats.DURATION), pool.total(GlyphStats.DRAIN), pool.total(GlyphStats.HEAL_MANA),
+                durationUpside, homingRange, homingTurn,
                 orbit, gravity, ethereal, copies, echo, charge, GlyphGrants.of(definitions, glyphs));
-    }
-
-    /** The stacked step stats of a step's active glyphs, before Shotgun's per-copy damage and the size clamp. */
-    public static GlyphStacking.Pool pool(Function<GlyphType, SpellcraftConfig.GlyphDefinition> definitions, List<PlacedGlyph> glyphs) {
-        GlyphStacking.Pool pool = new GlyphStacking.Pool();
-        for (PlacedGlyph glyph : glyphs) {
-            if (glyph.active()) {
-                SpellcraftConfig.GlyphDefinition definition = definitions.apply(glyph.type());
-                pool.add(definition, definition.step, glyph.potency());
-            }
-        }
-        return pool;
     }
 
     public boolean homing() {
@@ -106,14 +96,5 @@ public record CastModifiers(float damage, float area, float speed, float scale, 
     public boolean affectsProjectiles() {
         return this.damage != 1.0F || this.speed != 1.0F || homing() || orbit() || this.area != 1.0F
                 || this.gravityReduction > 0 || ethereal() || this.scale != 1.0F;
-    }
-
-    public boolean has(GlyphType type) {
-        return switch (type) {
-            case SHOTGUN -> this.shotgunCopies > 0;
-            case ECHO -> this.echoPower > 0;
-            case CHARGE -> this.chargeBonus > 0;
-            default -> false;
-        };
     }
 }

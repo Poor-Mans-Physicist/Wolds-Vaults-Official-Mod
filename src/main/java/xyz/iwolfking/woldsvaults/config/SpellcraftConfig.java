@@ -115,6 +115,34 @@ public class SpellcraftConfig extends Config implements WoldsTable {
         public boolean spellWide() {
             return SCOPE_SPELL.equals(this.scope);
         }
+
+        public boolean isModifier() {
+            return "modifier".equals(this.kind);
+        }
+
+        public boolean isDelay() {
+            return "delay".equals(this.kind);
+        }
+
+        public boolean isBundle() {
+            return "bundle".equals(this.kind);
+        }
+
+        public boolean isCommon() {
+            return "common".equals(this.glyphClass);
+        }
+
+        public boolean isSpecial() {
+            return "special".equals(this.glyphClass);
+        }
+
+        public boolean isUnique() {
+            return "unique".equals(this.glyphClass);
+        }
+
+        public boolean isUtility() {
+            return "utility".equals(this.glyphClass);
+        }
     }
 
     /** The rolled main value: a range per item-level tier, plus values rolled at the same quality. */
@@ -444,7 +472,7 @@ public class SpellcraftConfig extends Config implements WoldsTable {
             if (entry.attribute == null || type == null) {
                 return "gear glyph " + entry.attribute + " names no attribute or an unknown glyph " + entry.glyph;
             }
-            if (!"unique".equals(this.glyphs.get(type.id()).glyphClass)) {
+            if (!this.glyphs.get(type.id()).isUnique()) {
                 return "gear glyph " + entry.attribute + " grants " + type.id() + ", which is not a unique glyph";
             }
             if (entry.scale < 0.0F || (entry.orientation != null && !List.of("higher", "lower").contains(entry.orientation))) {
@@ -474,7 +502,7 @@ public class SpellcraftConfig extends Config implements WoldsTable {
                 return name + " names no attribute, an unknown glyph " + entry.glyph + " or no value parts";
             }
             GlyphDefinition glyph = this.glyphs.get(type.id());
-            if (!"unique".equals(glyph.glyphClass)) {
+            if (!glyph.isUnique()) {
                 return name + " grants " + type.id() + ", which is not a unique glyph";
             }
             if (entry.lingering != null) {
@@ -617,7 +645,7 @@ public class SpellcraftConfig extends Config implements WoldsTable {
         if (!GlyphDefinition.SCOPE_STEP.equals(glyph.scope) && !GlyphDefinition.SCOPE_SPELL.equals(glyph.scope)) {
             return "has an unknown scope " + glyph.scope;
         }
-        if (glyph.spellWide() && (!"modifier".equals(glyph.kind) || !glyph.excludes.isEmpty())) {
+        if (glyph.spellWide() && (!glyph.isModifier() || !glyph.excludes.isEmpty())) {
             return "is spell-wide but is not a modifier or excludes other glyphs";
         }
         return null;
@@ -632,7 +660,7 @@ public class SpellcraftConfig extends Config implements WoldsTable {
         if (modes != 1 || (effect.base != null && effect.k == null)) {
             return "has an effect on " + effect.stat + " that is not exactly one of k, fixed or perUse";
         }
-        if ("utility".equals(glyph.glyphClass) && "upside".equals(effect.role)) {
+        if (glyph.isUtility() && "upside".equals(effect.role)) {
             return "is a utility glyph with an upside on " + effect.stat;
         }
         return null;

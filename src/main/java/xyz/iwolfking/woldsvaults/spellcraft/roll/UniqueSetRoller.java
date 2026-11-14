@@ -9,7 +9,6 @@ import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
 import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
 import xyz.iwolfking.woldsvaults.spellcraft.item.GlyphLine;
 import xyz.iwolfking.woldsvaults.spellcraft.item.StoredSpell;
-import xyz.iwolfking.woldsvaults.spellcraft.spell.SpellModel;
 import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
 
 import javax.annotation.Nullable;
@@ -91,7 +90,7 @@ public final class UniqueSetRoller implements SpellcraftRoller.UniqueSets {
             int count = 0;
             for (String token : spell.tokens()) {
                 GlyphType type = GlyphType.byId(token);
-                if (type != null && !SpellModel.isUnique(config, type)) {
+                if (type != null && !config.glyph(type).isUnique()) {
                     count++;
                 }
             }
@@ -135,7 +134,7 @@ public final class UniqueSetRoller implements SpellcraftRoller.UniqueSets {
      * Rolls a set for an item: budget and depth on the row, the signature lines not already granted by the item's gear
      * affixes, and the draw. Public for the offline check.
      */
-    public static Rolled rollSet(SpellcraftConfig config, ItemStack stack, int level, SpellcraftConfig.UniqueSet set, String row,
+    private static Rolled rollSet(SpellcraftConfig config, ItemStack stack, int level, SpellcraftConfig.UniqueSet set, String row,
                                  SpellcraftConfig.RarityRolls rolls, Random random) {
         int budget = Math.max(0, Math.round(SpellcraftRoller.budget(config, stack, level, rolls, random)));
         int depth = Math.max(1, SpellcraftRoller.depth(config, stack, level, row, random));

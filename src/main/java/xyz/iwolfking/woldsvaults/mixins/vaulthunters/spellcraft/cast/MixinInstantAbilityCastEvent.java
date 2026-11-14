@@ -19,7 +19,7 @@ public abstract class MixinInstantAbilityCastEvent {
     private void woldsvaults$suppressCopyCastEvent(Entity entity, Ability ability, SkillContext context,
                                                    CallbackInfoReturnable<AbilityCastEvent.Data> cir) {
         if (SlotManaBilling.suppressesCastEvent(entity)) {
-            SlotManaBilling.noteSuppressedCast(entity, ability);
+            SlotManaBilling.noteSuppressedCast(ability);
             cir.setReturnValue(new AbilityCastEvent.Data(entity, ability, context));
         }
     }

@@ -73,7 +73,8 @@ public final class ProjectileGlyphs {
 
     @Nullable
     private static CastModifiers scopeFor(Entity entity) {
-        return CastScope.current().filter(scope -> scope.player() == entity).map(CastScope.Active::modifiers).orElse(null);
+        CastScope.Active scope = CastScope.forPlayer(entity);
+        return scope == null ? null : scope.modifiers();
     }
 
     @Nullable
@@ -169,7 +170,7 @@ public final class ProjectileGlyphs {
             multiplier = ProjectileGlyphTags.damage(direct);
             spec = ProjectileGlyphTags.spec(direct);
         } else if (attacker != null) {
-            CastScope.Active scope = CastScope.current().filter(active -> active.player() == attacker).orElse(null);
+            CastScope.Active scope = CastScope.forPlayer(attacker);
             if (scope != null) {
                 multiplier = scope.modifiers().damage();
                 spec = scope.spec();

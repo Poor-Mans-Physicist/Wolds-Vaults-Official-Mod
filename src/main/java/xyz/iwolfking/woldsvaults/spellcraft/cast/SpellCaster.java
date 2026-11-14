@@ -6,8 +6,6 @@ import iskallia.vault.skill.ability.effect.spi.core.Ability;
 import iskallia.vault.skill.ability.effect.spi.core.InstantManaAbility;
 import iskallia.vault.skill.tree.AbilityTree;
 import iskallia.vault.util.calc.ManaCostHelper;
-import net.minecraft.ChatFormatting;
-import net.minecraft.network.chat.TextComponent;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.phys.Vec3;
@@ -15,13 +13,11 @@ import xyz.iwolfking.woldsvaults.spellcraft.ability.AbilityTrait;
 import xyz.iwolfking.woldsvaults.spellcraft.ability.SpellAbilities;
 import xyz.iwolfking.woldsvaults.spellcraft.ability.SpellAbility;
 import xyz.iwolfking.woldsvaults.spellcraft.ability.CastResult;
-import xyz.iwolfking.woldsvaults.spellcraft.Spellcraft;
 import xyz.iwolfking.woldsvaults.spellcraft.projectile.RailBolts;
 import xyz.iwolfking.woldsvaults.spellcraft.buff.ToggleDiscounts;
 import xyz.iwolfking.woldsvaults.spellcraft.spell.SpellModel;
 import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
 import xyz.iwolfking.woldsvaults.spellcraft.bar.EffectiveBar;
-import xyz.iwolfking.woldsvaults.spellcraft.play.SpellCooldowns;
 import xyz.iwolfking.woldsvaults.spellcraft.ability.CastOrigin;
 import xyz.iwolfking.woldsvaults.spellcraft.hit.ShotgunHits;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.ShotgunShot;
@@ -30,6 +26,8 @@ import xyz.iwolfking.woldsvaults.spellcraft.scope.AimOverride;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.CastModifiers;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.CastScope;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.CastBilling;
+import xyz.iwolfking.woldsvaults.init.ModConfigs;
+import xyz.iwolfking.woldsvaults.spellcraft.ability.AbilityLookup;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -48,26 +46,26 @@ public final class SpellCaster {
 
     /** Casts the slot's spell. {@code chargeShare} is how full Charge got (0-1), or negative when not charged. */
     public static void castSlot(ServerPlayer player, EffectiveBar.Slot slot, float chargeShare) {
-        SpellcraftConfig config = Spellcraft.config();
+        SpellcraftConfig config = ModConfigs.SPELLCRAFT;
         SpellModel model = slot.model();
         if (config == null || model == null || model.steps().isEmpty() || !(model.steps().get(0) instanceof SpellModel.Cast trigger)
                 || trigger.spec() == null) {
             return;
         }
-        AbilityTree tree = SpellCooldowns.tree(player);
+        AbilityTree tree = AbilityLookup.tree(player);
         float otherMana = 0.0F;
         for (String group : model.castGroups()) {
             if (group.equals(trigger.group())) {
                 continue;
             }
-            Ability ability = SpellCooldowns.ability(tree, group);
+            Ability ability = AbilityLookup.ability(tree, group);
             if (ability instanceof InstantManaAbility mana) {
                 otherMana += ManaCostHelper.adjustManaCost(player, mana, mana.getManaCost());
             }
         }
         CastBilling billing = CastBilling.trigger(trigger.spec(), otherMana, model.manaFactor(),
                 slot, chargeShare >= 1.0F);
-        Ability triggerAbility = SpellCooldowns.ability(tree, trigger.group());
+        Ability triggerAbility = AbilityLookup.ability(tree, trigger.group());
         if (triggerAbility != null && !triggerAbility.isActive() && !SlotManaBilling.canPayUnbilledTrigger(player, triggerAbility, billing)) {
             player.level.playSound(null, player.blockPosition(), ModSounds.ABILITY_OUT_OF_MANA, SoundSource.PLAYERS, 1.0F, 1.0F);
             return;
@@ -82,7 +80,7 @@ public final class SpellCaster {
 
     private static void run(ServerPlayer player, List<SpellModel.Step> steps, int from, @Nullable CastOrigin origin, float damageFactor,
                             @Nullable CastBilling trigger, float chargeShare, @Nullable SpellModel model) {
-        SpellcraftConfig config = Spellcraft.config();
+        SpellcraftConfig config = ModConfigs.SPELLCRAFT;
         if (config == null) {
             return;
         }
@@ -110,7 +108,7 @@ public final class SpellCaster {
                 if (!result.went() || result == CastResult.STOPPED) {
                     return;
                 }
-                SlotManaBilling.payUnbilledTrigger(player, SpellCooldowns.ability(SpellCooldowns.tree(player), cast.group()), billing);
+                SlotManaBilling.payUnbilledTrigger(player, AbilityLookup.ability(AbilityLookup.tree(player), cast.group()), billing);
             }
             billing = null;
         }
@@ -120,7 +118,7 @@ public final class SpellCaster {
                                        float damageFactor, @Nullable CastBilling trigger, float chargeShare, @Nullable SpellModel model) {
         SpellAbility ability = cast.spec() == null ? null : SpellAbilities.get(config, cast.spec());
         if (ability == null) {
-            showMessage(player, cast.group().replace('_', ' ') + " can't be cast by a spell");
+            SpellMessages.show(player, AbilityLookup.groupName(cast.group()) + " can't be cast by a spell");
             return CastResult.UNSUPPORTED;
         }
         CastModifiers base = CastModifiers.of(config, cast.glyphs()).withDamageFactor(damageFactor);
@@ -130,20 +128,19 @@ public final class SpellCaster {
             modifiers = base.withDamageFactor(1.0F + base.chargeBonus() * share);
         }
         List<Vec3> aims = ShotgunPattern.fan(baseDirection(player, origin), modifiers.shotgunCopies(), config.tuning.shotgunSpreadDegrees);
-        CastModifiers applied = modifiers;
         long volley = aims.size() > 1 ? ShotgunHits.newGroup() : 0L;
         ShotgunShot nativeShot = volley > 0 ? new ShotgunShot(volley, 0) : null;
         CastResult result;
         if (trigger != null) {
-            result = scoped(player, applied, aimedOrigin(origin, aims.get(0)), trigger, ability.id(), nativeShot, aims.get(0),
+            result = scoped(player, modifiers, aimedOrigin(origin, aims.get(0)), trigger, ability.id(), nativeShot, aims.get(0),
                     () -> ability.cast(player, aimedOrigin(origin, aims.get(0))));
         } else {
-            result = scoped(player, applied, aimedOrigin(origin, aims.get(0)), CastBilling.free(false), ability.id(), nativeShot,
+            result = scoped(player, modifiers, aimedOrigin(origin, aims.get(0)), CastBilling.free(false), ability.id(), nativeShot,
                     aims.get(0), () -> ability.castExtra(player, aimedOrigin(origin, aims.get(0))));
         }
-        afterRail(config, player, ability, applied, aims.get(0), result, nativeShot);
+        afterRail(config, player, ability, modifiers, aims.get(0), result, nativeShot);
         if (result == CastResult.SUCCESS) {
-            castCopies(config, player, ability, applied, origin, aims, volley);
+            castCopies(config, player, ability, modifiers, origin, aims, volley);
         }
         report(player, ability, result);
         if (!result.went()) {
@@ -157,7 +154,7 @@ public final class SpellCaster {
             CastModifiers echoed = base.withDamageFactor(base.echoPower());
             int delay = Math.max(1, Math.round(config.tuning.echoDelaySeconds * 20.0F));
             SpellScheduler.schedule(player, delay, later -> {
-                SpellcraftConfig current = Spellcraft.config();
+                SpellcraftConfig current = ModConfigs.SPELLCRAFT;
                 if (current == null) {
                     return;
                 }
@@ -220,11 +217,7 @@ public final class SpellCaster {
         if (result == CastResult.ON_COOLDOWN || result == CastResult.FAILED) {
             player.level.playSound(null, player.blockPosition(), ModSounds.ABILITY_ON_COOLDOWN, SoundSource.PLAYERS, 1.0F, 1.0F);
         } else if (result.message() != null) {
-            showMessage(player, String.format(result.message(), SpellAbilities.displayName(ability.id())));
+            SpellMessages.show(player, String.format(result.message(), SpellAbilities.displayName(ability.id())));
         }
-    }
-
-    public static void showMessage(ServerPlayer player, String message) {
-        player.displayClientMessage(new TextComponent(message).withStyle(ChatFormatting.LIGHT_PURPLE), true);
     }
 }

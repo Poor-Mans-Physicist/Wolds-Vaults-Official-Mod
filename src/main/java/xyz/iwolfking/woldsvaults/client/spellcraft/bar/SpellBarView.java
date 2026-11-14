@@ -4,23 +4,22 @@ import iskallia.vault.skill.base.Skill;
 import iskallia.vault.skill.base.SpecializedSkill;
 import iskallia.vault.skill.tree.AbilityTree;
 import net.minecraft.client.Minecraft;
-import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
 import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
-import xyz.iwolfking.woldsvaults.spellcraft.Spellcraft;
 import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
 import xyz.iwolfking.woldsvaults.spellcraft.item.GlyphLine;
 import xyz.iwolfking.woldsvaults.spellcraft.item.StoredSpell;
 import xyz.iwolfking.woldsvaults.spellcraft.spell.SpellModel;
 import xyz.iwolfking.woldsvaults.spellcraft.spell.GlyphState;
 import xyz.iwolfking.woldsvaults.spellcraft.spell.ReadMode;
-import xyz.iwolfking.woldsvaults.spellcraft.spell.SpellcraftRules;
 import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
 import xyz.iwolfking.woldsvaults.init.ModNetwork;
 import xyz.iwolfking.woldsvaults.network.packets.SpellBarEditMessage;
 import xyz.iwolfking.woldsvaults.network.packets.SpellBarSyncMessage;
 import xyz.iwolfking.woldsvaults.spellcraft.source.GlyphView;
 import xyz.iwolfking.woldsvaults.client.spellcraft.state.ClientSpellBar;
+import xyz.iwolfking.woldsvaults.init.ModConfigs;
+import xyz.iwolfking.woldsvaults.spellcraft.ability.AbilityLookup;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -49,13 +48,13 @@ public final class SpellBarView {
      */
     public record Slot(int index, State state, String group, String spellName, boolean unlearned, @Nullable StoredSpell spell,
                        @Nullable SpellModel model, List<String> groups, String itemKey, int spellId, String sourceName,
-                       @Nullable InteractionHand hand, int prio, boolean locked, String lockReason, boolean implicit, List<String> shadowed) {
+                       int prio, boolean locked, String lockReason, boolean implicit, List<String> shadowed) {
         public boolean filled() {
             return this.state == State.ABILITY || (this.state == State.SPELL && !this.locked);
         }
 
         static Slot of(int index, State state, String group, List<String> groups, boolean unlearned) {
-            return new Slot(index, state, group, "", unlearned, null, null, groups, "", 0, "", null, 0, false, "", false, List.of());
+            return new Slot(index, state, group, "", unlearned, null, null, groups, "", 0, "", 0, false, "", false, List.of());
         }
     }
 
@@ -87,7 +86,7 @@ public final class SpellBarView {
             return null;
         }
         Slot[] slots = new Slot[SpellcraftItemData.SLOTS];
-        SpellcraftConfig config = Spellcraft.config();
+        SpellcraftConfig config = ModConfigs.SPELLCRAFT;
         for (int i = 0; i < slots.length; i++) {
             SpellBarSyncMessage.Entry entry = ClientSpellBar.entry(i);
             String group = entry.group();
@@ -96,9 +95,8 @@ public final class SpellBarView {
             } else if (entry.kind() == ClientSpellBar.SPELL) {
                 StoredSpell spell = new StoredSpell(entry.spellId(), entry.spellName(), entry.tokens(), i, entry.prio());
                 SpellModel model = config == null ? null : model(config, tree, entry);
-                InteractionHand hand = entry.hand() >= 0 && entry.hand() < InteractionHand.values().length ? InteractionHand.values()[entry.hand()] : null;
                 slots[i] = new Slot(i, State.SPELL, group, entry.spellName(), entry.groups().stream().anyMatch(g -> !learned(tree, g)), spell, model,
-                        entry.groups(), entry.itemKey(), entry.spellId(), entry.sourceName(), hand, entry.prio(), entry.locked(), entry.lockReason(),
+                        entry.groups(), entry.itemKey(), entry.spellId(), entry.sourceName(), entry.prio(), entry.locked(), entry.lockReason(),
                         entry.implicit(), entry.shadowed());
             } else {
                 slots[i] = Slot.of(i, entry.hidden() ? State.HIDDEN : State.EMPTY, group, List.of(), false);
@@ -130,7 +128,7 @@ public final class SpellBarView {
             }
         }
         GlyphView view = GlyphView.of(config, "", "", new ArrayList<>(lines.values()), List.of());
-        return SpellModel.build(config, view, config.rules.maxGlyphsPerSpell, entry.tokens(), SpellcraftRules.specOf(tree), ReadMode.LENIENT,
+        return SpellModel.build(config, view, config.rules.maxGlyphsPerSpell, entry.tokens(), AbilityLookup.specOf(tree), ReadMode.LENIENT,
                 forced, Map.of());
     }
 
@@ -174,7 +172,7 @@ public final class SpellBarView {
     }
 
     /** The filled slot that hides a hidden slot (it casts the same ability), or -1. */
-    public int hiddenBy(int index) {
+    int hiddenBy(int index) {
         Slot hidden = this.slots[index];
         if (hidden.state() != State.HIDDEN) {
             return -1;

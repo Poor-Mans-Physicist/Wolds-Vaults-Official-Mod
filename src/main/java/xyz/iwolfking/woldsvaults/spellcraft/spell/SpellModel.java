@@ -1,15 +1,14 @@
 package xyz.iwolfking.woldsvaults.spellcraft.spell;
 
-import xyz.iwolfking.woldsvaults.spellcraft.buff.BuffGlyphs;
 
 import xyz.iwolfking.woldsvaults.spellcraft.ability.SpellAbilities;
 import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
-import xyz.iwolfking.woldsvaults.spellcraft.scope.CastModifiers;
-import xyz.iwolfking.woldsvaults.spellcraft.item.GlyphLine;
 import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
 import xyz.iwolfking.woldsvaults.spellcraft.source.GlyphView;
 import xyz.iwolfking.woldsvaults.spellcraft.source.GlyphViewLine;
 import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphStacking;
+import xyz.iwolfking.woldsvaults.spellcraft.ability.AbilityLookup;
+import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphStats;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -48,19 +47,14 @@ public final class SpellModel {
     private final Set<String> groups;
     private final Set<String> castGroups;
     private final Map<GlyphType, Integer> uses;
-    private final Map<GlyphType, Integer> activeUses;
     private final Map<Integer, PlacedGlyph> glyphs;
     private final float arcana;
     private final float escalation;
-    private final int glyphCount;
     private final int casts;
-    private final int nesting;
     private final float manaFactor;
     private final float cooldownBase;
     private final float glyphHaste;
-    private final GlyphStacking.Pool spellPool;
     private final Map<Step, GlyphStacking.Pool> stepPools;
-    private final List<SpellcraftConfig.Combo> combos;
 
     public sealed interface Step permits Cast, Pause, Bundle {
     }
@@ -99,21 +93,16 @@ public final class SpellModel {
         this.groups = Collections.unmodifiableSet(builder.groups);
         this.castGroups = Collections.unmodifiableSet(builder.castGroups);
         this.uses = Collections.unmodifiableMap(builder.uses);
-        this.activeUses = Collections.unmodifiableMap(builder.activeUses);
         this.glyphs = Collections.unmodifiableMap(builder.byToken);
         this.arcana = arcana.total();
         this.escalation = arcana.escalation();
-        this.glyphCount = builder.depthCount;
         this.casts = casts;
-        this.nesting = builder.maxNesting;
         this.manaFactor = manaFactor;
-        GlyphStacking.Stat cooldown = builder.spellPool.stat("cooldown");
+        GlyphStacking.Stat cooldown = builder.spellPool.stat(GlyphStats.COOLDOWN);
         this.cooldownBase = cooldown == null ? 1.0F : cooldown.favourable();
         float penalty = cooldown == null ? 1.0F : cooldown.total() / cooldown.favourable();
-        this.glyphHaste = builder.spellPool.total("haste") / penalty;
-        this.spellPool = builder.spellPool;
+        this.glyphHaste = builder.spellPool.total(GlyphStats.HASTE) / penalty;
         this.stepPools = stepPools;
-        this.combos = Collections.unmodifiableList(builder.appliedCombos);
     }
 
     public List<Step> steps() {
@@ -143,11 +132,6 @@ public final class SpellModel {
         return this.uses;
     }
 
-    /** Placements of each glyph type that are active. */
-    public Map<GlyphType, Integer> activeUses() {
-        return this.activeUses;
-    }
-
     /** The glyph at a token index, or null when that token is an ability. */
     @Nullable
     public PlacedGlyph glyphAt(int token) {
@@ -159,11 +143,6 @@ public final class SpellModel {
         return List.copyOf(this.glyphs.values());
     }
 
-    /** How many placed glyphs are not active. */
-    public int inactiveCount() {
-        return (int) this.glyphs.values().stream().filter(glyph -> !glyph.active()).count();
-    }
-
     public float arcana() {
         return this.arcana;
     }
@@ -173,17 +152,8 @@ public final class SpellModel {
         return this.escalation;
     }
 
-    /** Placed glyphs that count toward the item's depth (unique glyphs don't). */
-    public int glyphCount() {
-        return this.glyphCount;
-    }
-
     public int casts() {
         return this.casts;
-    }
-
-    public int nesting() {
-        return this.nesting;
     }
 
     /** The slot's mana multiplier, floored at the table's minimum. */
@@ -202,15 +172,6 @@ public final class SpellModel {
      */
     public float glyphHaste() {
         return this.glyphHaste;
-    }
-
-    public List<SpellcraftConfig.Combo> combos() {
-        return this.combos;
-    }
-
-    /** The spell-wide glyph stats (mana, cooldown, haste, efficiency) as stacked, before the mana floor. */
-    public GlyphStacking.Pool spellPool() {
-        return this.spellPool;
     }
 
     /**
@@ -285,10 +246,10 @@ public final class SpellModel {
     private static float healManaFactor(List<Step> steps, Map<Step, GlyphStacking.Pool> stepPools) {
         float factor = 1.0F;
         for (Step step : steps) {
-            if (step instanceof Cast cast && cast.live() && BuffGlyphs.billsHealMana(cast.spec())) {
+            if (step instanceof Cast cast && cast.live() && SpellAbilities.isHeal(cast.spec())) {
                 GlyphStacking.Pool pool = stepPools.get(cast);
                 if (pool != null) {
-                    factor *= pool.total("heal_mana");
+                    factor *= pool.total(GlyphStats.HEAL_MANA);
                 }
             }
         }
@@ -298,21 +259,12 @@ public final class SpellModel {
     private static void collectPools(SpellcraftConfig config, List<Step> steps, Map<Step, GlyphStacking.Pool> pools) {
         for (Step step : steps) {
             if (step instanceof Cast cast) {
-                pools.put(cast, CastModifiers.pool(config::glyph, cast.glyphs()));
+                pools.put(cast, PlacedGlyph.pool(config::glyph, cast.glyphs()));
             } else if (step instanceof Bundle bundle) {
-                pools.put(bundle, CastModifiers.pool(config::glyph, bundle.glyphs()));
+                pools.put(bundle, PlacedGlyph.pool(config::glyph, bundle.glyphs()));
                 collectPools(config, bundle.payload(), pools);
             }
         }
-    }
-
-    /** How many times one spell may place an item's own line: the line's uses, capped by its cap or the glyph's. */
-    public static int perSpellLimit(SpellcraftConfig config, GlyphLine line) {
-        return GlyphView.ownLimit(config, line);
-    }
-
-    public static boolean isUnique(SpellcraftConfig config, GlyphType type) {
-        return "unique".equals(config.glyph(type).glyphClass);
     }
 
     /** The traits of a specialization in lower case, from the table. */
@@ -336,12 +288,12 @@ public final class SpellModel {
      */
     private static Arcana arcana(SpellcraftConfig config, Builder builder) {
         List<PlacedGlyph> active = builder.byToken.values().stream().filter(PlacedGlyph::active).toList();
-        boolean allUnique = active.stream().allMatch(glyph -> isUnique(config, glyph.type()));
+        boolean allUnique = active.stream().allMatch(glyph -> config.glyph(glyph.type()).isUnique());
         float common = 0.0F;
         float unique = 0.0F;
         int escalating = 0;
         for (PlacedGlyph glyph : active) {
-            if (isUnique(config, glyph.type())) {
+            if (config.glyph(glyph.type()).isUnique()) {
                 unique += allUnique ? 0.0F : config.rules.uniqueMixCost;
             } else {
                 common += glyph.cost();
@@ -365,7 +317,6 @@ public final class SpellModel {
             }
             if (hit) {
                 total += combo.cost;
-                builder.appliedCombos.add(combo);
             }
         }
         return new Arcana(total, escalation);
@@ -413,7 +364,6 @@ public final class SpellModel {
         final Map<GlyphType, Integer> uses = new EnumMap<>(GlyphType.class);
         final Map<GlyphType, Integer> activeUses = new EnumMap<>(GlyphType.class);
         final Map<Integer, PlacedGlyph> byToken = new TreeMap<>();
-        final List<SpellcraftConfig.Combo> appliedCombos = new ArrayList<>();
         List<Step> sink = this.root;
         Object target;
         List<PlacedGlyph> targetGlyphs;
@@ -421,7 +371,6 @@ public final class SpellModel {
         String targetSpec;
         int depthCount;
         int nesting;
-        int maxNesting;
         boolean shotgunOnBundle;
         boolean awaitingStep;
         GlyphState inactiveBundle;
@@ -448,7 +397,7 @@ public final class SpellModel {
             }
             SpellcraftConfig.GlyphDefinition definition = this.config.glyph(type);
             int placed = this.uses.merge(type, 1, Integer::sum);
-            if (!isUnique(this.config, type)) {
+            if (!this.config.glyph(type).isUnique()) {
                 this.depthCount++;
             }
             GlyphViewLine line = this.view.get(type);
@@ -464,7 +413,7 @@ public final class SpellModel {
             float potency = line == null ? 0.0F : line.potency();
             float quality = line == null ? 0.0F : line.quality();
             int cost = line == null ? 0 : line.cost();
-            if ("delay".equals(definition.kind)) {
+            if (definition.isDelay()) {
                 PlacedGlyph glyph = finish(new PlacedGlyph(type, potency, quality, cost, state, false, index));
                 this.sink.add(new Pause(glyph));
                 applySpellEffects(definition, glyph);
@@ -473,7 +422,7 @@ public final class SpellModel {
                 this.awaitingStep = true;
                 return;
             }
-            if ("bundle".equals(definition.kind)) {
+            if (definition.isBundle()) {
                 openBundle(finish(new PlacedGlyph(type, potency, quality, cost, state, false, index)), definition);
                 return;
             }
@@ -510,7 +459,7 @@ public final class SpellModel {
         }
 
         void refuse(boolean isNew, String message) {
-            if (this.mode == ReadMode.STRICT || (this.mode == ReadMode.STRICT_NEW && isNew)) {
+            if (this.mode == ReadMode.STRICT_NEW && isNew) {
                 this.errors.add(message);
             }
         }
@@ -605,20 +554,20 @@ public final class SpellModel {
                 this.errors.add(SpellAbilities.displayName(spec) + " can't be cast by a spell");
             }
             if (!this.groups.add(group)) {
-                this.errors.add(group.replace('_', ' ') + " appears twice in the spell");
+                this.errors.add(AbilityLookup.groupName(group) + " appears twice in the spell");
             }
             if (this.inactiveBundle == null) {
                 this.castGroups.add(group);
             }
             Set<String> traits = traits(this.config, spec);
             if (traits.contains("hold")) {
-                this.errors.add(group.replace('_', ' ') + " is a hold ability and can't be part of a spell");
+                this.errors.add(AbilityLookup.groupName(group) + " is a hold ability and can't be part of a spell");
             }
             if (traits.contains("toggle") && this.groups.size() > 1) {
-                this.errors.add(group.replace('_', ' ') + " is a toggle and can only start a spell");
+                this.errors.add(AbilityLookup.groupName(group) + " is a toggle and can only start a spell");
             }
             if (this.config.isDisabled(spec)) {
-                this.errors.add(group.replace('_', ' ') + " is disabled for spellcraft");
+                this.errors.add(AbilityLookup.groupName(group) + " is disabled for spellcraft");
             }
             if (!this.openBundles.isEmpty() && !traits.contains("payload")) {
                 this.errors.add(SpellAbilities.displayName(spec) + " can't ride in a Bundled Spell payload");
@@ -635,7 +584,6 @@ public final class SpellModel {
 
         void openBundle(PlacedGlyph glyph, SpellcraftConfig.GlyphDefinition definition) {
             this.nesting++;
-            this.maxNesting = Math.max(this.maxNesting, this.nesting);
             if (this.nesting > this.config.rules.maxBundleNesting) {
                 this.errors.add("Bundled Spells nest at most " + this.config.rules.maxBundleNesting + " deep");
             }
@@ -677,7 +625,7 @@ public final class SpellModel {
 
         String describeTarget() {
             if (this.target instanceof Cast cast) {
-                return cast.spec() == null ? cast.group().replace('_', ' ') : SpellAbilities.displayName(cast.spec());
+                return cast.spec() == null ? AbilityLookup.groupName(cast.group()) : SpellAbilities.displayName(cast.spec());
             }
             return "a Bundled Spell orb";
         }

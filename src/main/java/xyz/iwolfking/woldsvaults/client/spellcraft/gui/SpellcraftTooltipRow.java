@@ -15,7 +15,7 @@ import java.util.List;
  * rows stay text). Rows of one block share {@code width} so their right-hand numbers line up.
  */
 public record SpellcraftTooltipRow(Kind kind, String text, String right, String extra, List<Rune> runes, List<String> icons, int color,
-                                   boolean dim, float used, float budget, int[] width) implements TooltipComponent {
+                                   float used, float budget, int[] width) implements TooltipComponent {
 
     public enum Kind {
         HEAD,
@@ -25,8 +25,8 @@ public record SpellcraftTooltipRow(Kind kind, String text, String right, String 
         SPELL_ROW
     }
 
-    /** A rune in a row; dimmed when its line is spent. */
-    public record Rune(GlyphType type, boolean dim) {
+    /** A rune in a row. */
+    public record Rune(GlyphType type) {
     }
 
     private static final int BAR_W = 60;
@@ -83,21 +83,21 @@ public record SpellcraftTooltipRow(Kind kind, String text, String right, String 
                 }
                 case RUNES -> {
                     for (int k = 0; k < r.runes().size(); k++) {
-                        SpellcraftGui.rune(pose, r.runes().get(k).type(), x + k * RUNE_PITCH, y - 1, RUNE, r.runes().get(k).dim());
+                        SpellcraftGui.rune(pose, r.runes().get(k).type(), x + k * RUNE_PITCH, y - 1, RUNE, false);
                     }
                     font.drawShadow(pose, r.text(), x + r.runes().size() * RUNE_PITCH + 6, y, SpellcraftGui.GREY);
                 }
                 case GLYPH -> {
                     GlyphType type = r.runes().get(0).type();
-                    SpellcraftGui.rune(pose, type, x, y - 1, RUNE, r.dim());
+                    SpellcraftGui.rune(pose, type, x, y - 1, RUNE, false);
                     int tx = x + INDENT;
-                    font.drawShadow(pose, r.text() + " ", tx, y, r.dim() ? SpellcraftGui.DARK : r.color());
-                    font.drawShadow(pose, r.extra(), tx + font.width(r.text() + " "), y, r.dim() ? SpellcraftGui.DARK : SpellcraftGui.GREY);
+                    font.drawShadow(pose, r.text() + " ", tx, y, r.color());
+                    font.drawShadow(pose, r.extra(), tx + font.width(r.text() + " "), y, SpellcraftGui.GREY);
                     String cost = r.costText();
                     int cx = x + w - font.width(cost) - 1;
                     font.drawShadow(pose, cost, cx, y, SpellcraftGui.ARCANA);
                     GuiComponent.fill(pose, cx - 6, y + 2, cx - 2, y + 6, SpellcraftGui.ARCANA);
-                    font.drawShadow(pose, r.right(), cx - 9 - font.width(r.right()), y, r.dim() ? SpellcraftGui.DARK : SpellcraftGui.WHITE);
+                    font.drawShadow(pose, r.right(), cx - 9 - font.width(r.right()), y, SpellcraftGui.WHITE);
                 }
                 case SPELL -> {
                     if (!r.icons().isEmpty()) {
@@ -112,7 +112,7 @@ public record SpellcraftTooltipRow(Kind kind, String text, String right, String 
                 case SPELL_ROW -> {
                     int tx = x + INDENT;
                     for (Rune rune : r.runes()) {
-                        SpellcraftGui.rune(pose, rune.type(), tx, y - 1, RUNE, rune.dim());
+                        SpellcraftGui.rune(pose, rune.type(), tx, y - 1, RUNE, false);
                         tx += RUNE_PITCH;
                     }
                     for (String icon : r.icons()) {

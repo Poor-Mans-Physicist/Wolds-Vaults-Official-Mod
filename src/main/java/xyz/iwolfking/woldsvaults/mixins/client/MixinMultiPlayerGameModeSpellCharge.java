@@ -6,7 +6,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import xyz.iwolfking.woldsvaults.spellcraft.roll.SpellcraftRoller;
+import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
 
 @Mixin(MultiPlayerGameMode.class)
 public abstract class MixinMultiPlayerGameModeSpellCharge {
@@ -19,7 +19,7 @@ public abstract class MixinMultiPlayerGameModeSpellCharge {
      */
     @Inject(method = "releaseUsingItem", at = @At("HEAD"), cancellable = true)
     private void woldsvaults$keepSpellCharge(Player player, CallbackInfo ci) {
-        if (player.isUsingItem() && SpellcraftRoller.canCarry(player.getUseItem())) {
+        if (player.isUsingItem() && SpellcraftItemData.canCarry(player.getUseItem())) {
             ci.cancel();
         }
     }

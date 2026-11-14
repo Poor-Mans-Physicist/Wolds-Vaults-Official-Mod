@@ -27,7 +27,7 @@ public final class AbilityCastTracker {
     }
 
     /** Runs the action while watching the ability: the action's own result, and whether the ability cast. */
-    public static Outcome watch(Ability ability, BooleanSupplier action) {
+    static Outcome watch(Ability ability, BooleanSupplier action) {
         Ability outerWatched = watched;
         boolean outerCast = watchedCast;
         watched = ability;

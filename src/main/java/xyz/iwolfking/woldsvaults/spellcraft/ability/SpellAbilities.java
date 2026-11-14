@@ -11,6 +11,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
 
 /**
@@ -18,6 +19,7 @@ import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
  * installed. An ability missing from the table cannot appear in a recipe or trigger one.
  */
 public final class SpellAbilities {
+    private static final Set<String> HEALS = Set.of("Heal_Base", "Heal_Group");
     private static SpellcraftConfig builtFrom;
     private static Map<String, SpellAbility> byId = Collections.emptyMap();
 
@@ -47,6 +49,11 @@ public final class SpellAbilities {
             builtFrom = config;
         }
         return byId;
+    }
+
+    /** Whether a step casting {@code spec} bills its heal mana factor (Intensify on a heal costs mana, not duration). */
+    public static boolean isHeal(@Nullable String spec) {
+        return HEALS.contains(spec);
     }
 
     /** The name VH's skill screen shows for an ability, or its id when VH's config doesn't know it. */

@@ -17,14 +17,14 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import xyz.iwolfking.woldsvaults.spellcraft.Spellcraft;
-import xyz.iwolfking.woldsvaults.spellcraft.spell.SpellcraftRules;
 import xyz.iwolfking.woldsvaults.client.spellcraft.stats.SlotCostStats;
 import xyz.iwolfking.woldsvaults.client.spellcraft.bar.SkillMenuSpellBar;
 import xyz.iwolfking.woldsvaults.client.spellcraft.bar.SpellBarView;
 import xyz.iwolfking.woldsvaults.client.spellcraft.gui.SpellcraftGui;
 import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
 import xyz.iwolfking.woldsvaults.mixins.vaulthunters.accessors.AbstractDialogAccessor;
+import xyz.iwolfking.woldsvaults.init.ModConfigs;
+import xyz.iwolfking.woldsvaults.spellcraft.ability.AbilityLookup;
 
 import java.awt.Rectangle;
 
@@ -67,9 +67,9 @@ public class MixinAbilityDialogSpellBar {
             }
         }
         String numbers = null;
-        if (this.selectedAbility.equals(SpellcraftRules.specOf(this.abilityTree).apply(group))) {
+        if (this.selectedAbility.equals(AbilityLookup.specOf(this.abilityTree).apply(group))) {
             SlotCostStats.Numbers stats;
-            SpellcraftConfig config = Spellcraft.config();
+            SpellcraftConfig config = ModConfigs.SPELLCRAFT;
             SpellBarView.Slot shown = slot >= 0 ? view.slot(slot) : null;
             if (shown != null && shown.state() == SpellBarView.State.SPELL && shown.model() != null && config != null) {
                 stats = SlotCostStats.spell(config, this.abilityTree, shown.model());

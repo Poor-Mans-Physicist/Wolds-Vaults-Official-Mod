@@ -20,11 +20,11 @@ import net.minecraft.world.phys.Vec3;
 import com.mojang.math.Vector3f;
 import net.minecraftforge.event.ForgeEventFactory;
 import net.minecraftforge.network.NetworkHooks;
-import xyz.iwolfking.woldsvaults.spellcraft.Spellcraft;
 import xyz.iwolfking.woldsvaults.spellcraft.cast.SpellCaster;
 import xyz.iwolfking.woldsvaults.spellcraft.ability.CastOrigin;
 import xyz.iwolfking.woldsvaults.spellcraft.spell.SpellModel;
 import xyz.iwolfking.woldsvaults.init.ModEntities;
+import xyz.iwolfking.woldsvaults.init.ModConfigs;
 
 import java.util.List;
 
@@ -91,7 +91,7 @@ public class BundledSpellOrb extends Projectile {
     public void tick() {
         super.tick();
         if (!this.level.isClientSide) {
-            if (this.payload == null || Spellcraft.config() == null || ++this.age > this.lifetimeTicks) {
+            if (this.payload == null || ModConfigs.SPELLCRAFT == null || ++this.age > this.lifetimeTicks) {
                 discard();
                 return;
             }
@@ -131,12 +131,12 @@ public class BundledSpellOrb extends Projectile {
     }
 
     /** Keeps the orb alive for at least {@code ticks} more ticks. */
-    public void holdFor(int ticks) {
+    void holdFor(int ticks) {
         this.lifetimeTicks = Math.max(this.lifetimeTicks, this.age + ticks);
     }
 
     /** Lands the orb where it is now, casting its payload there. */
-    public void landHere() {
+    void landHere() {
         land(position());
     }
 

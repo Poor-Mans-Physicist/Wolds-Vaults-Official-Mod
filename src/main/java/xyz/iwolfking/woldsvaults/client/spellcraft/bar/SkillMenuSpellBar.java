@@ -21,27 +21,25 @@ public final class SkillMenuSpellBar implements SpellBarStrip.Host {
 
     private final AbilitiesElementContainerScreen screen;
     private final Supplier<String> selectedSpec;
-    private final Supplier<Float> treeZoom;
     private final SpellBarStrip strip;
     private SpellBarView defaultView;
     @Nullable
     private SpellBarView effectiveView;
     private boolean renderingTree;
 
-    private SkillMenuSpellBar(AbilitiesElementContainerScreen screen, Supplier<String> selectedSpec, Supplier<Float> treeZoom) {
+    private SkillMenuSpellBar(AbilitiesElementContainerScreen screen, Supplier<String> selectedSpec) {
         this.screen = screen;
         this.selectedSpec = selectedSpec;
-        this.treeZoom = treeZoom;
         this.strip = new SpellBarStrip(this, showEffective);
     }
 
     /**
      * The menu for this Abilities screen, made on first use and dropped when another screen asks. {@code selectedSpec}
-     * gives the specialization the dialog shows, {@code treeZoom} the tree pan's current zoom.
+     * gives the specialization the dialog shows.
      */
-    public static SkillMenuSpellBar of(AbilitiesElementContainerScreen screen, Supplier<String> selectedSpec, Supplier<Float> treeZoom) {
+    public static SkillMenuSpellBar of(AbilitiesElementContainerScreen screen, Supplier<String> selectedSpec) {
         if (current == null || current.screen != screen) {
-            current = new SkillMenuSpellBar(screen, selectedSpec, treeZoom);
+            current = new SkillMenuSpellBar(screen, selectedSpec);
         }
         return current;
     }
@@ -71,12 +69,6 @@ public final class SkillMenuSpellBar implements SpellBarStrip.Host {
 
     public void endTree() {
         this.renderingTree = false;
-    }
-
-    /** The tree pan's zoom, so slot tags can undo it and keep a fixed size on screen. */
-    public float treeZoom() {
-        Float zoom = this.treeZoom.get();
-        return zoom == null || zoom <= 0.0F ? 1.0F : zoom;
     }
 
     public SpellBarStrip strip() {

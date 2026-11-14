@@ -103,7 +103,7 @@ public final class GlyphChains {
      * step, the step that threw the hit's direct entity, or the deferred step whose carrier delivers it.
      */
     private static boolean chainsFrom(ServerPlayer player, DamageSource source) {
-        CastScope.Active scope = CastScope.current().filter(active -> active.player() == player).orElse(null);
+        CastScope.Active scope = CastScope.forPlayer(player);
         if (scope != null) {
             return chaining(scope.modifiers().grants()) && OwnHits.isOwnDirectHit(scope.spec(), source, null);
         }

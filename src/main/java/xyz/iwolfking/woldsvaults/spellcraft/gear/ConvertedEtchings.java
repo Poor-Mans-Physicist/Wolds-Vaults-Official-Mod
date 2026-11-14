@@ -22,7 +22,6 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import xyz.iwolfking.woldsvaults.WoldsVaults;
 import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
-import xyz.iwolfking.woldsvaults.spellcraft.Spellcraft;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.CastScope;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.DeferredReach;
 import xyz.iwolfking.woldsvaults.spellcraft.item.GlyphLine;
@@ -41,10 +40,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
 import xyz.iwolfking.woldsvaults.spellcraft.buff.LingeringBuffs;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.GlyphGrants;
+import xyz.iwolfking.woldsvaults.spellcraft.source.GlyphQuality;
 
 /**
  * Etchings that grant unique glyphs (the table's {@code etchingGlyphs}). An etching on any equipped source is a
@@ -64,7 +63,6 @@ public final class ConvertedEtchings {
     private static final String LINKED = "linked";
     private static final String CHOICE = "choice";
     private static final String FLAG = "flag";
-    private static final Set<String> REPORTED = ConcurrentHashMap.newKeySet();
     private static Index index;
 
     private ConvertedEtchings() {
@@ -83,7 +81,7 @@ public final class ConvertedEtchings {
 
     @Nullable
     private static Index index() {
-        SpellcraftConfig config = Spellcraft.config();
+        SpellcraftConfig config = xyz.iwolfking.woldsvaults.init.ModConfigs.SPELLCRAFT;
         if (config == null) {
             return null;
         }
@@ -94,7 +92,7 @@ public final class ConvertedEtchings {
         Map<String, Entry> byAttribute = new HashMap<>();
         Map<GlyphType, Entry> byType = new HashMap<>();
         if (config.etchingGlyphs == null) {
-            reportOnce("missing", "Spellcraft: the focus augments table has no etchingGlyphs section; etchings act on their own and grant no glyphs");
+            WoldLogger.errorOnce("ConvertedEtchings:missing", "Spellcraft: the focus augments table has no etchingGlyphs section; etchings act on their own and grant no glyphs");
         } else {
             for (SpellcraftConfig.EtchingGlyph entry : config.etchingGlyphs) {
                 GlyphType type = GlyphType.byId(entry.glyph);
@@ -134,7 +132,7 @@ public final class ConvertedEtchings {
         }
         VaultEtchingConfig.EtchingEntry etching = etchingConfig(entry.config().attribute);
         if (etching == null) {
-            reportOnce("description:" + entry.config().attribute, "Spellcraft: no etching config describes " + entry.config().attribute
+            WoldLogger.errorOnce("ConvertedEtchings:description:" + entry.config().attribute, "Spellcraft: no etching config describes " + entry.config().attribute
                     + "; glyph " + type.id() + " shows its potency instead of the etching text");
             return null;
         }
@@ -207,7 +205,7 @@ public final class ConvertedEtchings {
         List<Object> components = components(value);
         List<SpellcraftConfig.EtchingPart> parts = entry.config().parts;
         if (components.size() != parts.size()) {
-            reportOnce("shape:" + entry.config().attribute, "Spellcraft: etching " + entry.config().attribute + " has a value of " + components.size()
+            WoldLogger.errorOnce("ConvertedEtchings:shape:" + entry.config().attribute, "Spellcraft: etching " + entry.config().attribute + " has a value of " + components.size()
                     + " parts but its glyph entry reads " + parts.size() + "; it grants nothing");
             return null;
         }
@@ -238,14 +236,13 @@ public final class ConvertedEtchings {
                         return mismatch(entry, i, component);
                     }
                     SpellcraftConfig.Linked linked = ConvertedAffixes.linked(config, entry.type(), part.linked);
-                    quality = linked == null || linked.max <= linked.min ? 0.0F
-                            : Mth.clamp((number.floatValue() - linked.min) / (linked.max - linked.min), 0.0F, 1.0F);
+                    quality = GlyphQuality.linkedQuality(linked, number.floatValue());
                 }
                 case CHOICE -> {
                     List<String> choices = entry.config().choices;
                     int choice = choices.indexOf(String.valueOf(component));
                     if (choice < 0) {
-                        reportOnce("choice:" + entry.config().attribute + ":" + component, "Spellcraft: etching " + entry.config().attribute + " rolled "
+                        WoldLogger.errorOnce("ConvertedEtchings:choice:" + entry.config().attribute + ":" + component, "Spellcraft: etching " + entry.config().attribute + " rolled "
                                 + component + ", which its glyph entry does not list; it grants nothing");
                         return null;
                     }
@@ -261,12 +258,12 @@ public final class ConvertedEtchings {
         if (potency == null) {
             return null;
         }
-        return new GlyphLine(entry.type(), potency, quality != null ? quality : tierQuality(glyph, potency), glyph.costMin, 1, false, null);
+        return new GlyphLine(entry.type(), potency, quality != null ? quality : GlyphQuality.tierQuality(glyph, potency), glyph.costMin, 1, false, null);
     }
 
     @Nullable
     private static GlyphLine mismatch(Entry entry, int index, Object component) {
-        reportOnce("part:" + entry.config().attribute + ":" + index, "Spellcraft: etching " + entry.config().attribute + " part " + index + " is "
+        WoldLogger.errorOnce("ConvertedEtchings:part:" + entry.config().attribute + ":" + index, "Spellcraft: etching " + entry.config().attribute + " part " + index + " is "
                 + (component == null ? "missing" : component.getClass().getSimpleName()) + ", which its glyph entry cannot read; it grants nothing");
         return null;
     }
@@ -279,19 +276,6 @@ public final class ConvertedEtchings {
             return Arrays.asList(throuple.getFirst(), throuple.getSecond(), throuple.getThird());
         }
         return Collections.singletonList(value);
-    }
-
-    private static float tierQuality(SpellcraftConfig.GlyphDefinition glyph, float potency) {
-        SpellcraftConfig.PotencyTier top = null;
-        for (SpellcraftConfig.PotencyTier tier : glyph.potency.tiers) {
-            if (top == null || tier.minLevel > top.minLevel) {
-                top = tier;
-            }
-        }
-        if (top == null || top.max <= top.min) {
-            return 0.0F;
-        }
-        return Mth.clamp((potency - top.min) / (top.max - top.min), 0.0F, 1.0F);
     }
 
     /**
@@ -339,7 +323,7 @@ public final class ConvertedEtchings {
      */
     @Nullable
     public static GlyphGrants.Grant grant(ServerPlayer player, GlyphType type) {
-        CastScope.Active scope = CastScope.current().filter(active -> active.player() == player).orElse(null);
+        CastScope.Active scope = CastScope.forPlayer(player);
         Index current = index();
         Entry entry = current == null ? null : current.byType().get(type);
         if (entry != null && entry.config().lingering != null) {
@@ -356,7 +340,7 @@ public final class ConvertedEtchings {
         if (toggled != null) {
             return toggled;
         }
-        SpellcraftConfig config = Spellcraft.config();
+        SpellcraftConfig config = xyz.iwolfking.woldsvaults.init.ModConfigs.SPELLCRAFT;
         if (config == null) {
             return null;
         }
@@ -369,7 +353,7 @@ public final class ConvertedEtchings {
         GlyphType type = entry.type();
         SpellcraftConfig.GlyphDefinition glyph = config.glyph(type);
         if (glyph == null || glyph.specs == null || glyph.specs.size() != 1) {
-            reportOnce("lingering_spec:" + type.id(), "Spellcraft: lingering etching glyph " + type.id()
+            WoldLogger.errorOnce("ConvertedEtchings:lingering_spec:" + type.id(), "Spellcraft: lingering etching glyph " + type.id()
                     + " is not locked to exactly one ability; it reads the gear auto line");
             return LingeringBuffs.autoLine(player, type, config);
         }
@@ -381,7 +365,7 @@ public final class ConvertedEtchings {
         if (resolution.known()) {
             return resolution.grant();
         }
-        reportOnce("lingering_note:" + type.id(), "Spellcraft: no buff note for " + spec + " when " + type.id()
+        WoldLogger.errorOnce("ConvertedEtchings:lingering_note:" + type.id(), "Spellcraft: no buff note for " + spec + " when " + type.id()
                 + " was read (buff active since before a relog or restart?); it reads the gear auto line");
         return LingeringBuffs.autoLine(player, type, config);
     }
@@ -398,11 +382,11 @@ public final class ConvertedEtchings {
                 case LINKED -> {
                     SpellcraftConfig.Linked linked = ConvertedAffixes.linked(config, entry.type(), part.linked);
                     if (linked == null) {
-                        reportOnce("linked:" + entry.type().id(), "Spellcraft: " + entry.type().displayName() + " has no linked value " + part.linked
+                        WoldLogger.errorOnce("ConvertedEtchings:linked:" + entry.type().id(), "Spellcraft: " + entry.type().displayName() + " has no linked value " + part.linked
                                 + "; its etching acts as absent");
                         return null;
                     }
-                    components[i] = number(part, linked.min + (linked.max - linked.min) * grant.quality());
+                    components[i] = number(part, GlyphQuality.linkedValue(linked, grant.quality()));
                 }
                 case CHOICE -> {
                     List<String> choices = entry.config().choices;
@@ -432,15 +416,9 @@ public final class ConvertedEtchings {
     private static VaultGearAttribute<?> attribute(String id) {
         VaultGearAttribute<?> attribute = VaultGearAttributeRegistry.getAttribute(new ResourceLocation(id));
         if (attribute == null) {
-            reportOnce("attribute:" + id, "Spellcraft: etching glyph attribute " + id + " is not registered; it grants nothing");
+            WoldLogger.errorOnce("ConvertedEtchings:attribute:" + id, "Spellcraft: etching glyph attribute " + id + " is not registered; it grants nothing");
         }
         return attribute;
-    }
-
-    private static void reportOnce(String key, String message) {
-        if (REPORTED.add(key)) {
-            WoldLogger.error(message);
-        }
     }
 
     @SubscribeEvent

@@ -4,7 +4,6 @@ import iskallia.vault.mana.ManaAction;
 import iskallia.vault.mana.ManaPlayer;
 import net.minecraft.server.level.ServerPlayer;
 
-import java.util.function.Supplier;
 
 /**
  * Discount and Shotgun copy refunds. VH has no mana-cost stat event (costs come from gear, {@code ManaCostHelper}),
@@ -12,16 +11,6 @@ import java.util.function.Supplier;
  */
 public final class ManaRefunds {
     private ManaRefunds() {
-    }
-
-    public static <T> T withRefund(ServerPlayer player, float fraction, Supplier<T> action) {
-        if (fraction <= 0) {
-            return action.get();
-        }
-        float before = ((ManaPlayer) player).getMana();
-        T result = action.get();
-        refund(player, (before - ((ManaPlayer) player).getMana()) * Math.min(1.0F, fraction));
-        return result;
     }
 
     public static void refund(ServerPlayer player, float amount) {

@@ -23,7 +23,7 @@ public final class LightningOrbs {
     }
 
     /** Entity ids the orb already damaged; it never hits them again, so Homing skips them. */
-    public static Set<Integer> alreadyHit(LightningOrbEntity orb) {
+    static Set<Integer> alreadyHit(LightningOrbEntity orb) {
         return ((LightningOrbEntityAccessor) orb).woldsvaults$getHitEntities();
     }
 }

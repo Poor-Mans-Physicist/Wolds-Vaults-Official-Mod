@@ -34,7 +34,6 @@ import xyz.iwolfking.woldsvaults.api.cast.CastContext;
 import xyz.iwolfking.woldsvaults.api.lib.HomingJavelin;
 import xyz.iwolfking.woldsvaults.api.lib.IWoldAbilityEnhancements;
 import xyz.iwolfking.woldsvaults.api.util.ElementHelper;
-import xyz.iwolfking.woldsvaults.spellcraft.Spellcraft;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.AimOverride;
 import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
 import xyz.iwolfking.woldsvaults.init.ModNetwork;
@@ -58,6 +57,7 @@ import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
 import xyz.iwolfking.woldsvaults.api.cast.CastCarrier;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.ProjectileGlyphTags;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.TickingEntity;
+import xyz.iwolfking.woldsvaults.init.ModConfigs;
 
 /**
  * Homing and Orbit: steers projectiles a cast spawned by setting their motion each server tick; the projectile's own
@@ -128,7 +128,7 @@ public final class ProjectileSteering {
             return;
         }
         Steered steered = new Steered(projectile, owner, false, 0, range, turnRate, 0L);
-        SpellcraftConfig config = Spellcraft.config();
+        SpellcraftConfig config = ModConfigs.SPELLCRAFT;
         if (config != null) {
             steered.preferred = cursorTarget(owner, config, e -> canTarget(projectile, owner, e)).orElse(null);
         }
@@ -168,7 +168,7 @@ public final class ProjectileSteering {
         if (event.phase != TickEvent.Phase.END || STEERED.isEmpty()) {
             return;
         }
-        SpellcraftConfig config = Spellcraft.config();
+        SpellcraftConfig config = ModConfigs.SPELLCRAFT;
         if (config == null) {
             STEERED.clear();
             ORBITING.clear();

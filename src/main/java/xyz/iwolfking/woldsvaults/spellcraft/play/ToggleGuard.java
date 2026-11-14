@@ -2,7 +2,6 @@ package xyz.iwolfking.woldsvaults.spellcraft.play;
 
 import iskallia.vault.skill.ability.effect.spi.core.Ability;
 import iskallia.vault.skill.ability.effect.spi.core.ToggleAbility;
-import iskallia.vault.skill.base.Skill;
 import iskallia.vault.skill.base.SkillContext;
 import iskallia.vault.skill.tree.AbilityTree;
 import net.minecraft.server.level.ServerPlayer;
@@ -16,13 +15,13 @@ import xyz.iwolfking.woldsvaults.spellcraft.spell.PlacedGlyph;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
 import xyz.iwolfking.woldsvaults.spellcraft.bar.EffectiveBar;
+import xyz.iwolfking.woldsvaults.spellcraft.ability.AbilityLookup;
 
 /**
  * Switches a toggle off when the spell that switched it on changes. Each activation records the bar slot that holds
@@ -39,7 +38,7 @@ public final class ToggleGuard {
 
     /** A toggle switched: on, it records the slot signature of its group; off, it forgets it. */
     public static void onToggle(ServerPlayer player, ToggleAbility ability) {
-        String group = groupOf(ability);
+        String group = AbilityLookup.groupOf(ability);
         if (group == null) {
             return;
         }
@@ -59,7 +58,7 @@ public final class ToggleGuard {
         }
         for (Map.Entry<String, String> entry : new ArrayList<>(active.entrySet())) {
             String group = entry.getKey();
-            Ability ability = SpellCooldowns.ability(tree, group);
+            Ability ability = AbilityLookup.ability(tree, group);
             if (!(ability instanceof ToggleAbility toggle) || !toggle.isActive()) {
                 active.remove(group);
                 continue;
@@ -117,12 +116,6 @@ public final class ToggleGuard {
     }
 
     @Nullable
-    private static String groupOf(Ability ability) {
-        Skill parent = ability.getParent();
-        Skill group = parent == null ? null : parent.getParent();
-        return group == null ? null : group.getId();
-    }
-
     @SubscribeEvent
     public static void onLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
         ACTIVE.remove(event.getPlayer().getUUID());

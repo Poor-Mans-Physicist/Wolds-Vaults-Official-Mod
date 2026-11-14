@@ -13,7 +13,6 @@ import iskallia.vault.gear.attribute.ability.special.base.template.value.FloatVa
 import iskallia.vault.gear.attribute.ability.special.base.template.value.IntValue;
 import iskallia.vault.skill.ability.effect.spi.core.Ability;
 import iskallia.vault.skill.base.Skill;
-import iskallia.vault.skill.base.TieredSkill;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
@@ -23,9 +22,7 @@ import net.minecraftforge.event.server.ServerStoppedEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import xyz.iwolfking.woldsvaults.WoldsVaults;
-import xyz.iwolfking.woldsvaults.spellcraft.ability.SpellAbility;
 import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
-import xyz.iwolfking.woldsvaults.spellcraft.Spellcraft;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.CastScope;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.DeferredReach;
 import xyz.iwolfking.woldsvaults.api.cast.CastContext;
@@ -47,6 +44,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.GlyphGrants;
 import xyz.iwolfking.woldsvaults.spellcraft.source.GearAffixLines;
+import xyz.iwolfking.woldsvaults.init.ModConfigs;
+import xyz.iwolfking.woldsvaults.spellcraft.ability.AbilityLookup;
+import xyz.iwolfking.woldsvaults.spellcraft.source.GlyphQuality;
 
 /**
  * Gear effects that became glyph grants (loadout spec sec. 6, 9.4). The table's {@code gearGlyphs} section names each
@@ -60,13 +60,12 @@ import xyz.iwolfking.woldsvaults.spellcraft.source.GearAffixLines;
  */
 @Mod.EventBusSubscriber(modid = WoldsVaults.MOD_ID)
 public final class ConvertedAffixes {
-    public static final String SPECIAL_MODIFICATION = "the_vault:ability_special_modification";
-    public static final String ABILITY_AREA = "the_vault:ability_area_of_effect_percent";
-    public static final String ABILITY_COOLDOWN = "the_vault:ability_cooldown_percent";
+    private static final String SPECIAL_MODIFICATION = "the_vault:ability_special_modification";
+    private static final String ABILITY_AREA = "the_vault:ability_area_of_effect_percent";
+    private static final String ABILITY_COOLDOWN = "the_vault:ability_cooldown_percent";
     private static final String RADIUS = "radius";
     private static final Object LISTENER_OWNER = new Object();
     private static final Map<UUID, Map<String, GlyphGrants>> TOGGLES = new ConcurrentHashMap<>();
-    private static final Set<String> REPORTED = ConcurrentHashMap.newKeySet();
     private static Index index;
 
     private ConvertedAffixes() {
@@ -88,7 +87,7 @@ public final class ConvertedAffixes {
     /** The table's gear glyph entries, or an empty list (logged once) when the section is missing. */
     public static List<SpellcraftConfig.GearGlyph> entries(SpellcraftConfig config) {
         if (config.gearGlyphs == null) {
-            reportOnce("missing", "Spellcraft: the focus augments table has no gearGlyphs section; converted gear affixes grant no glyphs "
+            WoldLogger.errorOnce("ConvertedAffixes:missing", "Spellcraft: the focus augments table has no gearGlyphs section; converted gear affixes grant no glyphs "
                     + "and stay switched off");
             return List.of();
         }
@@ -97,7 +96,7 @@ public final class ConvertedAffixes {
 
     @Nullable
     private static Index index() {
-        SpellcraftConfig config = Spellcraft.config();
+        SpellcraftConfig config = ModConfigs.SPELLCRAFT;
         if (config == null) {
             return null;
         }
@@ -119,12 +118,6 @@ public final class ConvertedAffixes {
         return current;
     }
 
-    /** Whether a keyed or special-modification affix of this attribute and key is converted (and so filtered from VH's reads). */
-    public static boolean isConverted(String attribute, @Nullable String key) {
-        Index current = index();
-        return current != null && current.convertedKeys().contains(attribute + "|" + key);
-    }
-
     /**
      * The unique glyphs in effect for an entity's ability reads: the open cast scope's step, else the deferred scope of
      * one of its spell steps (an entity it cast ticking, scheduled work), else the toggles a spell switched on. Clients and
@@ -134,7 +127,7 @@ public final class ConvertedAffixes {
         if (!(holder instanceof ServerPlayer player)) {
             return GlyphGrants.NONE;
         }
-        CastScope.Active scope = CastScope.current().filter(active -> active.player() == player).orElse(null);
+        CastScope.Active scope = CastScope.forPlayer(player);
         if (scope != null) {
             return scope.modifiers().grants();
         }
@@ -174,7 +167,7 @@ public final class ConvertedAffixes {
                 } else if (modification instanceof FloatRangeModification) {
                     result.add(new ConfiguredModification(modification, new FloatValue(value)));
                 } else {
-                    reportOnce("value:" + entry.key, "Spellcraft: special modification " + entry.key + " takes neither an int nor a float value; "
+                    WoldLogger.errorOnce("ConvertedAffixes:value:" + entry.key, "Spellcraft: special modification " + entry.key + " takes neither an int nor a float value; "
                             + type.displayName() + " grants nothing through it");
                 }
             }
@@ -187,7 +180,7 @@ public final class ConvertedAffixes {
         try {
             return SpecialAbilityModificationRegistry.getAbilityModification(new ResourceLocation(key));
         } catch (IllegalArgumentException e) {
-            reportOnce("special:" + key, "Spellcraft: gear glyph names special modification " + key + ", which is not registered; it grants nothing");
+            WoldLogger.errorOnce("ConvertedAffixes:special:" + key, "Spellcraft: gear glyph names special modification " + key + ", which is not registered; it grants nothing");
             return null;
         }
     }
@@ -211,7 +204,7 @@ public final class ConvertedAffixes {
                 }
                 SpellcraftConfig.Linked linked = linked(current.config(), type, entry.linked);
                 if (linked == null) {
-                    reportOnce("area_linked:" + type.id(), "Spellcraft: " + type.id() + " has no linked value " + entry.linked
+                    WoldLogger.errorOnce("ConvertedAffixes:area_linked:" + type.id(), "Spellcraft: " + type.id() + " has no linked value " + entry.linked
                             + "; its area change is not applied");
                     continue;
                 }
@@ -256,16 +249,16 @@ public final class ConvertedAffixes {
             return null;
         }
         GlyphGrants.Grant grant = carried(fireball, owner).get(GlyphType.STEEL_CORE);
-        SpellcraftConfig config = Spellcraft.config();
+        SpellcraftConfig config = ModConfigs.SPELLCRAFT;
         if (grant == null || config == null) {
             return null;
         }
         SpellcraftConfig.Linked radius = linked(config, GlyphType.STEEL_CORE, RADIUS);
         if (radius == null) {
-            reportOnce("steel_core_radius", "Spellcraft: Steel Core has no linked radius value in the table; its fireballs keep their radius");
+            WoldLogger.errorOnce("ConvertedAffixes:steel_core_radius", "Spellcraft: Steel Core has no linked radius value in the table; its fireballs keep their radius");
             return new SteelInfernoAttribute(1.0F, grant.potency());
         }
-        return new SteelInfernoAttribute(radius.min + (radius.max - radius.min) * grant.quality(), grant.potency());
+        return new SteelInfernoAttribute(GlyphQuality.linkedValue(radius, grant.quality()), grant.potency());
     }
 
     /** The grants of the spell step that cast {@code entity}, when {@code owner} cast it; none otherwise. */
@@ -293,7 +286,7 @@ public final class ConvertedAffixes {
 
     private static void noteToggle(ServerPlayer player, Ability ability) {
         Skill spec = ability.getParent();
-        CastScope.Active scope = CastScope.current().filter(active -> active.player() == player).orElse(null);
+        CastScope.Active scope = CastScope.forPlayer(player);
         if (spec == null || scope == null) {
             return;
         }
@@ -325,21 +318,11 @@ public final class ConvertedAffixes {
     }
 
     private static boolean toggleActive(ServerPlayer player, String spec) {
-        return SpellAbility.serverTree(player).getForId(spec)
-                .filter(TieredSkill.class::isInstance)
-                .map(TieredSkill.class::cast)
-                .filter(TieredSkill::isUnlocked)
-                .map(TieredSkill::getChild)
+        return AbilityLookup.unlockedChild(AbilityLookup.tree(player), spec)
                 .filter(Ability.class::isInstance)
                 .map(Ability.class::cast)
                 .map(Ability::isActive)
                 .orElse(false);
-    }
-
-    private static void reportOnce(String key, String message) {
-        if (REPORTED.add(key)) {
-            WoldLogger.error(message);
-        }
     }
 
     @SubscribeEvent

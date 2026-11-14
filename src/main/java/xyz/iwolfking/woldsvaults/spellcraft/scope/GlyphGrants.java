@@ -36,7 +36,7 @@ public final class GlyphGrants {
         Map<GlyphType, Grant> grants = null;
         for (PlacedGlyph glyph : glyphs) {
             SpellcraftConfig.GlyphDefinition definition = definitions.apply(glyph.type());
-            if (!glyph.active() || definition == null || !"unique".equals(definition.glyphClass)) {
+            if (!glyph.active() || definition == null || !definition.isUnique()) {
                 continue;
             }
             if (grants == null) {

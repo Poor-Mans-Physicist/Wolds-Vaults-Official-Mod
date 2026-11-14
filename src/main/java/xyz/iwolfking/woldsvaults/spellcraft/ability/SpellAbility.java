@@ -9,7 +9,6 @@ import iskallia.vault.skill.base.TieredSkill;
 import iskallia.vault.skill.source.SkillSource;
 import iskallia.vault.skill.tree.AbilityTree;
 import iskallia.vault.world.data.DownedPlayerManager;
-import iskallia.vault.world.data.PlayerAbilitiesData;
 import net.minecraft.server.level.ServerPlayer;
 
 import javax.annotation.Nullable;
@@ -40,36 +39,15 @@ public final class SpellAbility {
         return this.traits.contains(trait);
     }
 
-    /** Whether recipes can cast this ability: instants and toggles; holds keep their native key handling. */
-    public boolean isCastable() {
-        return has(AbilityTrait.INSTANT) || has(AbilityTrait.TOGGLE);
-    }
-
-    public static AbilityTree serverTree(ServerPlayer player) {
-        return PlayerAbilitiesData.get(player.getLevel()).getAbilities(player);
-    }
-
-    public Optional<TieredSkill> findSpecialization(AbilityTree tree) {
+    private Optional<TieredSkill> findSpecialization(AbilityTree tree) {
         if (tree == null) {
             return Optional.empty();
         }
         return tree.getForId(this.id).filter(TieredSkill.class::isInstance).map(TieredSkill.class::cast);
     }
 
-    public boolean isUnlocked(AbilityTree tree) {
-        return findSpecialization(tree).map(TieredSkill::isUnlocked).orElse(false);
-    }
-
-    /** Ticks until the ability's group cooldown ends (delay included), or 0 when it is ready. */
-    public int remainingCooldownTicks(AbilityTree tree) {
-        return findSpecialization(tree)
-                .flatMap(TieredSkill::getTreeCooldown)
-                .map(cooldown -> cooldown.getRemainingDelayTicks() + cooldown.getRemainingTicks())
-                .orElse(0);
-    }
-
     public Optional<Ability> findAbility(ServerPlayer player) {
-        return findSpecialization(serverTree(player))
+        return findSpecialization(AbilityLookup.tree(player))
                 .filter(TieredSkill::isUnlocked)
                 .map(TieredSkill::getChild)
                 .filter(Ability.class::isInstance)
@@ -78,7 +56,7 @@ public final class SpellAbility {
 
     /** One native key press on the player's own ability. With an origin, VH's skill source carries that position. */
     public CastResult cast(ServerPlayer player, @Nullable CastOrigin origin) {
-        AbilityTree tree = serverTree(player);
+        AbilityTree tree = AbilityLookup.tree(player);
         Class<? extends Ability> kind = has(AbilityTrait.TOGGLE) ? ToggleAbility.class : InstantAbility.class;
         Lookup<? extends Ability> lookup = lookup(tree, kind);
         if (lookup.failure() != null) {
@@ -111,7 +89,7 @@ public final class SpellAbility {
      * challenge curse disables the ability, as a key press would be.
      */
     public CastResult castExtra(ServerPlayer player, @Nullable CastOrigin origin) {
-        AbilityTree tree = serverTree(player);
+        AbilityTree tree = AbilityLookup.tree(player);
         Lookup<InstantAbility> lookup = lookup(tree, InstantAbility.class);
         if (lookup.failure() != null) {
             return lookup.failure();

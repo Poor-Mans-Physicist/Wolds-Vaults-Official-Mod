@@ -21,7 +21,6 @@ import xyz.iwolfking.woldsvaults.spellcraft.spell.PlacedGlyph;
 import xyz.iwolfking.woldsvaults.spellcraft.spell.SpellcraftRules;
 import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
 import xyz.iwolfking.woldsvaults.spellcraft.play.SpellBars;
-import xyz.iwolfking.woldsvaults.spellcraft.play.SpellCooldowns;
 import xyz.iwolfking.woldsvaults.spellcraft.source.EquippedSources;
 import xyz.iwolfking.woldsvaults.spellcraft.source.GlyphView;
 import xyz.iwolfking.woldsvaults.spellcraft.source.GlyphViewLine;
@@ -38,6 +37,8 @@ import iskallia.vault.init.ModGearAttributes;
 import iskallia.vault.world.data.DiscoveredModelsData;
 import net.minecraft.resources.ResourceLocation;
 import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
+import xyz.iwolfking.woldsvaults.init.ModConfigs;
+import xyz.iwolfking.woldsvaults.spellcraft.ability.AbilityLookup;
 import iskallia.vault.init.ModItems;
 import java.util.Locale;
 import net.minecraft.commands.SharedSuggestionProvider;
@@ -90,20 +91,20 @@ public final class SpellcraftCommand {
 
     private static int show(CommandSourceStack source) throws CommandSyntaxException {
         ServerPlayer player = source.getPlayerOrException();
-        SpellcraftConfig config = Spellcraft.config();
+        SpellcraftConfig config = ModConfigs.SPELLCRAFT;
         ItemStack stack = player.getOffhandItem();
         if (config == null || !SpellcraftItemData.has(stack)) {
             source.sendFailure(new TextComponent("Hold a focus or wand with spellcraft in your off hand"));
             return 0;
         }
         GlyphView view = EquippedSources.get(player).view(config, stack);
-        SpellcraftRules.ItemCheck check = SpellcraftRules.check(config, stack, view, SpellcraftRules.specOf(SpellCooldowns.tree(player)));
+        SpellcraftRules.ItemCheck check = SpellcraftRules.check(config, stack, view, AbilityLookup.specOf(AbilityLookup.tree(player)));
         line(source, "Arcana " + Math.round(check.arcana()) + "/" + SpellcraftItemData.budget(stack) + ", depth "
                 + SpellcraftItemData.depth(stack) + (check.budgetInactive() > 0 ? ", over budget: " + check.budgetInactive() + " glyphs inactive" : ""),
                 ChatFormatting.LIGHT_PURPLE);
         for (GlyphLine line : SpellcraftItemData.lines(stack)) {
             line(source, "  " + line.type().id() + "  potency " + String.format("%.3f", line.potency()) + "  cost " + line.cost()
-                    + "  up to " + SpellModel.perSpellLimit(config, line) + " per spell" + (line.transferable() ? "  transferable" : ""),
+                    + "  up to " + GlyphView.ownLimit(config, line) + " per spell" + (line.transferable() ? "  transferable" : ""),
                     ChatFormatting.GRAY);
         }
         for (StoredSpell spell : SpellcraftItemData.spells(stack)) {
@@ -127,7 +128,7 @@ public final class SpellcraftCommand {
 
     private static int view(CommandSourceStack source) throws CommandSyntaxException {
         ServerPlayer player = source.getPlayerOrException();
-        SpellcraftConfig config = Spellcraft.config();
+        SpellcraftConfig config = ModConfigs.SPELLCRAFT;
         if (config == null) {
             source.sendFailure(new TextComponent("The focus augments table is not loaded"));
             return 0;
@@ -198,8 +199,8 @@ public final class SpellcraftCommand {
 
     private static int reroll(CommandSourceStack source) throws CommandSyntaxException {
         ServerPlayer player = source.getPlayerOrException();
-        ItemStack stack = SpellcraftRoller.canCarry(player.getMainHandItem()) ? player.getMainHandItem() : player.getOffhandItem();
-        if (!SpellcraftRoller.canCarry(stack)) {
+        ItemStack stack = SpellcraftItemData.canCarry(player.getMainHandItem()) ? player.getMainHandItem() : player.getOffhandItem();
+        if (!SpellcraftItemData.canCarry(stack)) {
             source.sendFailure(new TextComponent("Hold a focus or wand"));
             return 0;
         }

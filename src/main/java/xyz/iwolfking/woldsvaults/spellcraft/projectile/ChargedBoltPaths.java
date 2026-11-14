@@ -9,13 +9,13 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import xyz.iwolfking.woldsvaults.spellcraft.Spellcraft;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.CastModifiers;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.CastScope;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.CastBilling;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.ShotgunShot;
 import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
 import xyz.iwolfking.woldsvaults.mixins.vaulthunters.accessors.ChargedBoltsAbilityInvoker;
+import xyz.iwolfking.woldsvaults.init.ModConfigs;
 
 import javax.annotation.Nullable;
 import java.util.HashMap;
@@ -40,7 +40,7 @@ public final class ChargedBoltPaths {
 
     public static void cast(ChargedBoltsAbility ability, ServerPlayer player, CastModifiers modifiers, @Nullable String spec,
                             @Nullable ShotgunShot shot) {
-        SpellcraftConfig config = Spellcraft.config();
+        SpellcraftConfig config = ModConfigs.SPELLCRAFT;
         ChargedBoltsAbilityInvoker invoker = (ChargedBoltsAbilityInvoker) ability;
         Vec3 look = player.getLookAngle().normalize();
         Vec3 start = player.getEyePosition().add(0.0, -SPAWN_DROP, 0.0).add(look.scale(SPAWN_FORWARD));
@@ -124,7 +124,7 @@ public final class ChargedBoltPaths {
         }
 
         private void steer() {
-            SpellcraftConfig config = Spellcraft.config();
+            SpellcraftConfig config = ModConfigs.SPELLCRAFT;
             if (config == null) {
                 return;
             }

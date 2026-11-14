@@ -40,6 +40,8 @@ import xyz.iwolfking.woldsvaults.spellcraft.scope.DeferredReach;
 import xyz.iwolfking.woldsvaults.spellcraft.buff.BuffGlyphs;
 import xyz.iwolfking.woldsvaults.spellcraft.cast.SpellScheduler;
 import xyz.iwolfking.woldsvaults.spellcraft.hit.ShotgunHits;
+import xyz.iwolfking.woldsvaults.spellcraft.cast.SpellMessages;
+import xyz.iwolfking.woldsvaults.spellcraft.ability.AbilityLookup;
 
 /**
  * Spellcraft: focuses and wands roll arcana, glyph lines and depth; their owner builds augmented spells from the glyphs
@@ -77,12 +79,7 @@ public final class Spellcraft {
         SpellcraftRoller.setUniqueSets(new UniqueSetRoller());
     }
 
-    @Nullable
-    public static SpellcraftConfig config() {
-        return ModConfigs.SPELLCRAFT;
-    }
-
-    public static boolean worksHere(SpellcraftConfig config, ServerPlayer player) {
+    private static boolean worksHere(SpellcraftConfig config, ServerPlayer player) {
         return config.worksOutsideVaults || player.getLevel().dimension().location().getNamespace().equals("the_vault");
     }
 
@@ -92,27 +89,27 @@ public final class Spellcraft {
      * groups is still cooling down refuses with the reason. Inactive glyphs never refuse: they are skipped.
      */
     public static void onSpellKey(ServerPlayer player, EffectiveBar bar, EffectiveBar.Slot slot, boolean down) {
-        SpellcraftConfig config = config();
+        SpellcraftConfig config = ModConfigs.SPELLCRAFT;
         SpellModel model = slot.model();
         if (config == null || model == null) {
             return;
         }
         if (!worksHere(config, player)) {
             if (!down) {
-                SpellCaster.showMessage(player, "Spells don't work here");
+                SpellMessages.show(player, "Spells don't work here");
             }
             return;
         }
-        String name = slot.spell() == null ? slot.group().replace('_', ' ') : slot.spell().name();
+        String name = slot.spell() == null ? AbilityLookup.groupName(slot.group()) : slot.spell().name();
         if (slot.locked()) {
             if (!down) {
-                SpellCaster.showMessage(player, "Slot " + (slot.index() + 1) + " is locked: " + slot.lockReason());
+                SpellMessages.show(player, "Slot " + (slot.index() + 1) + " is locked: " + slot.lockReason());
             }
             return;
         }
         if (!model.isValid()) {
             if (!down) {
-                SpellCaster.showMessage(player, "Can't cast " + name + ": " + model.errors().get(0));
+                SpellMessages.show(player, "Can't cast " + name + ": " + model.errors().get(0));
             }
             return;
         }
@@ -140,10 +137,10 @@ public final class Spellcraft {
      * cooldown sound and names the slowest group when it isn't the trigger.
      */
     private static boolean ready(ServerPlayer player, EffectiveBar.Slot slot) {
-        AbilityTree tree = SpellCooldowns.tree(player);
+        AbilityTree tree = AbilityLookup.tree(player);
         for (String group : slot.groups()) {
-            if (SpellCooldowns.ability(tree, group) == null) {
-                SpellCaster.showMessage(player, group.replace('_', ' ') + " is not learned");
+            if (AbilityLookup.ability(tree, group) == null) {
+                SpellMessages.show(player, AbilityLookup.groupName(group) + " is not learned");
                 return false;
             }
         }
@@ -153,7 +150,7 @@ public final class Spellcraft {
         }
         player.level.playSound(null, player.blockPosition(), ModSounds.ABILITY_ON_COOLDOWN, SoundSource.PLAYERS, 1.0F, 1.0F);
         if (!blocking.group().equals(slot.group())) {
-            SpellCaster.showMessage(player, blocking.group().replace('_', ' ') + ": " + Math.max(1, Math.round(blocking.ticks() / 20.0F)) + " s");
+            SpellMessages.show(player, AbilityLookup.groupName(blocking.group()) + ": " + Math.max(1, Math.round(blocking.ticks() / 20.0F)) + " s");
         }
         return false;
     }
@@ -164,7 +161,7 @@ public final class Spellcraft {
      * keeps its slot and priority.
      */
     public static void editSpell(ServerPlayer player, int inventorySlot, int spellId, String name, List<String> tokens, boolean delete) {
-        SpellcraftConfig config = config();
+        SpellcraftConfig config = ModConfigs.SPELLCRAFT;
         ItemStack stack = carrier(player, inventorySlot);
         if (config == null || stack == null) {
             return;
@@ -198,7 +195,7 @@ public final class Spellcraft {
      * it off the bar) and sets its priority (0 keeps it). Refused when another spell of the item already uses the slot.
      */
     public static void placeSpell(ServerPlayer player, int inventorySlot, int spellId, int barSlot, int prio) {
-        SpellcraftConfig config = config();
+        SpellcraftConfig config = ModConfigs.SPELLCRAFT;
         if (config == null) {
             WoldLogger.error("Spellcraft: no focus augments table; spell {} was not moved", spellId);
             return;
@@ -227,7 +224,7 @@ public final class Spellcraft {
     private static boolean store(ServerPlayer player, SpellcraftConfig config, ItemStack stack, List<StoredSpell> spells,
                                  String refusal) {
         GlyphView view = EquippedSources.get(player).view(config, stack);
-        SpellcraftRules.ItemCheck check = SpellcraftRules.checkEdit(config, stack, view, spells, SpellcraftRules.specOf(SpellCooldowns.tree(player)));
+        SpellcraftRules.ItemCheck check = SpellcraftRules.checkEdit(config, stack, view, spells, AbilityLookup.specOf(AbilityLookup.tree(player)));
         if (!check.isValid()) {
             refuse(player, refusal + check.errors().get(0));
             return false;
@@ -241,7 +238,7 @@ public final class Spellcraft {
             return null;
         }
         ItemStack stack = player.getInventory().getItem(inventorySlot);
-        if (!SpellcraftRoller.canCarry(stack) || !SpellcraftItemData.has(stack)) {
+        if (!SpellcraftItemData.canCarry(stack) || !SpellcraftItemData.has(stack)) {
             refuse(player, "That item has no spellcraft");
             return null;
         }

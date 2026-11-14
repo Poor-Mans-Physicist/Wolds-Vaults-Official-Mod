@@ -8,11 +8,12 @@ import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
 import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphStacking;
 import xyz.iwolfking.woldsvaults.spellcraft.spell.SpellModel;
 import xyz.iwolfking.woldsvaults.spellcraft.spell.PlacedGlyph;
+import xyz.iwolfking.woldsvaults.spellcraft.ability.SpellAbilities;
+import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphStats;
 
 /**
  * Which glyph stats do anything on a given step, so tooltips list only the side effects that apply
@@ -24,7 +25,6 @@ import xyz.iwolfking.woldsvaults.spellcraft.spell.PlacedGlyph;
  * always apply. A glyph with no ability context keeps every stat ({@link #ALL}).
  */
 public final class GlyphRelevance {
-    private static final Set<String> WARNED = ConcurrentHashMap.newKeySet();
 
     /** Whether a stat does anything here; {@code pooled} marks a common upside, which adds into the step's pool. */
     @FunctionalInterface
@@ -59,17 +59,17 @@ public final class GlyphRelevance {
         boolean costsMana = costsMana(config, model.steps());
         return (stat, pooled) -> {
             switch (stat) {
-                case "mana", "efficiency" -> {
+                case GlyphStats.MANA, GlyphStats.EFFICIENCY -> {
                     return costsMana;
                 }
-                case "cooldown", "haste" -> {
+                case GlyphStats.COOLDOWN, GlyphStats.HASTE -> {
                     return true;
                 }
                 default -> {
                 }
             }
             if (!GlyphStacking.STEP_STATS.contains(stat)) {
-                errorOnce("stat:" + stat, "Glyph relevance: unknown stat '{}'; it is listed as applying", stat);
+                WoldLogger.errorOnce("GlyphRelevance:stat:" + stat, "Glyph relevance: unknown stat '{}'; it is listed as applying", stat);
                 return true;
             }
             if (step instanceof SpellModel.Cast cast) {
@@ -77,8 +77,8 @@ public final class GlyphRelevance {
             }
             if (step instanceof SpellModel.Bundle bundle) {
                 return switch (stat) {
-                    case "speed", "scale" -> true;
-                    case "damage" -> damages(config, bundle.payload());
+                    case GlyphStats.SPEED, GlyphStats.SCALE -> true;
+                    case GlyphStats.DAMAGE -> damages(config, bundle.payload());
                     default -> false;
                 };
             }
@@ -89,23 +89,23 @@ public final class GlyphRelevance {
     /** Whether a step stat applies to an ability step casting {@code spec}. */
     public static boolean castApplies(SpellcraftConfig config, @Nullable String spec, String stat, boolean pooled) {
         if (spec == null) {
-            errorOnce("spec:null", "Glyph relevance: an ability step has no specialization; every glyph stat is listed for it");
+            WoldLogger.errorOnce("GlyphRelevance:spec:null", "Glyph relevance: an ability step has no specialization; every glyph stat is listed for it");
             return true;
         }
         Set<String> traits = SpellModel.traits(config, spec);
         boolean toggle = traits.contains("toggle");
-        boolean heal = BuffGlyphs.billsHealMana(spec);
+        boolean heal = SpellAbilities.isHeal(spec);
         boolean intensify = traits.contains("intensify");
         boolean extend = traits.contains("extend");
         return switch (stat) {
-            case "damage" -> hasHits(spec);
-            case "area" -> traits.contains("area");
-            case "speed" -> traits.contains("projectile") || traits.contains("path");
-            case "scale" -> traits.contains("projectile") || traits.contains("path") || traits.contains("bolt");
-            case "intensity" -> intensify;
-            case "duration" -> extend && !heal && (!toggle || pooled);
-            case "drain" -> (intensify || extend) && toggle;
-            case "heal_mana" -> heal;
+            case GlyphStats.DAMAGE -> hasHits(spec);
+            case GlyphStats.AREA -> traits.contains("area");
+            case GlyphStats.SPEED -> traits.contains("projectile") || traits.contains("path");
+            case GlyphStats.SCALE -> traits.contains("projectile") || traits.contains("path") || traits.contains("bolt");
+            case GlyphStats.INTENSITY -> intensify;
+            case GlyphStats.DURATION -> extend && !heal && (!toggle || pooled);
+            case GlyphStats.DRAIN -> (intensify || extend) && toggle;
+            case GlyphStats.HEAL_MANA -> heal;
             default -> true;
         };
     }
@@ -137,7 +137,7 @@ public final class GlyphRelevance {
     private static boolean hasHits(String spec) {
         List<OwnHits.Source> sources = OwnHits.sources(spec);
         if (sources == null) {
-            errorOnce("hits:" + spec, "Glyph relevance: spell hits has no entry for {}; damage is listed as applying", spec);
+            WoldLogger.errorOnce("GlyphRelevance:hits:" + spec, "Glyph relevance: spell hits has no entry for {}; damage is listed as applying", spec);
             return true;
         }
         return !sources.isEmpty();
@@ -145,7 +145,7 @@ public final class GlyphRelevance {
 
     private static boolean damages(SpellcraftConfig config, List<SpellModel.Step> steps) {
         for (SpellModel.Step step : steps) {
-            if (step instanceof SpellModel.Cast cast && castApplies(config, cast.spec(), "damage", false)) {
+            if (step instanceof SpellModel.Cast cast && castApplies(config, cast.spec(), GlyphStats.DAMAGE, false)) {
                 return true;
             }
             if (step instanceof SpellModel.Bundle bundle && damages(config, bundle.payload())) {
@@ -165,11 +165,5 @@ public final class GlyphRelevance {
             }
         }
         return false;
-    }
-
-    private static void errorOnce(String key, String message, Object... args) {
-        if (WARNED.add(key)) {
-            WoldLogger.error(message, args);
-        }
     }
 }

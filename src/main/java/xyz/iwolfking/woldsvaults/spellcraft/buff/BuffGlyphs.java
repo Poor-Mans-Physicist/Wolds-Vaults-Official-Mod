@@ -3,22 +3,21 @@ package xyz.iwolfking.woldsvaults.spellcraft.buff;
 import iskallia.vault.init.ModEffects;
 import iskallia.vault.skill.ability.effect.spi.core.ToggleAbility;
 import iskallia.vault.skill.base.Skill;
-import iskallia.vault.skill.base.TieredSkill;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.server.ServerStoppedEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import xyz.iwolfking.woldsvaults.spellcraft.ability.SpellAbility;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.CastModifiers;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.CastScope;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.DeferredGlyphs;
+import xyz.iwolfking.woldsvaults.spellcraft.ability.AbilityLookup;
+import xyz.iwolfking.woldsvaults.spellcraft.ability.SpellAbilities;
 
 import javax.annotation.Nullable;
 import java.util.Collections;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
@@ -34,7 +33,6 @@ import java.util.function.Supplier;
  * intensity and heal mana.
  */
 public final class BuffGlyphs {
-    private static final Set<String> HEALS = Set.of("Heal_Base", "Heal_Group");
     private static final Map<UUID, Map<String, Live>> BY_PLAYER = new ConcurrentHashMap<>();
     private static final Map<Skill, Live> BY_ABILITY = Collections.synchronizedMap(new WeakHashMap<>());
     private static final Map<String, Supplier<MobEffect>> TIMED_EFFECTS = Map.of(
@@ -56,7 +54,7 @@ public final class BuffGlyphs {
     public record Factors(float intensity, float duration, float durationUpside, float drain, float healMana) {
         public static final Factors NONE = new Factors(1.0F, 1.0F, 1.0F, 1.0F, 1.0F);
 
-        public boolean isNone() {
+        private boolean isNone() {
             return this.equals(NONE);
         }
     }
@@ -72,15 +70,10 @@ public final class BuffGlyphs {
         if (ability instanceof ToggleAbility) {
             return new Factors(modifiers.intensity(), 1.0F, modifiers.durationUpside(), modifiers.drain(), 1.0F);
         }
-        if (HEALS.contains(specOf(ability))) {
+        if (SpellAbilities.isHeal(specOf(ability))) {
             return new Factors(modifiers.intensity(), 1.0F, 1.0F, 1.0F, modifiers.healMana());
         }
         return new Factors(modifiers.intensity(), modifiers.duration(), 1.0F, 1.0F, 1.0F);
-    }
-
-    /** Whether a step casting {@code spec} bills its heal mana factor (Intensify on a heal costs mana, not duration). */
-    public static boolean billsHealMana(@Nullable String spec) {
-        return HEALS.contains(spec);
     }
 
     /** The factors of the spell step open right now for {@code ability} (its owner's own instance), or none. */
@@ -188,9 +181,7 @@ public final class BuffGlyphs {
         if (checkedScope != scope || checkedAbility != ability) {
             checkedScope = scope;
             checkedAbility = ability;
-            checkedBelongs = SpellAbility.serverTree(player).getForId(scope.spec())
-                    .filter(TieredSkill.class::isInstance).map(TieredSkill.class::cast)
-                    .map(TieredSkill::getChild).orElse(null) == ability;
+            checkedBelongs = AbilityLookup.child(AbilityLookup.tree(player), scope.spec()).orElse(null) == ability;
         }
         return checkedBelongs;
     }

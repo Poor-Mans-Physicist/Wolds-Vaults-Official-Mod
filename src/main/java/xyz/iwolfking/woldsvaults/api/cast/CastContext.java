@@ -3,7 +3,6 @@ package xyz.iwolfking.woldsvaults.api.cast;
 import iskallia.vault.block.entity.LandmineBlockEntity;
 import iskallia.vault.block.entity.TotemTileEntity;
 import iskallia.vault.skill.base.Skill;
-import iskallia.vault.skill.base.TieredSkill;
 import iskallia.vault.world.data.PlayerAbilitiesData;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
@@ -29,6 +28,7 @@ import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
+import xyz.iwolfking.woldsvaults.spellcraft.ability.AbilityLookup;
 
 /**
  * Tracks which ability cast is running. A cast pushes its {@link CastTag} for its own call; entities
@@ -171,8 +171,7 @@ public final class CastContext {
         if (owner == null) {
             return null;
         }
-        Skill skill = PlayerAbilitiesData.get(level).getAbilities(owner).getForId(glyphs.spec())
-                .filter(TieredSkill.class::isInstance).map(TieredSkill.class::cast).map(TieredSkill::getChild).orElse(null);
+        Skill skill = AbilityLookup.child(PlayerAbilitiesData.get(level).getAbilities(owner), glyphs.spec()).orElse(null);
         if (skill == null) {
             WoldLogger.error("Deferred glyphs: {} at {} was placed by {} but {} has no such ability now; the glyphs are dropped.",
                     blockEntity.getClass().getSimpleName(), blockEntity.getBlockPos(), glyphs.spec(), owner.getScoreboardName());

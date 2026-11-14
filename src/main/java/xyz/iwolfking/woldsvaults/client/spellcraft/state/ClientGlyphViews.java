@@ -34,14 +34,6 @@ public final class ClientGlyphViews {
         return GlyphView.of(config, SpellcraftItemData.key(stack), stack.getHoverName().getString(), GlyphLineProviders.own(stack), SHARED);
     }
 
-    public static GlyphView autoLines(SpellcraftConfig config) {
-        return GlyphView.best(config, AUTO);
-    }
-
-    public static List<GlyphCandidate> shared() {
-        return SHARED;
-    }
-
     public static void reset() {
         SHARED.clear();
         AUTO.clear();

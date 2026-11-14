@@ -73,10 +73,6 @@ public final class OwnHits {
         return TABLE.get(spec);
     }
 
-    public static Map<String, List<Source>> table() {
-        return TABLE;
-    }
-
     /**
      * Whether this hurt is one of {@code spec}'s own hits. A null spec (a Bundled Spell orb's step) has none. A spec
      * the table lacks logs an error once and gets no glyph damage. The first hit of each other kind seen inside a
@@ -136,7 +132,7 @@ public final class OwnHits {
     }
 
     /** {@link #isOwnHit} without the log of skipped hits. */
-    public static boolean matchesOwnHit(@Nullable String spec, DamageSource source) {
+    static boolean matchesOwnHit(@Nullable String spec, DamageSource source) {
         return matchesOwnHit(spec, source, null);
     }
 

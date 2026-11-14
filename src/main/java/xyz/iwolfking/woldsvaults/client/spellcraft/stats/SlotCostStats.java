@@ -14,6 +14,7 @@ import xyz.iwolfking.woldsvaults.init.ModConfigs;
 import xyz.iwolfking.woldsvaults.mixins.vaulthunters.gods.idona.ManaCostHelperAccessor;
 import xyz.iwolfking.woldsvaults.spellcraft.play.SpellCooldowns;
 import xyz.iwolfking.woldsvaults.spellcraft.haste.SpellHaste;
+import xyz.iwolfking.woldsvaults.spellcraft.ability.AbilityLookup;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -44,7 +45,7 @@ public final class SlotCostStats {
     }
 
     /** An instant ability's mana cost after VH's mana attributes, or -1 for toggles and holds. */
-    public static float mana(Ability ability) {
+    private static float mana(Ability ability) {
         LocalPlayer player = player();
         if (player == null || !(ability instanceof InstantManaAbility instant)) {
             return -1.0F;
@@ -55,7 +56,7 @@ public final class SlotCostStats {
     }
 
     /** An ability's cooldown in ticks after the player's haste and per-ability cooldown attributes. */
-    public static int cooldown(Ability ability) {
+    private static int cooldown(Ability ability) {
         LocalPlayer player = player();
         return player == null ? ability.getCooldownTicks() : CooldownHelper.adjustCooldown(player, ability, ability.getCooldownTicks());
     }
@@ -63,7 +64,7 @@ public final class SlotCostStats {
     /** A plain spell: VH's mana, and the cooldown before and after haste. Null when the ability isn't learned. */
     @Nullable
     public static Numbers plain(AbilityTree tree, String group) {
-        Ability ability = SpellCooldowns.ability(tree, group);
+        Ability ability = AbilityLookup.ability(tree, group);
         if (ability == null) {
             return null;
         }
@@ -80,7 +81,7 @@ public final class SlotCostStats {
         }
         float mana = -1.0F;
         for (String group : model.groups()) {
-            Ability ability = SpellCooldowns.ability(tree, group);
+            Ability ability = AbilityLookup.ability(tree, group);
             float cost = ability == null ? -1.0F : mana(ability);
             if (cost >= 0.0F) {
                 mana = Math.max(0.0F, mana) + cost;
@@ -94,7 +95,7 @@ public final class SlotCostStats {
     private static int chain(SpellcraftConfig config, AbilityTree tree, Collection<String> groups) {
         List<Integer> adjusted = new ArrayList<>();
         for (String group : groups) {
-            Ability ability = SpellCooldowns.ability(tree, group);
+            Ability ability = AbilityLookup.ability(tree, group);
             if (ability != null) {
                 adjusted.add(cooldown(ability));
             }

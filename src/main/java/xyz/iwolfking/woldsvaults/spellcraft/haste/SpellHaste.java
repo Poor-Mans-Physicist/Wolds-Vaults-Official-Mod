@@ -35,7 +35,7 @@ public final class SpellHaste {
     }
 
     /** Uncapped haste: gear, talents and every other source, Cufflinks, and the player stat event. */
-    public static float raw(LivingEntity entity) {
+    private static float raw(LivingEntity entity) {
         return CooldownHelper.getCooldownMultiplierUnlimited(entity);
     }
 

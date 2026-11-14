@@ -3,8 +3,8 @@ package xyz.iwolfking.woldsvaults.network.packets;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkEvent;
-import xyz.iwolfking.woldsvaults.spellcraft.cast.SpellCaster;
 import xyz.iwolfking.woldsvaults.spellcraft.play.SpellBars;
+import xyz.iwolfking.woldsvaults.spellcraft.cast.SpellMessages;
 
 import java.util.function.Supplier;
 
@@ -27,7 +27,7 @@ public record SpellBarEditMessage(int slot, String value) {
             }
             String error = SpellBars.editDefault(player, message.slot, message.value);
             if (error != null) {
-                SpellCaster.showMessage(player, "Spell bar: " + error);
+                SpellMessages.show(player, "Spell bar: " + error);
             }
         });
         context.get().setPacketHandled(true);

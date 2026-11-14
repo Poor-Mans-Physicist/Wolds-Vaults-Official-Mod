@@ -16,7 +16,6 @@ import xyz.iwolfking.woldsvaults.WoldsVaults;
 import xyz.iwolfking.woldsvaults.api.cast.CastContext;
 import xyz.iwolfking.woldsvaults.api.cast.CastTag;
 import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
-import xyz.iwolfking.woldsvaults.spellcraft.ability.SpellAbility;
 import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.CastScope;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.DeferredGlyphs;
@@ -24,11 +23,11 @@ import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
 import xyz.iwolfking.woldsvaults.spellcraft.source.EquippedSources;
 import xyz.iwolfking.woldsvaults.spellcraft.source.GlyphViewLine;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.GlyphGrants;
+import xyz.iwolfking.woldsvaults.spellcraft.ability.AbilityLookup;
 
 import javax.annotation.Nullable;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -47,7 +46,6 @@ public final class LingeringBuffs {
     private static final Object LISTENER_OWNER = new Object();
     private static final Map<UUID, Map<String, Source>> NOTES = new ConcurrentHashMap<>();
     private static final Map<UUID, Map<BlockPos, Cover>> COVERS = new ConcurrentHashMap<>();
-    private static final Set<String> REPORTED = ConcurrentHashMap.newKeySet();
     private static final long COVER_TICKS = 5L;
 
     private LingeringBuffs() {
@@ -78,11 +76,11 @@ public final class LingeringBuffs {
     private static void note(ServerPlayer player, Ability ability) {
         String group = groupOf(ability.getParent());
         if (group == null) {
-            reportOnce("group:" + ability.getClass().getSimpleName(), "Spellcraft: an ability cast (" + ability.getClass().getSimpleName()
+            WoldLogger.errorOnce("LingeringBuffs:group:" + ability.getClass().getSimpleName(), "Spellcraft: an ability cast (" + ability.getClass().getSimpleName()
                     + ") has no ability group; its lingering buffs keep no cast note and read the gear auto line");
             return;
         }
-        CastScope.Active scope = CastScope.current().filter(active -> active.player() == player).orElse(null);
+        CastScope.Active scope = CastScope.forPlayer(player);
         Source source = new Source(scope == null ? null : scope.modifiers().grants());
         NOTES.computeIfAbsent(player.getUUID(), id -> new ConcurrentHashMap<>()).put(group, source);
     }
@@ -106,7 +104,7 @@ public final class LingeringBuffs {
 
     private static Resolution fromNote(ServerPlayer player, GlyphType type, String spec, SpellcraftConfig config) {
         Map<String, Source> notes = NOTES.get(player.getUUID());
-        String group = SpellAbility.serverTree(player).getForId(spec).map(LingeringBuffs::groupOf).orElse(spec);
+        String group = AbilityLookup.tree(player).getForId(spec).map(LingeringBuffs::groupOf).orElse(spec);
         Source source = notes == null ? null : notes.get(group);
         if (source == null) {
             return Resolution.UNKNOWN;
@@ -157,12 +155,6 @@ public final class LingeringBuffs {
         }
         Skill group = spec.getParent();
         return group instanceof SpecializedSkill && group.getId() != null ? group.getId() : spec.getId();
-    }
-
-    private static void reportOnce(String key, String message) {
-        if (REPORTED.add(key)) {
-            WoldLogger.error(message);
-        }
     }
 
     @SubscribeEvent

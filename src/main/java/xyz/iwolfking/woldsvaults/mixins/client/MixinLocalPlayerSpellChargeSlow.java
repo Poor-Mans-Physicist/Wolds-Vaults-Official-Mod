@@ -5,10 +5,10 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.Constant;
 import org.spongepowered.asm.mixin.injection.ModifyConstant;
-import xyz.iwolfking.woldsvaults.spellcraft.Spellcraft;
-import xyz.iwolfking.woldsvaults.spellcraft.roll.SpellcraftRoller;
 import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
 import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
+import xyz.iwolfking.woldsvaults.init.ModConfigs;
+import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
 
 @Mixin(LocalPlayer.class)
 public abstract class MixinLocalPlayerSpellChargeSlow {
@@ -23,10 +23,10 @@ public abstract class MixinLocalPlayerSpellChargeSlow {
     @ModifyConstant(method = "aiStep", constant = @Constant(floatValue = 0.2F), require = 2)
     private float woldsvaults$spellChargeSlow(float slow) {
         LocalPlayer player = (LocalPlayer) (Object) this;
-        if (!player.isUsingItem() || !SpellcraftRoller.canCarry(player.getUseItem())) {
+        if (!player.isUsingItem() || !SpellcraftItemData.canCarry(player.getUseItem())) {
             return slow;
         }
-        SpellcraftConfig config = Spellcraft.config();
+        SpellcraftConfig config = ModConfigs.SPELLCRAFT;
         if (config == null) {
             if (!woldsvaults$loggedMissingTable) {
                 woldsvaults$loggedMissingTable = true;

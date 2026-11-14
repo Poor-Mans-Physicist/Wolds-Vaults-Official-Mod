@@ -52,10 +52,6 @@ public final class SpellCharge {
         return Math.min(1.0F, charging.held()[0] / (float) charging.fullTicks());
     }
 
-    public static boolean isCharging(ServerPlayer player) {
-        return CHARGING.containsKey(player.getUUID());
-    }
-
     private static void stop(ServerPlayer player) {
         Charging charging = CHARGING.remove(player.getUUID());
         if (charging != null && player.isUsingItem() && player.getUsedItemHand() == charging.hand()) {

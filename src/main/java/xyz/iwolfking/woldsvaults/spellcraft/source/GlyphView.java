@@ -35,7 +35,7 @@ public final class GlyphView {
     }
 
     /** The per-spell limit a borrowed line lends: never its own cap override, only the type's cap. */
-    public static int borrowedLimit(SpellcraftConfig config, GlyphLine line) {
+    private static int borrowedLimit(SpellcraftConfig config, GlyphLine line) {
         return Math.max(0, Math.min(config.glyph(line.type()).capPerSpell, line.uses()));
     }
 

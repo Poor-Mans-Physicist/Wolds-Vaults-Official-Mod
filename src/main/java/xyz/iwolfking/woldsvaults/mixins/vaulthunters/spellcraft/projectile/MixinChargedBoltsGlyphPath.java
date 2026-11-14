@@ -15,9 +15,10 @@ public abstract class MixinChargedBoltsGlyphPath {
     /** Inside a spell cast, Charged Bolts fly the spellcraft path, which carries the step's glyphs; otherwise VH's own. */
     @Inject(method = "castBolts", at = @At("HEAD"), cancellable = true)
     private void woldsvaults$glyphedBolts(ServerPlayer player, CallbackInfo ci) {
-        CastScope.current().filter(active -> active.player() == player).ifPresent(active -> {
+        CastScope.Active active = CastScope.forPlayer(player);
+        if (active != null) {
             ChargedBoltPaths.cast((ChargedBoltsAbility) (Object) this, player, active.modifiers(), active.spec(), active.shot());
             ci.cancel();
-        });
+        }
     }
 }

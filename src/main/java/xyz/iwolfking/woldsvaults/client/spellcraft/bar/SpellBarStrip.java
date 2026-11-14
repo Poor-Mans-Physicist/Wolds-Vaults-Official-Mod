@@ -24,13 +24,10 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import xyz.iwolfking.woldsvaults.spellcraft.Spellcraft;
 import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
 import xyz.iwolfking.woldsvaults.spellcraft.item.StoredSpell;
-import xyz.iwolfking.woldsvaults.spellcraft.roll.SpellcraftRoller;
 import xyz.iwolfking.woldsvaults.client.spellcraft.stats.GlyphRelevance;
 import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphStacking;
-import xyz.iwolfking.woldsvaults.spellcraft.spell.SpellcraftRules;
 import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
 import xyz.iwolfking.woldsvaults.init.ModNetwork;
 import xyz.iwolfking.woldsvaults.network.packets.SpellPlaceMessage;
@@ -39,6 +36,8 @@ import xyz.iwolfking.woldsvaults.client.spellcraft.gui.SpellcraftGui;
 import xyz.iwolfking.woldsvaults.client.spellcraft.state.ClientSpellBar;
 import xyz.iwolfking.woldsvaults.client.spellcraft.stats.SlotCostStats;
 import xyz.iwolfking.woldsvaults.client.spellcraft.stats.StepStats;
+import xyz.iwolfking.woldsvaults.init.ModConfigs;
+import xyz.iwolfking.woldsvaults.spellcraft.ability.AbilityLookup;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -68,9 +67,9 @@ public final class SpellBarStrip {
     public static final int HEIGHT = 24;
     public static final int BAND = 27;
     public static final int PICK = 20;
-    public static final int SLOT_PITCH = 18;
-    public static final int KEYS_W = 32;
-    public static final int KEYS_H = 16;
+    private static final int SLOT_PITCH = 18;
+    private static final int KEYS_W = 32;
+    private static final int KEYS_H = 16;
     public static final float KEY_SCALE = 0.75F;
     private static final int POPUP_ROW = 12;
     private static final int POPUP_MAX_ROWS = 10;
@@ -82,8 +81,8 @@ public final class SpellBarStrip {
     private static final int COOLING = 0x90000000;
     private static final int LOCK = 0xFFFF5050;
     private static final int IMPLICIT_RING = 0xFFE0B040;
-    public static final int BADGE = 8;
-    public static final int WRAP = 200;
+    private static final int BADGE = 8;
+    private static final int WRAP = 200;
     private static final int POPUP_BG = 0xF0100010;
     private static final int POPUP_HOVER = 0x405000FF;
 
@@ -140,12 +139,8 @@ public final class SpellBarStrip {
         return this.view;
     }
 
-    public boolean showingEffective() {
-        return this.view != null && this.view.isEffective();
-    }
-
     /** Whether the player last picked the focus bar (kept while no focus bar is available). */
-    public boolean prefersEffective() {
+    boolean prefersEffective() {
         return this.showEffective;
     }
 
@@ -173,7 +168,7 @@ public final class SpellBarStrip {
             drawPicker(pose, 1, view.isEffective(), item.stack());
         }
         AbilityTree tree = this.host.tree();
-        Function<String, String> specOf = SpellcraftRules.specOf(tree);
+        Function<String, String> specOf = AbilityLookup.specOf(tree);
         int room = (int) ((16 - 1) / KEY_SCALE);
         for (int i = 0; i < SpellcraftItemData.SLOTS; i++) {
             int x = slotX(this.x0, i);
@@ -340,7 +335,7 @@ public final class SpellBarStrip {
     private List<Component> slotTooltip(SpellBarView view, int index) {
         List<Component> lines = new ArrayList<>();
         AbilityTree tree = this.host.tree();
-        SpellcraftConfig config = Spellcraft.config();
+        SpellcraftConfig config = ModConfigs.SPELLCRAFT;
         SpellBarView.Slot slot = view.slot(index);
         switch (slot.state()) {
             case ABILITY -> {
@@ -744,10 +739,10 @@ public final class SpellBarStrip {
             return choices;
         }
         ItemStack stack = player.getInventory().getItem(Inventory.SLOT_OFFHAND);
-        if (!SpellcraftRoller.canCarry(stack) || !SpellcraftItemData.has(stack)) {
+        if (!SpellcraftItemData.canCarry(stack) || !SpellcraftItemData.has(stack)) {
             return choices;
         }
-        Function<String, String> specOf = SpellcraftRules.specOf(tree);
+        Function<String, String> specOf = AbilityLookup.specOf(tree);
         for (StoredSpell spell : SpellcraftItemData.spells(stack)) {
             String spec = specOf.apply(spell.trigger());
             String label = spell.assigned() ? SpellcraftGui.tr("picker.spell_on", spell.name(), spell.slot() + 1) : SpellcraftGui.tr("picker.spell", spell.name());
@@ -785,10 +780,6 @@ public final class SpellBarStrip {
 
     public boolean popupOpen() {
         return this.popupSlot >= 0;
-    }
-
-    public void closePopup() {
-        this.popupSlot = -1;
     }
 
     private static void click() {

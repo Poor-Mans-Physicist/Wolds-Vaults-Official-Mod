@@ -118,7 +118,7 @@ public enum GlyphType {
     }
 
     public boolean isModifier(SpellcraftConfig config) {
-        return "modifier".equals(config.glyph(this).kind);
+        return config.glyph(this).isModifier();
     }
 
     /**

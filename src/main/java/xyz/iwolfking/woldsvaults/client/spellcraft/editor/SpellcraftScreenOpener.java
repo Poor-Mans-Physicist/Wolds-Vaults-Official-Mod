@@ -11,7 +11,6 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import xyz.iwolfking.woldsvaults.WoldsVaults;
 import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
-import xyz.iwolfking.woldsvaults.spellcraft.roll.SpellcraftRoller;
 
 /**
  * Right-clicking a focus or wand with spellcraft in a player-inventory slot of any container screen, with nothing on
@@ -34,7 +33,7 @@ public final class SpellcraftScreenOpener {
             return;
         }
         ItemStack stack = slot.getItem();
-        if (!SpellcraftRoller.canCarry(stack) || !SpellcraftItemData.has(stack)) {
+        if (!SpellcraftItemData.canCarry(stack) || !SpellcraftItemData.has(stack)) {
             return;
         }
         event.setCanceled(true);

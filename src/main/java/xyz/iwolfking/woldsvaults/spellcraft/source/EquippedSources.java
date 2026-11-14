@@ -26,14 +26,12 @@ import net.minecraftforge.network.PacketDistributor;
 import xyz.iwolfking.woldsvaults.WoldsVaults;
 import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
 import xyz.iwolfking.woldsvaults.spellcraft.item.GlyphLine;
-import xyz.iwolfking.woldsvaults.spellcraft.roll.SpellcraftRoller;
 import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
 import xyz.iwolfking.woldsvaults.init.ModNetwork;
 import xyz.iwolfking.woldsvaults.network.packets.GlyphViewSyncMessage;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -43,7 +41,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
-import xyz.iwolfking.woldsvaults.spellcraft.Spellcraft;
+import xyz.iwolfking.woldsvaults.init.ModConfigs;
 
 /**
  * A player's glyph sources: the equipped items VH itself counts for the attribute snapshot (intended slot, not broken,
@@ -57,7 +55,6 @@ public final class EquippedSources {
     private static final int SYNC_TICKS = 4;
     private static final Map<UUID, Cached> CACHE = new HashMap<>();
     private static final Map<UUID, String> SENT = new HashMap<>();
-    private static final Set<String> REPORTED = Collections.synchronizedSet(new HashSet<>());
 
     private EquippedSources() {
     }
@@ -109,7 +106,7 @@ public final class EquippedSources {
         }
 
         @Nullable
-        public Equipped arcanaItem(String key) {
+        private Equipped arcanaItem(String key) {
             for (Equipped equipped : this.arcana) {
                 if (equipped.key().equals(key)) {
                     return equipped;
@@ -175,11 +172,12 @@ public final class EquippedSources {
             InteractionHand hand = slot == EquipmentSlot.MAINHAND ? InteractionHand.MAIN_HAND
                     : slot == EquipmentSlot.OFFHAND ? InteractionHand.OFF_HAND : null;
             String slotName = slot.getName();
-            if (SpellcraftRoller.canCarry(stack)) {
+            if (SpellcraftItemData.canCarry(stack)) {
                 if (SpellcraftItemData.has(stack) && VaultGearData.read(stack).getState() == VaultGearState.IDENTIFIED) {
                     String key = SpellcraftItemData.key(stack);
                     if (!keys.add(key)) {
-                        report("duplicate:" + key, "Spellcraft: two equipped items share the spellcraft id " + key + "; the one in "
+                        WoldLogger.errorOnce("EquippedSources:" + ("duplicate:" + key).toLowerCase(Locale.ROOT),
+                                "Spellcraft: two equipped items share the spellcraft id " + key + "; the one in "
                                 + slotName + " is ignored as a glyph source");
                         continue;
                     }
@@ -198,7 +196,7 @@ public final class EquippedSources {
                 }
             }
         });
-        SpellcraftConfig config = Spellcraft.config();
+        SpellcraftConfig config = ModConfigs.SPELLCRAFT;
         Map<String, List<GlyphLine>> own = new LinkedHashMap<>();
         List<GlyphCandidate> shared = new ArrayList<>();
         List<GlyphCandidate> auto = new ArrayList<>();
@@ -211,10 +209,11 @@ public final class EquippedSources {
                     shared.add(new GlyphCandidate(line.line(), source.key(), source.name()));
                 }
                 if (line.auto()) {
-                    if (config != null && "unique".equals(config.glyph(line.line().type()).glyphClass)) {
+                    if (config != null && config.glyph(line.line().type()).isUnique()) {
                         auto.add(new GlyphCandidate(line.line(), source.key(), source.name()));
                     } else if (config != null) {
-                        report("auto:" + line.line().type().id(), "Spellcraft: a glyph provider offered " + line.line().type().id()
+                        WoldLogger.errorOnce("EquippedSources:" + ("auto:" + line.line().type().id()).toLowerCase(Locale.ROOT),
+                                "Spellcraft: a glyph provider offered " + line.line().type().id()
                                 + " as an auto glyph, but only unique glyphs auto-apply; it is only lent to arcana items");
                     }
                 }
@@ -250,14 +249,8 @@ public final class EquippedSources {
         return !(stack.getItem() instanceof IVaultUsesItem) || VaultUsesHelper.isUsable(stack, player);
     }
 
-    private static void report(String key, String message) {
-        if (REPORTED.add(key.toLowerCase(Locale.ROOT))) {
-            WoldLogger.error(message);
-        }
-    }
-
     /** Sends the player's glyph candidates to their client when they changed since the last send. */
-    public static void sync(ServerPlayer player) {
+    private static void sync(ServerPlayer player) {
         Snapshot snapshot = get(player);
         GlyphViewSyncMessage message = new GlyphViewSyncMessage(snapshot.shared(), snapshot.auto());
         String signature = message.signature();

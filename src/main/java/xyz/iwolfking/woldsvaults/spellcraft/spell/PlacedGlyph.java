@@ -1,6 +1,11 @@
 package xyz.iwolfking.woldsvaults.spellcraft.spell;
 
+import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
+import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphStacking;
 import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
+
+import java.util.List;
+import java.util.function.Function;
 
 /**
  * One placed glyph with its view line's potency, quality and cost, its state, and its token index in the spell.
@@ -13,5 +18,17 @@ public record PlacedGlyph(GlyphType type, float potency, float quality, int cost
 
     boolean potential() {
         return this.state != GlyphState.DORMANT;
+    }
+
+    /** The stacked step stats of a step's active glyphs, before Shotgun's per-copy damage and the size clamp. */
+    public static GlyphStacking.Pool pool(Function<GlyphType, SpellcraftConfig.GlyphDefinition> definitions, List<PlacedGlyph> glyphs) {
+        GlyphStacking.Pool pool = new GlyphStacking.Pool();
+        for (PlacedGlyph glyph : glyphs) {
+            if (glyph.active()) {
+                SpellcraftConfig.GlyphDefinition definition = definitions.apply(glyph.type());
+                pool.add(definition, definition.step, glyph.potency());
+            }
+        }
+        return pool;
     }
 }

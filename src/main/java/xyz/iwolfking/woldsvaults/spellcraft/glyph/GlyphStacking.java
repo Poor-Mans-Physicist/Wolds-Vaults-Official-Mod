@@ -18,11 +18,12 @@ import java.util.Set;
  * Spell mana is further divided by the spell's efficiency total.
  */
 public final class GlyphStacking {
-    public static final List<String> STEP_STATS = List.of("damage", "area", "speed", "scale", "intensity", "duration", "drain", "heal_mana");
-    public static final List<String> SPELL_STATS = List.of("mana", "cooldown", "haste", "efficiency");
+    public static final List<String> STEP_STATS = List.of(GlyphStats.DAMAGE, GlyphStats.AREA, GlyphStats.SPEED, GlyphStats.SCALE,
+            GlyphStats.INTENSITY, GlyphStats.DURATION, GlyphStats.DRAIN, GlyphStats.HEAL_MANA);
+    public static final List<String> SPELL_STATS = List.of(GlyphStats.MANA, GlyphStats.COOLDOWN, GlyphStats.HASTE, GlyphStats.EFFICIENCY);
     public static final List<String> CLASSES = List.of("common", "special", "unique", "utility");
     public static final List<String> ROLES = List.of("upside", "downside", "cost");
-    private static final Set<String> LOWER_IS_BETTER = Set.of("mana", "cooldown", "drain", "heal_mana");
+    private static final Set<String> LOWER_IS_BETTER = Set.of(GlyphStats.MANA, GlyphStats.COOLDOWN, GlyphStats.DRAIN, GlyphStats.HEAL_MANA);
 
     private GlyphStacking() {
     }
@@ -38,7 +39,7 @@ public final class GlyphStacking {
 
     /** Whether this effect of a glyph of this class goes into the additive pool rather than multiplying. */
     public static boolean pooled(SpellcraftConfig.GlyphDefinition glyph, SpellcraftConfig.Effect effect) {
-        return "common".equals(glyph.glyphClass) && "upside".equals(effect.role);
+        return glyph.isCommon() && "upside".equals(effect.role);
     }
 
     /** One stat's parts: the summed pool of common upsides, the per-copy product, and the special product. */
@@ -70,7 +71,7 @@ public final class GlyphStacking {
         }
 
         /** The product of the favourable factors among the multiplying (non-pooled) effects. */
-        public float relief() {
+        private float relief() {
             return this.relief;
         }
 
@@ -109,7 +110,7 @@ public final class GlyphStacking {
                 if (favourable(effect.stat, factor)) {
                     stat.relief *= factor;
                 }
-                if ("special".equals(glyph.glyphClass) || "unique".equals(glyph.glyphClass)) {
+                if (glyph.isSpecial() || glyph.isUnique()) {
                     stat.special *= factor;
                 } else {
                     stat.perCopy *= factor;
@@ -134,7 +135,7 @@ public final class GlyphStacking {
 
         /** Spell mana: the mana stat divided by the efficiency total. */
         public float mana() {
-            return total("mana") / total("efficiency");
+            return total(GlyphStats.MANA) / total(GlyphStats.EFFICIENCY);
         }
     }
 }

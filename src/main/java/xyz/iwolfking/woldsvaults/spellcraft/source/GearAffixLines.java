@@ -11,10 +11,8 @@ import iskallia.vault.gear.attribute.ability.special.base.template.value.IntValu
 import iskallia.vault.gear.attribute.type.VaultGearAttributeTypeMerger;
 import iskallia.vault.gear.data.AttributeGearData;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemStack;
 import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
-import xyz.iwolfking.woldsvaults.spellcraft.Spellcraft;
 import xyz.iwolfking.woldsvaults.spellcraft.item.GlyphLine;
 import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
 import xyz.iwolfking.woldsvaults.modifiers.gear.unique.SteelInfernoAttribute;
@@ -25,10 +23,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
 import xyz.iwolfking.woldsvaults.spellcraft.gear.ConvertedAffixes;
+import xyz.iwolfking.woldsvaults.init.ModConfigs;
 
 /**
  * The glyph lines converted gear affixes grant (loadout spec sec. 6): every value of a {@code gearGlyphs} attribute on
@@ -39,7 +36,6 @@ import xyz.iwolfking.woldsvaults.spellcraft.gear.ConvertedAffixes;
  * multiplier in the glyph's linked radius range, so the cast reproduces both rolled values.
  */
 public final class GearAffixLines {
-    private static final Set<String> REPORTED = ConcurrentHashMap.newKeySet();
 
     private GearAffixLines() {
     }
@@ -53,7 +49,7 @@ public final class GearAffixLines {
 
     /** The converted affixes on a stack as glyph lines (not transferable; the caller decides how the source lends them). */
     public static List<GlyphLine> lines(ItemStack stack) {
-        SpellcraftConfig config = Spellcraft.config();
+        SpellcraftConfig config = ModConfigs.SPELLCRAFT;
         if (config == null || stack.isEmpty() || !AttributeGearData.hasData(stack)) {
             return List.of();
         }
@@ -94,7 +90,7 @@ public final class GearAffixLines {
             }
             SpellcraftConfig.Linked linked = ConvertedAffixes.linked(config, type, entry.linked);
             if (linked == null) {
-                reportOnce("linked:" + type.id() + ":" + entry.linked, "Spellcraft: " + type.id() + " has no linked value " + entry.linked
+                WoldLogger.errorOnce("GearAffixLines:linked:" + type.id() + ":" + entry.linked, "Spellcraft: " + type.id() + " has no linked value " + entry.linked
                         + "; the " + entry.attribute + " affix that fills it is ignored");
                 continue;
             }
@@ -102,7 +98,7 @@ public final class GearAffixLines {
                 Float raw = number(entry, value);
                 if (raw != null) {
                     float magnitude = entry.potency(raw);
-                    out.put(type, linked.max <= linked.min ? 0.0F : Mth.clamp((magnitude - linked.min) / (linked.max - linked.min), 0.0F, 1.0F));
+                    out.put(type, GlyphQuality.linkedQuality(linked, magnitude));
                 }
             }
         }
@@ -115,7 +111,7 @@ public final class GearAffixLines {
 
     /** Every converted affix modifier on a gear item, in tooltip order, for the client tooltip. */
     public static List<Grant> grants(ItemStack stack) {
-        SpellcraftConfig config = Spellcraft.config();
+        SpellcraftConfig config = ModConfigs.SPELLCRAFT;
         if (config == null || stack.isEmpty() || !AttributeGearData.hasData(stack)) {
             return List.of();
         }
@@ -153,8 +149,7 @@ public final class GearAffixLines {
         if (value instanceof SteelInfernoAttribute steel) {
             potency = entry.potency(steel.getCentreBonus());
             SpellcraftConfig.Linked radius = ConvertedAffixes.linked(config, type, "radius");
-            quality = radius == null || radius.max <= radius.min ? 0.0F
-                    : Mth.clamp((steel.getRadiusMultiplier() - radius.min) / (radius.max - radius.min), 0.0F, 1.0F);
+            quality = GlyphQuality.linkedQuality(radius, steel.getRadiusMultiplier());
         } else {
             Float raw = number(entry, value);
             if (raw == null) {
@@ -164,9 +159,9 @@ public final class GearAffixLines {
             if (linkedQuality != null) {
                 quality = linkedQuality;
             } else {
-                quality = tierQuality(glyph, potency);
+                quality = GlyphQuality.tierQuality(glyph, potency);
                 if (glyph.potency != null && glyph.potency.linked != null && !glyph.potency.linked.isEmpty() && hasLinkedEntry(config, type)) {
-                    reportOnce("linked_missing:" + type.id(), "Spellcraft: an item grants " + type.id() + " without the affix that fills its linked value; "
+                    WoldLogger.errorOnce("GearAffixLines:linked_missing:" + type.id(), "Spellcraft: an item grants " + type.id() + " without the affix that fills its linked value; "
                             + "the line's quality comes from its potency instead");
                 }
             }
@@ -201,7 +196,7 @@ public final class GearAffixLines {
             if (special.getValue() instanceof FloatValue floatValue) {
                 return floatValue.getValue();
             }
-            reportOnce("value:" + entry.key, "Spellcraft: gear glyph affix " + entry.key + " has a value of an unknown kind; it grants nothing");
+            WoldLogger.errorOnce("GearAffixLines:value:" + entry.key, "Spellcraft: gear glyph affix " + entry.key + " has a value of an unknown kind; it grants nothing");
             return null;
         }
         if (value instanceof Boolean flag) {
@@ -210,7 +205,7 @@ public final class GearAffixLines {
         if (value instanceof Number number) {
             return number.floatValue();
         }
-        reportOnce("kind:" + entry.attribute, "Spellcraft: gear glyph attribute " + entry.attribute + " has values of kind "
+        WoldLogger.errorOnce("GearAffixLines:kind:" + entry.attribute, "Spellcraft: gear glyph attribute " + entry.attribute + " has values of kind "
                 + value.getClass().getSimpleName() + ", which no reader handles; it grants nothing");
         return null;
     }
@@ -220,31 +215,12 @@ public final class GearAffixLines {
         return (List<Object>) data.get(attribute, VaultGearAttributeTypeMerger.asList());
     }
 
-    private static float tierQuality(SpellcraftConfig.GlyphDefinition glyph, float potency) {
-        SpellcraftConfig.PotencyTier top = null;
-        for (SpellcraftConfig.PotencyTier tier : glyph.potency.tiers) {
-            if (top == null || tier.minLevel > top.minLevel) {
-                top = tier;
-            }
-        }
-        if (top == null || top.max <= top.min) {
-            return 0.0F;
-        }
-        return Mth.clamp((potency - top.min) / (top.max - top.min), 0.0F, 1.0F);
-    }
-
     @Nullable
     private static VaultGearAttribute<?> attribute(String id) {
         VaultGearAttribute<?> attribute = VaultGearAttributeRegistry.getAttribute(new ResourceLocation(id));
         if (attribute == null) {
-            reportOnce("attribute:" + id, "Spellcraft: gear glyph attribute " + id + " is not registered; it grants nothing");
+            WoldLogger.errorOnce("GearAffixLines:attribute:" + id, "Spellcraft: gear glyph attribute " + id + " is not registered; it grants nothing");
         }
         return attribute;
-    }
-
-    private static void reportOnce(String key, String message) {
-        if (REPORTED.add(key)) {
-            WoldLogger.error(message);
-        }
     }
 }

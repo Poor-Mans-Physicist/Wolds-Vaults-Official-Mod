@@ -31,8 +31,8 @@ import java.util.List;
  * never exceeds 1, so a link never deals more than the one before it.
  */
 public final class ChainLinks {
-    public static final float BASE_RANGE = 5.0F;
-    public static final float BASE_STEP = 0.5F;
+    private static final float BASE_RANGE = 5.0F;
+    private static final float BASE_STEP = 0.5F;
 
     private ChainLinks() {
     }

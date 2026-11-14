@@ -22,7 +22,6 @@ import net.minecraft.network.chat.TextComponent;
 import net.minecraft.resources.ResourceLocation;
 import xyz.iwolfking.woldsvaults.WoldsVaults;
 import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
-import xyz.iwolfking.woldsvaults.spellcraft.item.StoredSpell;
 import xyz.iwolfking.woldsvaults.client.spellcraft.stats.GlyphRelevance;
 import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphStacking;
 import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
@@ -44,6 +43,9 @@ import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
 import com.mojang.blaze3d.platform.InputConstants;
 import xyz.iwolfking.woldsvaults.spellcraft.spell.PlacedGlyph;
 import xyz.iwolfking.woldsvaults.client.spellcraft.keys.SpellBarKeys;
+import xyz.iwolfking.woldsvaults.spellcraft.ability.AbilityLookup;
+import xyz.iwolfking.woldsvaults.spellcraft.source.GlyphQuality;
+import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphStats;
 
 /**
  * Shared drawing for the spellcraft screens, the skill menu's spell bar and the focus tooltip: the H-menu window,
@@ -51,25 +53,24 @@ import xyz.iwolfking.woldsvaults.client.spellcraft.keys.SpellBarKeys;
  * small text, the arcana bar and the weave's starfield, plus the text helpers (translations, key labels, glyph potency).
  */
 public final class SpellcraftGui {
-    public static final int ARCANE_DEEP = 0xFF0B0714;
+    private static final int ARCANE_DEEP = 0xFF0B0714;
     public static final int ARCANE_LINE = 0xFF6C4AA8;
     public static final int ARCANE_GLOW = 0xFFB48CFF;
     public static final int ARCANA = 0xFFC08CFF;
-    public static final int ARCANA_DIM = 0xFF4A2F78;
+    private static final int ARCANA_DIM = 0xFF4A2F78;
     public static final int ARCANA_TEXT = 0xFF5A2A9A;
     public static final int WHITE = 0xFFFFFFFF;
     public static final int GREY = 0xFFAAAAAA;
     public static final int DARK = 0xFF555555;
     public static final int MUTED = 0xFF9A9A9A;
     public static final int LABEL = 0xFF000000;
-    public static final int GOOD = 0xFF6EF08C;
     public static final int BAD = 0xFFFF6A6A;
     public static final int BAD_TEXT = 0xFFB01010;
     public static final int GOLD = 0xFFFFE34D;
     public static final int NAME_GOLD = 0xFFFFF7C7;
     public static final int BORDER = 0xFF101010;
-    public static final int BAR_TICK = 0x60FFFFFF;
-    public static final int OVER_TINT = 0x80FF3030;
+    private static final int BAR_TICK = 0x60FFFFFF;
+    private static final int OVER_TINT = 0x80FF3030;
     public static final int STAT_DAMAGE = 0xFFE0564A;
     public static final int STAT_AREA = 0xFF5FD068;
     public static final int STAT_COOLDOWN = 0xFF4AC6E0;
@@ -77,7 +78,7 @@ public final class SpellcraftGui {
     public static final int STAT_INTENSITY = 0xFFFFAA00;
     public static final int STAT_YELLOW = 0xFFFFFF55;
     public static final int STAT_PLAIN = 0xFFD9C98A;
-    public static final String LABEL_TAG = "<gray>";
+    private static final String LABEL_TAG = "<gray>";
 
     private static final String LANG = "woldsvaults.spellcraft.";
     private static final Map<String, Integer> CATEGORY_COLORS = Map.of(
@@ -89,10 +90,10 @@ public final class SpellcraftGui {
     private static final Set<String> UNKNOWN_STATS = new HashSet<>();
     private static boolean noConfigWarned;
     private static final Map<String, String> STAT_TAGS = Map.ofEntries(
-            Map.entry("damage", "<#E0564A>"), Map.entry("area", "<#5FD068>"), Map.entry("cooldown", "<#4AC6E0>"),
-            Map.entry("haste", "<#4AC6E0>"), Map.entry("mana", "<#6FA8FF>"), Map.entry("efficiency", "<#6FA8FF>"),
-            Map.entry("heal_mana", "<#6FA8FF>"), Map.entry("intensity", "<gold>"), Map.entry("speed", "<yellow>"),
-            Map.entry("scale", "<yellow>"), Map.entry("duration", "<yellow>"), Map.entry("drain", "<yellow>"));
+            Map.entry(GlyphStats.DAMAGE, "<#E0564A>"), Map.entry(GlyphStats.AREA, "<#5FD068>"), Map.entry(GlyphStats.COOLDOWN, "<#4AC6E0>"),
+            Map.entry(GlyphStats.HASTE, "<#4AC6E0>"), Map.entry(GlyphStats.MANA, "<#6FA8FF>"), Map.entry(GlyphStats.EFFICIENCY, "<#6FA8FF>"),
+            Map.entry(GlyphStats.HEAL_MANA, "<#6FA8FF>"), Map.entry(GlyphStats.INTENSITY, "<gold>"), Map.entry(GlyphStats.SPEED, "<yellow>"),
+            Map.entry(GlyphStats.SCALE, "<yellow>"), Map.entry(GlyphStats.DURATION, "<yellow>"), Map.entry(GlyphStats.DRAIN, "<yellow>"));
 
     static {
         for (GlyphType type : GlyphType.values()) {
@@ -161,7 +162,7 @@ public final class SpellcraftGui {
 
     /** The icon of an ability group's specialization, or of the group's first specialization. */
     @Nullable
-    public static TextureAtlasRegion abilityIcon(@Nullable String specOrGroup) {
+    private static TextureAtlasRegion abilityIcon(@Nullable String specOrGroup) {
         if (specOrGroup == null || specOrGroup.isEmpty()) {
             return null;
         }
@@ -288,7 +289,7 @@ public final class SpellcraftGui {
                 return specialized.getSpecialization().getName();
             }
         }
-        return group.replace('_', ' ');
+        return AbilityLookup.groupName(group);
     }
 
     /** The group's own name (no specialization), for compact lists such as "Stonefall + Nova". */
@@ -299,7 +300,7 @@ public final class SpellcraftGui {
                 return skill.getName();
             }
         }
-        return group.replace('_', ' ');
+        return AbilityLookup.groupName(group);
     }
 
     /** A line's potency in its table format (percent, seconds, blocks), labelled from the table. */
@@ -357,7 +358,7 @@ public final class SpellcraftGui {
         }
         String out = template;
         for (SpellcraftConfig.Linked linked : glyph.potency.linked) {
-            float value = linked.min + (linked.max - linked.min) * quality;
+            float value = GlyphQuality.linkedValue(linked, quality);
             out = out.replace("{" + linked.name + "}", Integer.toString(Math.round(value * 100.0F)));
         }
         return out;
@@ -482,7 +483,7 @@ public final class SpellcraftGui {
     }
 
     /** The colour tag of a glyph stat's numbers, matching the glyph descriptions and the spell bar's stat lines. */
-    public static String statTag(String stat) {
+    private static String statTag(String stat) {
         String tag = STAT_TAGS.get(stat);
         if (tag == null) {
             if (UNKNOWN_STATS.add(stat)) {
@@ -517,16 +518,5 @@ public final class SpellcraftGui {
 
     public static String seconds(float ticks) {
         return String.format(Locale.ROOT, "%.1f", ticks / 20.0F);
-    }
-
-    /** The ability groups a spell casts (its tokens that are not glyphs), in order. */
-    public static List<String> groups(StoredSpell spell) {
-        List<String> groups = new ArrayList<>();
-        for (String token : spell.tokens()) {
-            if (GlyphType.byId(token) == null && !groups.contains(token)) {
-                groups.add(token);
-            }
-        }
-        return groups;
     }
 }

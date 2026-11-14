@@ -18,10 +18,8 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.network.PacketDistributor;
 import xyz.iwolfking.woldsvaults.WoldsVaults;
 import xyz.iwolfking.woldsvaults.spellcraft.Spellcraft;
-import xyz.iwolfking.woldsvaults.spellcraft.cast.SpellCaster;
 import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
 import xyz.iwolfking.woldsvaults.spellcraft.roll.SpellcraftRoller;
-import xyz.iwolfking.woldsvaults.spellcraft.spell.SpellcraftRules;
 import xyz.iwolfking.woldsvaults.init.ModNetwork;
 import xyz.iwolfking.woldsvaults.network.packets.SpellBarSyncMessage;
 
@@ -34,6 +32,8 @@ import java.util.ArrayList;
 import xyz.iwolfking.woldsvaults.spellcraft.StatMirror;
 import xyz.iwolfking.woldsvaults.spellcraft.bar.EffectiveBar;
 import xyz.iwolfking.woldsvaults.spellcraft.bar.SpellBarData;
+import xyz.iwolfking.woldsvaults.spellcraft.cast.SpellMessages;
+import xyz.iwolfking.woldsvaults.spellcraft.ability.AbilityLookup;
 
 /**
  * The spell bar service. Players cast slots: a slot key (or VH's cast key, for the selected slot) casts the slot's
@@ -72,7 +72,7 @@ public final class SpellBars {
         return state == null ? refresh(player) : state.bar;
     }
 
-    public static SpellBarData.PlayerBar saved(ServerPlayer player) {
+    private static SpellBarData.PlayerBar saved(ServerPlayer player) {
         return SpellBarData.get(player.getServer()).bar(player.getUUID());
     }
 
@@ -83,11 +83,11 @@ public final class SpellBars {
      */
     public static EffectiveBar refresh(ServerPlayer player) {
         SpellBarData.PlayerBar saved = saved(player);
-        AbilityTree tree = SpellCooldowns.tree(player);
+        AbilityTree tree = AbilityLookup.tree(player);
         if (!saved.migrated) {
             migrate(player, saved, tree);
         }
-        EffectiveBar bar = EffectiveBar.forPlayer(player, saved.defaults, SpellcraftRules.specOf(tree));
+        EffectiveBar bar = EffectiveBar.forPlayer(player, saved.defaults, AbilityLookup.specOf(tree));
         State state = STATES.computeIfAbsent(player.getUUID(), id -> new State());
         String[] keys = new String[SpellcraftItemData.SLOTS];
         Map<Integer, Integer> held = HELD.get(player.getUUID());
@@ -204,7 +204,7 @@ public final class SpellBars {
         EffectiveBar bar = refresh(player);
         int index = bar.slotOf(group);
         if (index < 0) {
-            SpellCaster.showMessage(player, group.replace('_', ' ') + " isn't on your spell bar");
+            SpellMessages.show(player, AbilityLookup.groupName(group) + " isn't on your spell bar");
             return true;
         }
         SpellBarData.PlayerBar saved = saved(player);
@@ -248,18 +248,18 @@ public final class SpellBars {
         switch (slot.kind()) {
             case EMPTY -> {
                 if (!down) {
-                    SpellCaster.showMessage(player, slot.hidden()
-                            ? "Slot " + (index + 1) + " is hidden: another slot casts " + slot.group().replace('_', ' ')
+                    SpellMessages.show(player, slot.hidden()
+                            ? "Slot " + (index + 1) + " is hidden: another slot casts " + AbilityLookup.groupName(slot.group())
                             : "Slot " + (index + 1) + " is empty");
                 }
             }
             case ABILITY -> {
-                AbilityTree tree = SpellCooldowns.tree(player);
+                AbilityTree tree = AbilityLookup.tree(player);
                 followSelection(player, tree, slot);
                 SpecializedSkill selected = tree.getSelected();
                 if (selected == null || !selected.getId().equals(slot.group())) {
                     if (!down) {
-                        SpellCaster.showMessage(player, slot.group().replace('_', ' ') + " is not learned");
+                        SpellMessages.show(player, AbilityLookup.groupName(slot.group()) + " is not learned");
                     }
                     return;
                 }
@@ -281,7 +281,7 @@ public final class SpellBars {
      * holds and Charge spells keep their own press and release handling.
      */
     private static boolean repeats(ServerPlayer player, EffectiveBar.Slot slot) {
-        Ability trigger = SpellCooldowns.ability(SpellCooldowns.tree(player), slot.group());
+        Ability trigger = AbilityLookup.ability(AbilityLookup.tree(player), slot.group());
         if (!(trigger instanceof InstantAbility) || slot.locked()) {
             return false;
         }
@@ -293,7 +293,7 @@ public final class SpellBars {
             Spellcraft.onSpellKey(player, bar, slot, false);
             return;
         }
-        AbilityTree tree = SpellCooldowns.tree(player);
+        AbilityTree tree = AbilityLookup.tree(player);
         followSelection(player, tree, slot);
         SpecializedSkill selected = tree.getSelected();
         if (selected == null || !selected.getId().equals(slot.group())) {
@@ -320,14 +320,14 @@ public final class SpellBars {
         if (bar == null) {
             return;
         }
-        AbilityTree tree = SpellCooldowns.tree(player);
+        AbilityTree tree = AbilityLookup.tree(player);
         for (Map.Entry<Integer, Integer> entry : new ArrayList<>(held.entrySet())) {
             EffectiveBar.Slot slot = bar.slot(entry.getKey());
             if (slot.kind() == EffectiveBar.Kind.EMPTY || !repeats(player, slot)) {
                 held.remove(entry.getKey());
                 continue;
             }
-            Ability trigger = SpellCooldowns.ability(tree, slot.group());
+            Ability trigger = AbilityLookup.ability(tree, slot.group());
             if (player.tickCount < entry.getValue() || trigger == null || SpellCooldowns.blocking(tree, slot.groups()) != null
                     || !canAfford(player, tree, slot)) {
                 continue;
@@ -338,7 +338,7 @@ public final class SpellBars {
     }
 
     private static int nextAttempt(ServerPlayer player, EffectiveBar.Slot slot) {
-        return SpellCooldowns.blocking(SpellCooldowns.tree(player), slot.groups()) != null ? 0 : player.tickCount + RETRY_TICKS;
+        return SpellCooldowns.blocking(AbilityLookup.tree(player), slot.groups()) != null ? 0 : player.tickCount + RETRY_TICKS;
     }
 
     private static boolean canAfford(ServerPlayer player, AbilityTree tree, EffectiveBar.Slot slot) {
@@ -347,7 +347,7 @@ public final class SpellBars {
         }
         float cost = 0.0F;
         for (String group : slot.model() != null ? slot.model().castGroups() : slot.groups()) {
-            if (SpellCooldowns.ability(tree, group) instanceof InstantManaAbility mana) {
+            if (AbilityLookup.ability(tree, group) instanceof InstantManaAbility mana) {
                 cost += ManaCostHelper.adjustManaCost(player, mana, mana.getManaCost());
             }
         }
@@ -363,7 +363,7 @@ public final class SpellBars {
         if (index < 0 || index >= SpellcraftItemData.SLOTS) {
             return "no such slot";
         }
-        if (!group.isEmpty() && SpellcraftRules.specOf(SpellCooldowns.tree(player)).apply(group) == null) {
+        if (!group.isEmpty() && AbilityLookup.specOf(AbilityLookup.tree(player)).apply(group) == null) {
             return group + " is not an ability";
         }
         SpellBarData.PlayerBar saved = saved(player);

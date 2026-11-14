@@ -2,14 +2,13 @@ package xyz.iwolfking.woldsvaults.mixins.vaulthunters.spellcraft.client;
 
 import iskallia.vault.client.data.ClientAbilityData;
 import iskallia.vault.skill.ability.effect.spi.core.Ability;
-import iskallia.vault.skill.base.SpecializedSkill;
-import iskallia.vault.skill.base.TieredSkill;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import xyz.iwolfking.woldsvaults.client.spellcraft.state.ClientSpellBar;
+import xyz.iwolfking.woldsvaults.spellcraft.ability.AbilityLookup;
 
 import javax.annotation.Nullable;
 
@@ -46,13 +45,6 @@ public abstract class MixinAbilitiesModuleSpellBar {
         if (group.isEmpty() || ClientAbilityData.getTree() == null) {
             return null;
         }
-        return ClientAbilityData.getTree().getForId(group)
-                .filter(SpecializedSkill.class::isInstance).map(SpecializedSkill.class::cast)
-                .map(SpecializedSkill::getSpecialization)
-                .filter(TieredSkill.class::isInstance).map(TieredSkill.class::cast)
-                .filter(TieredSkill::isUnlocked)
-                .map(TieredSkill::getChild)
-                .filter(Ability.class::isInstance).map(Ability.class::cast)
-                .orElse(null);
+        return AbilityLookup.ability(ClientAbilityData.getTree(), group);
     }
 }

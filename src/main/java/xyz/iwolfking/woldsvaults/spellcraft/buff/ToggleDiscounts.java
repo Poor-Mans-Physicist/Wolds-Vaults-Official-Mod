@@ -2,7 +2,6 @@ package xyz.iwolfking.woldsvaults.spellcraft.buff;
 
 import iskallia.vault.skill.ability.effect.spi.core.ToggleManaAbility;
 import iskallia.vault.skill.base.Skill;
-import iskallia.vault.skill.base.TieredSkill;
 import iskallia.vault.skill.talent.type.EtherealTalent;
 import iskallia.vault.util.calc.ManaCostHelper;
 import iskallia.vault.world.data.PlayerTalentsData;
@@ -12,7 +11,7 @@ import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.server.ServerStoppedEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import xyz.iwolfking.woldsvaults.spellcraft.ability.SpellAbility;
+import xyz.iwolfking.woldsvaults.spellcraft.ability.AbilityLookup;
 
 import java.util.Map;
 import java.util.Optional;
@@ -49,11 +48,7 @@ public final class ToggleDiscounts {
     }
 
     private static boolean refundTick(ServerPlayer player, String abilityId, float fraction) {
-        Optional<ToggleManaAbility> toggle = SpellAbility.serverTree(player).getForId(abilityId)
-                .filter(TieredSkill.class::isInstance)
-                .map(TieredSkill.class::cast)
-                .filter(TieredSkill::isUnlocked)
-                .map(TieredSkill::getChild)
+        Optional<ToggleManaAbility> toggle = AbilityLookup.unlockedChild(AbilityLookup.tree(player), abilityId)
                 .filter(ToggleManaAbility.class::isInstance)
                 .map(ToggleManaAbility.class::cast)
                 .filter(ToggleManaAbility::isActive);

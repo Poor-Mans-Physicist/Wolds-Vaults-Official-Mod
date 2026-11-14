@@ -3,11 +3,9 @@ package xyz.iwolfking.woldsvaults.spellcraft.roll;
 import iskallia.vault.gear.VaultGearRarity;
 import iskallia.vault.gear.VaultGearState;
 import iskallia.vault.gear.data.VaultGearData;
-import iskallia.vault.item.gear.FocusItem;
 import iskallia.vault.item.gear.WandItem;
 import net.minecraft.world.item.ItemStack;
 import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
-import xyz.iwolfking.woldsvaults.spellcraft.Spellcraft;
 import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
 
 import java.util.ArrayList;
@@ -16,6 +14,7 @@ import java.util.Random;
 import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
 import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
 import xyz.iwolfking.woldsvaults.spellcraft.item.GlyphLine;
+import xyz.iwolfking.woldsvaults.init.ModConfigs;
 
 /**
  * Rolls a focus's or wand's spellcraft implicits when it is identified: arcana from item level and rarity, glyph lines
@@ -50,16 +49,12 @@ public final class SpellcraftRoller {
         uniqueSets = sets;
     }
 
-    public static boolean canCarry(ItemStack stack) {
-        return stack.getItem() instanceof FocusItem || stack.getItem() instanceof WandItem;
-    }
-
     public static boolean isWand(ItemStack stack) {
         return stack.getItem() instanceof WandItem;
     }
 
     public static void rollIfMissing(ItemStack stack, Random random) {
-        if (canCarry(stack) && !SpellcraftItemData.has(stack)) {
+        if (SpellcraftItemData.canCarry(stack) && !SpellcraftItemData.has(stack)) {
             roll(stack, random);
         }
     }
@@ -70,7 +65,7 @@ public final class SpellcraftRoller {
      * uniques.
      */
     public static void upkeep(ItemStack stack, Random random) {
-        if (!canCarry(stack)) {
+        if (!SpellcraftItemData.canCarry(stack)) {
             return;
         }
         VaultGearData data = VaultGearData.read(stack);
@@ -81,7 +76,7 @@ public final class SpellcraftRoller {
             roll(stack, random);
             return;
         }
-        SpellcraftConfig config = Spellcraft.config();
+        SpellcraftConfig config = ModConfigs.SPELLCRAFT;
         if (uniqueSets != null && config != null && data.getRarity() == VaultGearRarity.UNIQUE) {
             uniqueSets.convert(config, stack, data, random);
         }
@@ -89,8 +84,8 @@ public final class SpellcraftRoller {
 
     /** Rolls fresh implicits, replacing any spells on the item. Logs and leaves the item alone if it can't. */
     public static void roll(ItemStack stack, Random random) {
-        SpellcraftConfig config = Spellcraft.config();
-        if (config == null || !canCarry(stack)) {
+        SpellcraftConfig config = ModConfigs.SPELLCRAFT;
+        if (config == null || !SpellcraftItemData.canCarry(stack)) {
             return;
         }
         VaultGearData data = VaultGearData.read(stack);

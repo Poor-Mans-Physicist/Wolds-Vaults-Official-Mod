@@ -109,7 +109,7 @@ public final class ShotgunHits {
         if (direct instanceof Projectile && ProjectileGlyphTags.shot(direct) != null) {
             return new Member(ProjectileGlyphTags.spec(direct), ProjectileGlyphTags.shot(direct));
         }
-        CastScope.Active scope = CastScope.current().filter(active -> active.player() == player).orElse(null);
+        CastScope.Active scope = CastScope.forPlayer(player);
         if (scope != null) {
             return new Member(scope.spec(), scope.shot());
         }

@@ -4,7 +4,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
 import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
-import xyz.iwolfking.woldsvaults.spellcraft.Spellcraft;
 import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
 import xyz.iwolfking.woldsvaults.spellcraft.item.StoredSpell;
 import xyz.iwolfking.woldsvaults.spellcraft.spell.SpellModel;
@@ -29,6 +28,8 @@ import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
+import xyz.iwolfking.woldsvaults.init.ModConfigs;
+import xyz.iwolfking.woldsvaults.spellcraft.ability.AbilityLookup;
 
 /**
  * The bar a player actually casts. Every equipped arcana item lays its assigned spells over their slots; the lowest
@@ -92,7 +93,7 @@ public final class EffectiveBar {
 
     /** The player's bar from their equipped sources (server). */
     public static EffectiveBar forPlayer(ServerPlayer player, String[] defaults, Function<String, String> specOf) {
-        SpellcraftConfig config = Spellcraft.config();
+        SpellcraftConfig config = ModConfigs.SPELLCRAFT;
         EquippedSources.Snapshot sources = EquippedSources.get(player);
         List<ArcanaItem> items = new ArrayList<>();
         if (config != null) {
@@ -165,7 +166,7 @@ public final class EffectiveBar {
                 String held = null;
                 for (String group : overlay.model().groups()) {
                     if (claimedBy.containsKey(group)) {
-                        held = groupName(group) + " is on slot " + (claimedBy.get(group) + 1);
+                        held = AbilityLookup.groupName(group) + " is on slot " + (claimedBy.get(group) + 1);
                         break;
                     }
                 }
@@ -183,7 +184,7 @@ public final class EffectiveBar {
                     for (String group : winners.get(a).model().groups()) {
                         if (winners.get(b).model().groups().contains(group)) {
                             locked.putIfAbsent(winners.get(a), winners.get(a).label() + " and " + winners.get(b).label()
-                                    + " both cast " + groupName(group) + " at priority " + prio);
+                                    + " both cast " + AbilityLookup.groupName(group) + " at priority " + prio);
                         }
                     }
                 }
@@ -238,16 +239,12 @@ public final class EffectiveBar {
             if (tokens.size() > 1) {
                 SpellModel model = SpellModel.build(config, auto, config.rules.maxGlyphsPerSpell, tokens, specOf, ReadMode.LENIENT);
                 if (model.isValid() && model.glyphs().stream().anyMatch(PlacedGlyph::active)) {
-                    StoredSpell spell = new StoredSpell(0, groupName(group), List.copyOf(tokens));
+                    StoredSpell spell = new StoredSpell(0, AbilityLookup.groupName(group), List.copyOf(tokens));
                     return new Slot(index, Kind.SPELL, group, spell, model, false, key, null, "", null, 0, false, "", true, List.of());
                 }
             }
         }
         return new Slot(index, Kind.ABILITY, group, null, null, false, key, null, "", null, 0, false, "", false, List.of());
-    }
-
-    private static String groupName(String group) {
-        return group.replace('_', ' ');
     }
 
     public Slot slot(int index) {

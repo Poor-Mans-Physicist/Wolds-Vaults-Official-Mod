@@ -19,7 +19,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import xyz.iwolfking.woldsvaults.client.spellcraft.bar.SkillMenuSpellBar;
 import xyz.iwolfking.woldsvaults.mixins.vaulthunters.accessors.AbilityDialogAccessor;
-import xyz.iwolfking.woldsvaults.mixins.vaulthunters.accessors.AbstractPanRegionAccessor;
 import xyz.iwolfking.woldsvaults.mixins.vaulthunters.accessors.SplitTabContentAccessor;
 
 import javax.annotation.Nullable;
@@ -35,16 +34,7 @@ public abstract class MixinLegacySkillTreeScreenSpellBar {
         if (self.getClass() != AbilitiesElementContainerScreen.class) {
             return null;
         }
-        return SkillMenuSpellBar.of((AbilitiesElementContainerScreen) self, this::woldsvaults$selectedSpec, this::woldsvaults$treeZoom);
-    }
-
-    @Unique
-    @Nullable
-    private Float woldsvaults$treeZoom() {
-        if (this.content instanceof SplitTabContent split) {
-            return ((AbstractPanRegionAccessor) ((SplitTabContentAccessor) split).woldsvaults$getPanRegion()).woldsvaults$getViewportScale();
-        }
-        return null;
+        return SkillMenuSpellBar.of((AbilitiesElementContainerScreen) self, this::woldsvaults$selectedSpec);
     }
 
     @Unique

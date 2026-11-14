@@ -76,7 +76,7 @@ public final class SlotManaBilling {
     }
 
     /** Whether the player can pay the slot share of a trigger VH does not bill; always true for triggers VH bills. */
-    public static boolean canPayUnbilledTrigger(ServerPlayer player, Ability trigger, CastBilling billing) {
+    static boolean canPayUnbilledTrigger(ServerPlayer player, Ability trigger, CastBilling billing) {
         if (trigger instanceof InstantManaAbility || player.isCreative()) {
             return true;
         }
@@ -87,7 +87,7 @@ public final class SlotManaBilling {
      * Pays the slot share of a trigger VH does not bill, after it went through: the other abilities' mana times the
      * spell's mana factor, nothing when the Ethereal talents roll.
      */
-    public static void payUnbilledTrigger(ServerPlayer player, @Nullable Ability trigger, CastBilling billing) {
+    static void payUnbilledTrigger(ServerPlayer player, @Nullable Ability trigger, CastBilling billing) {
         if (trigger == null || trigger instanceof InstantManaAbility || player.isCreative()) {
             return;
         }
@@ -106,7 +106,7 @@ public final class SlotManaBilling {
         return billing != null && billing.suppressCastEvent();
     }
 
-    public static void noteSuppressedCast(Entity entity, Ability ability) {
+    public static void noteSuppressedCast(Ability ability) {
         AbilityCastTracker.note(ability);
     }
 

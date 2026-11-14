@@ -1,5 +1,7 @@
 package xyz.iwolfking.woldsvaults.spellcraft.item;
 
+import iskallia.vault.item.gear.FocusItem;
+import iskallia.vault.item.gear.WandItem;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
@@ -36,6 +38,10 @@ public final class SpellcraftItemData {
     private static int revision;
 
     private SpellcraftItemData() {
+    }
+
+    public static boolean canCarry(ItemStack stack) {
+        return stack.getItem() instanceof FocusItem || stack.getItem() instanceof WandItem;
     }
 
     /** Bumped on every spellcraft write on this side, so cached views and bars know an item changed. */

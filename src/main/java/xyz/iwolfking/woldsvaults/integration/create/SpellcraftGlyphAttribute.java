@@ -6,7 +6,6 @@ import net.minecraft.world.item.ItemStack;
 import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
 import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
 import xyz.iwolfking.woldsvaults.spellcraft.item.GlyphLine;
-import xyz.iwolfking.woldsvaults.spellcraft.roll.SpellcraftRoller;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -38,7 +37,7 @@ public class SpellcraftGlyphAttribute implements ItemAttribute {
 
     @Override
     public boolean appliesTo(ItemStack stack) {
-        if (this.glyph == null || !SpellcraftRoller.canCarry(stack) || !SpellcraftItemData.has(stack)) {
+        if (this.glyph == null || !SpellcraftItemData.canCarry(stack) || !SpellcraftItemData.has(stack)) {
             return false;
         }
         return SpellcraftItemData.line(stack, this.glyph).isPresent();
@@ -47,7 +46,7 @@ public class SpellcraftGlyphAttribute implements ItemAttribute {
     @Override
     public List<ItemAttribute> listAttributesOf(ItemStack stack) {
         List<ItemAttribute> attributes = new ArrayList<>();
-        if (!SpellcraftRoller.canCarry(stack) || !SpellcraftItemData.has(stack)) {
+        if (!SpellcraftItemData.canCarry(stack) || !SpellcraftItemData.has(stack)) {
             return attributes;
         }
         for (GlyphLine line : SpellcraftItemData.lines(stack)) {

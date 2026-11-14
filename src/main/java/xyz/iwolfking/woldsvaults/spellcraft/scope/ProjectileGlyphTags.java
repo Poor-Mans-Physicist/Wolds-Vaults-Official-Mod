@@ -21,13 +21,13 @@ public final class ProjectileGlyphTags {
     public static final String GRAVITY = "woldsvaults:augment_gravity";
     public static final String ETHEREAL = "woldsvaults:augment_ethereal";
     public static final String HOMING_RANGE = "woldsvaults:augment_homing_range";
-    public static final String HOMING_TURN = "woldsvaults:augment_homing_turn";
+    private static final String HOMING_TURN = "woldsvaults:augment_homing_turn";
     public static final String ORBIT = "woldsvaults:augment_orbit";
     public static final String ORBIT_END = "woldsvaults:augment_orbit_end";
-    public static final String NO_ORBIT = "woldsvaults:augment_no_orbit";
+    private static final String NO_ORBIT = "woldsvaults:augment_no_orbit";
     public static final String SPEC = "woldsvaults:augment_spec";
-    public static final String SHOT_GROUP = "woldsvaults:augment_shot_group";
-    public static final String SHOT_MEMBER = "woldsvaults:augment_shot_member";
+    static final String SHOT_GROUP = "woldsvaults:augment_shot_group";
+    static final String SHOT_MEMBER = "woldsvaults:augment_shot_member";
     private static final String[] KEYS = {DAMAGE, AREA, SCALE, GRAVITY, ETHEREAL, HOMING_RANGE, HOMING_TURN, ORBIT, ORBIT_END, SPEC, SHOT_GROUP, SHOT_MEMBER};
 
     private ProjectileGlyphTags() {

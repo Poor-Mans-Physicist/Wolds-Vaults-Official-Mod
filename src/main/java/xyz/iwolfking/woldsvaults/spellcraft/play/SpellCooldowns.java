@@ -4,15 +4,11 @@ import iskallia.vault.init.ModSounds;
 import iskallia.vault.skill.ability.effect.spi.core.Ability;
 import iskallia.vault.skill.base.Skill;
 import iskallia.vault.skill.base.SkillContext;
-import iskallia.vault.skill.base.SpecializedSkill;
-import iskallia.vault.skill.base.TieredSkill;
 import iskallia.vault.skill.tree.AbilityTree;
 import iskallia.vault.util.calc.CooldownHelper;
 import iskallia.vault.util.calc.CooldownRefundHelper;
-import iskallia.vault.world.data.PlayerAbilitiesData;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
-import xyz.iwolfking.woldsvaults.spellcraft.Spellcraft;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.CastScope;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.CastBilling;
 import xyz.iwolfking.woldsvaults.spellcraft.spell.SpellModel;
@@ -20,6 +16,8 @@ import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
 import xyz.iwolfking.woldsvaults.mixins.vaulthunters.accessors.AbilityCooldownInvoker;
 import xyz.iwolfking.woldsvaults.spellcraft.haste.SpellHaste;
 import xyz.iwolfking.woldsvaults.spellcraft.bar.EffectiveBar;
+import xyz.iwolfking.woldsvaults.init.ModConfigs;
+import xyz.iwolfking.woldsvaults.spellcraft.ability.AbilityLookup;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -57,7 +55,7 @@ public final class SpellCooldowns {
             }
             return true;
         }
-        String group = groupId(ability);
+        String group = AbilityLookup.groupOf(ability);
         if (group == null) {
             return false;
         }
@@ -67,7 +65,7 @@ public final class SpellCooldowns {
             return false;
         }
         start(player, bar.slot(index), delayTicks, true);
-        tree(player).sync(context);
+        AbilityLookup.tree(player).sync(context);
         return true;
     }
 
@@ -75,14 +73,14 @@ public final class SpellCooldowns {
      * Starts a spell slot's cooldown on every ability group it holds, computed from the groups that cast. With
      * {@code roll}, skip chance and Quickening apply; a skip skips every group of the cast.
      */
-    public static void start(ServerPlayer player, EffectiveBar.Slot slot, int delayTicks, boolean roll) {
-        SpellcraftConfig config = Spellcraft.config();
+    private static void start(ServerPlayer player, EffectiveBar.Slot slot, int delayTicks, boolean roll) {
+        SpellcraftConfig config = ModConfigs.SPELLCRAFT;
         SpellModel model = slot.model();
         if (config == null || model == null) {
             return;
         }
-        AbilityTree tree = tree(player);
-        Ability trigger = ability(tree, slot.group());
+        AbilityTree tree = AbilityLookup.tree(player);
+        Ability trigger = AbilityLookup.ability(tree, slot.group());
         if (roll && trigger != null && ((AbilityCooldownInvoker) trigger).woldsvaults$trySkipCooldown(player)) {
             player.level.playSound(null, player.blockPosition(), ModSounds.COOLDOWN_RESET, SoundSource.MASTER, 0.5F, 1.0F);
             return;
@@ -90,7 +88,7 @@ public final class SpellCooldowns {
         int ticks = spellCooldownTicks(config, player, tree, model.castGroups(), model.cooldownBase(), model.glyphHaste());
         int remaining = roll ? CooldownRefundHelper.adjustInitialCooldown(player, ticks) : ticks;
         for (String group : model.groups()) {
-            Ability ability = ability(tree, group);
+            Ability ability = AbilityLookup.ability(tree, group);
             if (ability != null) {
                 ((AbilityCooldownInvoker) ability).woldsvaults$setCooldown(ticks, remaining, delayTicks);
             }
@@ -105,7 +103,7 @@ public final class SpellCooldowns {
                                          float cooldownBase, float glyphHaste) {
         List<Integer> adjusted = new ArrayList<>();
         for (String group : groups) {
-            Ability ability = ability(tree, group);
+            Ability ability = AbilityLookup.ability(tree, group);
             if (ability != null) {
                 adjusted.add(CooldownHelper.adjustCooldown(player, ability, ability.getCooldownTicks()));
             }
@@ -143,7 +141,7 @@ public final class SpellCooldowns {
     public static Blocking blocking(AbilityTree tree, Collection<String> groups) {
         Blocking longest = null;
         for (String group : groups) {
-            Ability ability = ability(tree, group);
+            Ability ability = AbilityLookup.ability(tree, group);
             if (ability == null || !ability.isTreeOnCooldown()) {
                 continue;
             }
@@ -155,31 +153,9 @@ public final class SpellCooldowns {
         return longest;
     }
 
-    public static AbilityTree tree(ServerPlayer player) {
-        return PlayerAbilitiesData.get(player.getLevel()).getAbilities(player);
-    }
-
-    /** The current tier object of an ability group, or null when it isn't learned. */
-    @Nullable
-    public static Ability ability(AbilityTree tree, String group) {
-        Skill skill = tree.getForId(group).orElse(null);
-        if (skill instanceof SpecializedSkill specialized && specialized.getSpecialization() instanceof TieredSkill tiered
-                && tiered.isUnlocked() && tiered.getChild() instanceof Ability ability) {
-            return ability;
-        }
-        return null;
-    }
-
     @Nullable
     private static String specId(Ability ability) {
         Skill parent = ability.getParent();
         return parent == null ? null : parent.getId();
-    }
-
-    @Nullable
-    private static String groupId(Ability ability) {
-        Skill parent = ability.getParent();
-        Skill group = parent == null ? null : parent.getParent();
-        return group == null ? null : group.getId();
     }
 }

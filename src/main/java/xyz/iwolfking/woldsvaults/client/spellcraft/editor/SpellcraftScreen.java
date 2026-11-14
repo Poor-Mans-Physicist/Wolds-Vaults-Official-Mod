@@ -25,10 +25,8 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.item.ItemStack;
 import xyz.iwolfking.woldsvaults.spellcraft.ability.SpellAbilities;
 import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
-import xyz.iwolfking.woldsvaults.spellcraft.Spellcraft;
 import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
 import xyz.iwolfking.woldsvaults.spellcraft.item.StoredSpell;
-import xyz.iwolfking.woldsvaults.spellcraft.roll.SpellcraftRoller;
 import xyz.iwolfking.woldsvaults.client.spellcraft.stats.GlyphRelevance;
 import xyz.iwolfking.woldsvaults.spellcraft.spell.SpellModel;
 import xyz.iwolfking.woldsvaults.spellcraft.spell.PlacedGlyph;
@@ -56,6 +54,8 @@ import xyz.iwolfking.woldsvaults.client.spellcraft.state.ClientGlyphViews;
 import xyz.iwolfking.woldsvaults.client.spellcraft.state.ClientSpellBar;
 import xyz.iwolfking.woldsvaults.client.spellcraft.stats.SlotCostStats;
 import xyz.iwolfking.woldsvaults.client.spellcraft.stats.StepStats;
+import xyz.iwolfking.woldsvaults.init.ModConfigs;
+import xyz.iwolfking.woldsvaults.spellcraft.ability.AbilityLookup;
 import net.minecraft.network.chat.Style;
 
 /**
@@ -71,20 +71,20 @@ import net.minecraft.network.chat.Style;
  */
 public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
     public static final int PAD = 4;
-    public static final int TITLE_Y = 4;
-    public static final int TITLE_H = 22;
-    public static final int POUCH_W = 118;
+    private static final int TITLE_Y = 4;
+    private static final int TITLE_H = 22;
+    private static final int POUCH_W = 118;
     public static final int ROW = 21;
     public static final int CELL = 22;
-    public static final int CELL_PITCH_Y = 26;
-    public static final int TAB = 20;
-    public static final int WEAVE_TOP = 11;
-    public static final int WEAVE_ROWS = 2;
-    public static final int WEAVE_H = WEAVE_TOP + WEAVE_ROWS * CELL_PITCH_Y + 2;
-    public static final int STAT_PITCH = 10;
-    public static final int ARCANA_BAR_W = 72;
-    public static final int SCROLL_W = 3;
-    public static final int NAME_MIN_W = 60;
+    private static final int CELL_PITCH_Y = 26;
+    private static final int TAB = 20;
+    private static final int WEAVE_TOP = 11;
+    private static final int WEAVE_ROWS = 2;
+    private static final int WEAVE_H = WEAVE_TOP + WEAVE_ROWS * CELL_PITCH_Y + 2;
+    private static final int STAT_PITCH = 10;
+    private static final int ARCANA_BAR_W = 72;
+    private static final int SCROLL_W = 3;
+    private static final int NAME_MIN_W = 60;
     private static final int SAVE_DELAY = 8;
     private static final int SERVER_WAIT = 60;
     private static final int DELETE_WINDOW = 60;
@@ -166,7 +166,7 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
 
     private boolean stackValid() {
         ItemStack stack = stack();
-        return SpellcraftRoller.canCarry(stack) && SpellcraftItemData.has(stack);
+        return SpellcraftItemData.canCarry(stack) && SpellcraftItemData.has(stack);
     }
 
     @Nullable
@@ -191,7 +191,7 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
     }
 
     private int maxTabs() {
-        SpellcraftConfig config = Spellcraft.config();
+        SpellcraftConfig config = ModConfigs.SPELLCRAFT;
         int byTable = config == null ? this.drafts.size() : config.rules.maxSpellsPerItem;
         int byRoom = (this.width - 21 - PAD - NAME_MIN_W - rightX0() - PAD) / (TAB + 2);
         return Math.max(1, Math.min(byTable, byRoom - 1));
@@ -203,7 +203,7 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
 
     @Override
     protected void init() {
-        SpellcraftConfig config = Spellcraft.config();
+        SpellcraftConfig config = ModConfigs.SPELLCRAFT;
         int nx = nameX();
         this.nameBox = new EditBox(this.font, nx + 4, bodyTop() + 4 + 6, this.width - 21 - PAD - nx - 8, 10, new TextComponent(""));
         this.nameBox.setBordered(false);
@@ -275,7 +275,7 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
             String trigger = draft.tokens.isEmpty() || GlyphType.byId(draft.tokens.get(0)) != null ? "" : draft.tokens.get(0);
             name = trigger.isEmpty() ? SpellcraftGui.tr("screen.new_spell") : SpellcraftGui.groupName(tree(), trigger);
         }
-        SpellcraftConfig config = Spellcraft.config();
+        SpellcraftConfig config = ModConfigs.SPELLCRAFT;
         return config != null && name.length() > config.rules.maxNameLength ? name.substring(0, config.rules.maxNameLength) : name;
     }
 
@@ -294,11 +294,11 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
 
     @Nullable
     private SpellcraftRules.ItemCheck check(Draft draft) {
-        SpellcraftConfig config = Spellcraft.config();
+        SpellcraftConfig config = ModConfigs.SPELLCRAFT;
         if (config == null) {
             return null;
         }
-        return SpellcraftRules.checkEdit(config, stack(), view(config), withDraft(draft), SpellcraftRules.specOf(tree()));
+        return SpellcraftRules.checkEdit(config, stack(), view(config), withDraft(draft), AbilityLookup.specOf(tree()));
     }
 
     private boolean matchesStored(Draft draft) {
@@ -418,7 +418,7 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
     @Override
     public void render(PoseStack pose, int mouseX, int mouseY, float partialTick) {
         this.renderBackground(pose);
-        SpellcraftConfig config = Spellcraft.config();
+        SpellcraftConfig config = ModConfigs.SPELLCRAFT;
         ItemStack stack = stack();
         if (config == null || !stackValid()) {
             return;
@@ -431,7 +431,7 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
         SpellModel model = draft == null || check == null ? null : check.models().get(draft.id > 0 ? draft.id : Integer.MAX_VALUE);
         RenderSystem.enableBlend();
         renderTitle(pose, config, stack, check, draft);
-        renderPouch(pose, config, stack, check, mouseX, mouseY);
+        renderPouch(pose, config, check, mouseX, mouseY);
         int rx0 = rightX0();
         int rx1 = this.width - 21;
         SpellcraftGui.window(pose, rx0, bodyTop(), rx1, bodyBottom());
@@ -482,7 +482,7 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
         if (draft != null) {
             for (String token : draft.tokens) {
                 GlyphType type = GlyphType.byId(token);
-                if (type != null && !SpellModel.isUnique(config, type)) {
+                if (type != null && !config.glyph(type).isUnique()) {
                     glyphs++;
                 }
             }
@@ -532,8 +532,8 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
         return groups;
     }
 
-    private int pouchSize(ItemStack stack) {
-        SpellcraftConfig config = Spellcraft.config();
+    private int pouchSize() {
+        SpellcraftConfig config = ModConfigs.SPELLCRAFT;
         return this.abilitiesTab ? pouchAbilities().size() : config == null ? 0 : view(config).lines().size();
     }
 
@@ -541,7 +541,7 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
         return new ArrayList<>(view(config).lines());
     }
 
-    private void renderPouch(PoseStack pose, SpellcraftConfig config, ItemStack stack, @Nullable SpellcraftRules.ItemCheck check, int mouseX, int mouseY) {
+    private void renderPouch(PoseStack pose, SpellcraftConfig config, @Nullable SpellcraftRules.ItemCheck check, int mouseX, int mouseY) {
         int x0 = 21;
         int y0 = bodyTop();
         int x1 = x0 + POUCH_W;
@@ -565,7 +565,7 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
         int ly1 = pouchListBottom();
         SpellcraftGui.insetBlack(pose, lx0, ly0, lx1, ly1);
         int fit = pouchFit();
-        int size = pouchSize(stack);
+        int size = pouchSize();
         this.pouchScroll = Math.max(0, Math.min(this.pouchScroll, size - fit));
         int right = lx1 - 3 - SCROLL_W;
         if (this.abilitiesTab) {
@@ -618,7 +618,7 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
         String name = this.font.plainSubstrByWidth(line.type().displayName(), room - this.font.width(uses) - 3);
         this.font.drawShadow(pose, name, tx, y + 1, spent ? SpellcraftGui.DARK : SpellcraftGui.categoryColor(config, line.type()));
         this.font.drawShadow(pose, uses, right - this.font.width(uses), y + 1, spent ? SpellcraftGui.DARK : SpellcraftGui.WHITE);
-        String cost = SpellModel.isUnique(config, line.type()) ? "0/" + config.rules.uniqueMixCost : String.valueOf(line.cost());
+        String cost = config.glyph(line.type()).isUnique() ? "0/" + config.rules.uniqueMixCost : String.valueOf(line.cost());
         int cw = this.font.width(cost);
         String potency = this.font.plainSubstrByWidth(SpellcraftGui.potency(config, line.type(), line.potency()), room - cw - 9);
         this.font.drawShadow(pose, potency, tx, y + 10, SpellcraftGui.GREY);
@@ -633,7 +633,7 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
 
     private void renderAbilityRow(PoseStack pose, SpellcraftConfig config, String group, @Nullable Draft draft, int lx0, int y, int right) {
         AbilityTree tree = tree();
-        String spec = SpellcraftRules.specOf(tree).apply(group);
+        String spec = AbilityLookup.specOf(tree).apply(group);
         boolean usable = spec != null && spellable(config, spec) && (draft == null || !draft.tokens.contains(group));
         SpellcraftGui.slot(pose, lx0 + 3, y + 1, false);
         SpellcraftGui.ability(pose, spec != null ? spec : group, lx0 + 3, y + 1, 16, usable ? 1.0F : 0.4F);
@@ -688,7 +688,7 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
             Draft draft = this.drafts.get(i);
             String trigger = draft.tokens.isEmpty() || GlyphType.byId(draft.tokens.get(0)) != null ? null : draft.tokens.get(0);
             if (trigger != null) {
-                String spec = SpellcraftRules.specOf(tree()).apply(trigger);
+                String spec = AbilityLookup.specOf(tree()).apply(trigger);
                 SpellcraftGui.ability(pose, spec != null ? spec : trigger, tx + 2, y + 2, 16, on ? 1.0F : 0.6F);
             } else {
                 this.font.drawShadow(pose, "?", tx + (TAB - this.font.width("?")) / 2.0F, y + 6, SpellcraftGui.MUTED);
@@ -796,7 +796,7 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
                     PlacedGlyph glyph = model == null ? null : model.glyphAt(cell.index());
                     SpellcraftGui.rune(pose, type, x, y, 16, glyph != null && !glyph.active());
                 } else {
-                    String spec = SpellcraftRules.specOf(tree()).apply(token);
+                    String spec = AbilityLookup.specOf(tree()).apply(token);
                     SpellcraftGui.ability(pose, spec != null ? spec : token, x, y, 16, 1.0F);
                 }
             }
@@ -958,7 +958,7 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
      * (1 to the table's count) and sends it to the server.
      */
     private void stepPlacement(boolean slot, int direction) {
-        SpellcraftConfig config = Spellcraft.config();
+        SpellcraftConfig config = ModConfigs.SPELLCRAFT;
         StoredSpell stored = stored(draft());
         if (config == null || stored == null) {
             return;
@@ -1082,7 +1082,7 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
                 List<String> groups = pouchAbilities();
                 if (row < groups.size()) {
                     String group = groups.get(row);
-                    String spec = SpellcraftRules.specOf(tree()).apply(group);
+                    String spec = AbilityLookup.specOf(tree()).apply(group);
                     lines.add(colored(SpellcraftGui.abilityName(tree(), group), SpellcraftGui.NAME_GOLD));
                     if (spec != null) {
                         lines.add(colored(traitText(config, spec), SpellcraftGui.GREY));
@@ -1095,7 +1095,7 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
                     GlyphViewLine line = all.get(row);
                     glyphLines(config, line.type(), line.potency(), line.quality(), GlyphRelevance.ALL, lines);
                     lines.add(colored(SpellcraftGui.tr("screen.uses_left", Math.max(0, usesLeft(line)), line.limit()), SpellcraftGui.WHITE));
-                    if (SpellModel.isUnique(config, line.type())) {
+                    if (config.glyph(line.type()).isUnique()) {
                         lines.add(colored(SpellcraftGui.tr("screen.unique_cost", config.rules.uniqueMixCost), SpellcraftGui.ARCANA));
                     } else {
                         lines.add(colored(SpellcraftGui.tr("screen.cost", line.cost()), SpellcraftGui.ARCANA));
@@ -1257,7 +1257,7 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
             return true;
         }
         this.nameBox.setFocus(false);
-        SpellcraftConfig config = Spellcraft.config();
+        SpellcraftConfig config = ModConfigs.SPELLCRAFT;
         if (config == null) {
             return false;
         }
@@ -1425,7 +1425,7 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
             }
         }
         if (SpellBarStrip.inside(mouseX, mouseY, 21, bodyTop(), POUCH_W, bodyBottom() - bodyTop())) {
-            this.pouchScroll = Math.max(0, Math.min(Math.max(0, pouchSize(stack()) - pouchFit()), this.pouchScroll + step));
+            this.pouchScroll = Math.max(0, Math.min(Math.max(0, pouchSize() - pouchFit()), this.pouchScroll + step));
             return true;
         }
         int wy0 = weaveTop();
@@ -1447,7 +1447,7 @@ public class SpellcraftScreen extends Screen implements SpellBarStrip.Host {
 
     /** Opens the screen for the focus or wand in a player inventory slot. */
     public static void open(@Nullable Screen parent, int inventorySlot) {
-        if (Spellcraft.config() == null) {
+        if (ModConfigs.SPELLCRAFT == null) {
             WoldLogger.error("Spellcraft screen: the focus augments table is not loaded on this client; the screen stays closed");
             return;
         }
