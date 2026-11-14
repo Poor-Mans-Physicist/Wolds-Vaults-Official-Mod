@@ -39,9 +39,10 @@ public record CastModifiers(float damage, float area, float speed, float scale, 
     private static final String ETHEREAL = "ethereal";
     private static final String ECHO = "echo";
     private static final String CHARGE = "charge";
+    private static final String SHOTGUN_COPIES = "shotgun_copies";
     private static final String GRANTS = "grants";
     private static final String[] REQUIRED = {DAMAGE, AREA, SPEED, SCALE, INTENSITY, DURATION, DRAIN, HEAL_MANA, DURATION_UPSIDE,
-            HOMING_RANGE, HOMING_TURN, ORBIT, GRAVITY, ETHEREAL, ECHO, CHARGE};
+            HOMING_RANGE, HOMING_TURN, ORBIT, GRAVITY, ETHEREAL, ECHO, CHARGE, SHOTGUN_COPIES};
 
     public static final CastModifiers NONE = new CastModifiers(1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, GlyphGrants.NONE);
 
@@ -131,7 +132,7 @@ public record CastModifiers(float damage, float area, float speed, float scale, 
         tag.putFloat(ETHEREAL, this.etherealSeconds);
         tag.putFloat(ECHO, this.echoPower);
         tag.putFloat(CHARGE, this.chargeBonus);
-        tag.putInt("shotgun_copies", this.shotgunCopies);
+        tag.putInt(SHOTGUN_COPIES, this.shotgunCopies);
         if (!this.grants.isEmpty()) {
             tag.put(GRANTS, this.grants.write());
         }
@@ -167,7 +168,7 @@ public record CastModifiers(float damage, float area, float speed, float scale, 
                 tag.getFloat(ORBIT),
                 tag.getFloat(GRAVITY),
                 tag.getFloat(ETHEREAL),
-                tag.getInt("shotgun_copies"),
+                tag.getInt(SHOTGUN_COPIES),
                 tag.getFloat(ECHO),
                 tag.getFloat(CHARGE),
                 tag.contains(GRANTS, Tag.TAG_COMPOUND) ? GlyphGrants.read(tag.getCompound(GRANTS)) : GlyphGrants.NONE);
