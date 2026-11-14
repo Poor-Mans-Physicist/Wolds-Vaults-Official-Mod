@@ -80,15 +80,15 @@ public final class SlotCostStats {
             return null;
         }
         float mana = -1.0F;
-        for (String group : model.groups()) {
+        for (String group : model.castGroups()) {
             Ability ability = AbilityLookup.ability(tree, group);
             float cost = ability == null ? -1.0F : mana(ability);
             if (cost >= 0.0F) {
                 mana = Math.max(0.0F, mana) + cost;
             }
         }
-        int plain = chain(config, tree, model.groups());
-        int glyphed = spellCooldown(config, tree, model.groups(), model.cooldownBase(), model.glyphHaste());
+        int plain = chain(config, tree, model.castGroups());
+        int glyphed = spellCooldown(config, tree, model.castGroups(),model.cooldownBase(), model.glyphHaste());
         return new Numbers(mana, mana < 0.0F ? mana : mana * model.manaFactor(), plain, glyphed);
     }
 
