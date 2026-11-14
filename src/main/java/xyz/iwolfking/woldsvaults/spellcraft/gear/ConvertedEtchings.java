@@ -18,11 +18,8 @@ import net.minecraftforge.fml.common.Mod;
 import xyz.iwolfking.woldsvaults.WoldsVaults;
 import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.CastScope;
-import xyz.iwolfking.woldsvaults.spellcraft.scope.DeferredReach;
 import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
 import xyz.iwolfking.woldsvaults.spellcraft.source.GlyphLineProviders;
-import xyz.iwolfking.woldsvaults.spellcraft.source.EquippedSources;
-import xyz.iwolfking.woldsvaults.spellcraft.source.GlyphViewLine;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -162,14 +159,11 @@ public final class ConvertedEtchings {
         if (entry != null && entry.config().lingering != null) {
             return lingering(player, entry, current.config(), scope);
         }
-        if (scope != null) {
-            return scope.modifiers().grants().get(type);
+        GlyphGrants cast = ActiveGrants.ofCast(player);
+        if (cast != null) {
+            return cast.get(type);
         }
-        DeferredReach.Reach reach = DeferredReach.current(player);
-        if (reach != null) {
-            return reach.glyphs().modifiers().grants().get(type);
-        }
-        GlyphGrants.Grant toggled = ConvertedAffixes.grants(player).get(type);
+        GlyphGrants.Grant toggled = ConvertedAffixes.toggleGrants(player).get(type);
         if (toggled != null) {
             return toggled;
         }
@@ -177,8 +171,7 @@ public final class ConvertedEtchings {
         if (config == null) {
             return null;
         }
-        GlyphViewLine line = EquippedSources.get(player).autoLines(config).get(type);
-        return line == null ? null : new GlyphGrants.Grant(line.potency(), line.quality());
+        return LingeringBuffs.autoLine(player, type, config);
     }
 
     @Nullable

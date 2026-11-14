@@ -2,7 +2,6 @@ package xyz.iwolfking.woldsvaults.spellcraft.play;
 
 import iskallia.vault.init.ModSounds;
 import iskallia.vault.skill.ability.effect.spi.core.Ability;
-import iskallia.vault.skill.base.Skill;
 import iskallia.vault.skill.base.SkillContext;
 import iskallia.vault.skill.tree.AbilityTree;
 import iskallia.vault.util.calc.CooldownHelper;
@@ -50,7 +49,7 @@ public final class SpellCooldowns {
         CastBilling billing = CastScope.billing(player);
         if (billing != null) {
             if (billing.isTrigger() && billing.slot() != null && billing.triggerSpec() != null
-                    && billing.triggerSpec().equals(specId(ability))) {
+                    && billing.triggerSpec().equals(AbilityLookup.specId(ability))) {
                 start(player, billing.slot(), delayTicks, true);
             }
             return true;
@@ -151,11 +150,5 @@ public final class SpellCooldowns {
             }
         }
         return longest;
-    }
-
-    @Nullable
-    private static String specId(Ability ability) {
-        Skill parent = ability.getParent();
-        return parent == null ? null : parent.getId();
     }
 }

@@ -30,7 +30,7 @@ public final class GlyphArea {
         }
         if (data.getStat() == PlayerStat.AREA_OF_EFFECT) {
             CastModifiers scope = scopeFor(entity);
-            Projectile ticking = scope == null ? GlyphDamage.tickingProjectileOf(entity) : null;
+            Projectile ticking = scope == null ? HitAttribution.tickingProjectileOf(entity) : null;
             float factor = scope != null ? scope.area() : ticking != null ? ProjectileGlyphTags.area(ticking) : deferredArea(entity);
             if (factor != 1.0F) {
                 data.setValue(data.getValue() * factor);

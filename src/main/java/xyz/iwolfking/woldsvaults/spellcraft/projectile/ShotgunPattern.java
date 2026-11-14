@@ -1,6 +1,7 @@
 package xyz.iwolfking.woldsvaults.spellcraft.projectile;
 
 import net.minecraft.world.phys.Vec3;
+import xyz.iwolfking.woldsvaults.spellcraft.scope.AimOverride;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -22,8 +23,8 @@ public final class ShotgunPattern {
         }
         offsets.sort(Comparator.comparingDouble(Math::abs));
         Vec3 unit = base.normalize();
-        float yaw = (float) Math.toDegrees(Math.atan2(-unit.x, unit.z));
-        float pitch = (float) Math.toDegrees(Math.asin(-unit.y));
+        float yaw = AimOverride.yaw(unit);
+        float pitch = AimOverride.pitch(unit);
         List<Vec3> result = new ArrayList<>(count);
         for (double offset : offsets) {
             result.add(Vec3.directionFromRotation(pitch, (float) (yaw + offset)));

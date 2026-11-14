@@ -10,6 +10,7 @@ import xyz.iwolfking.woldsvaults.spellcraft.bar.SpellBarData;
 import xyz.iwolfking.woldsvaults.spellcraft.cast.SpellMessages;
 import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
 
+import javax.annotation.Nullable;
 import java.util.Map;
 
 public final class SpellBarInput {
@@ -24,8 +25,7 @@ public final class SpellBarInput {
         EffectiveBar bar = SpellBars.refresh(player);
         SpellBarData.PlayerBar saved = SpellBars.saved(player);
         if (bar.slot(index).kind() != EffectiveBar.Kind.EMPTY && saved.selected != index) {
-            saved.selected = index;
-            SpellBarData.get(player.getServer()).setDirty();
+            SpellBars.select(player, saved, index);
             bar = SpellBars.refresh(player);
         }
         press(player, bar, index, down);
@@ -57,8 +57,7 @@ public final class SpellBarInput {
         }
         SpellBarData.PlayerBar saved = SpellBars.saved(player);
         if (saved.selected != index) {
-            saved.selected = index;
-            SpellBarData.get(player.getServer()).setDirty();
+            SpellBars.select(player, saved, index);
         }
         return false;
     }
@@ -76,8 +75,7 @@ public final class SpellBarInput {
             }
             index = next;
         }
-        saved.selected = index;
-        SpellBarData.get(player.getServer()).setDirty();
+        SpellBars.select(player, saved, index);
         SpellBars.refresh(player);
     }
 
@@ -102,10 +100,8 @@ public final class SpellBarInput {
                 }
             }
             case ABILITY -> {
-                AbilityTree tree = AbilityLookup.tree(player);
-                SpellBars.followSelection(player, tree, slot);
-                SpecializedSkill selected = tree.getSelected();
-                if (selected == null || !selected.getId().equals(slot.group())) {
+                AbilityTree tree = selectedTree(player, slot);
+                if (tree == null) {
                     if (!down) {
                         SpellMessages.show(player, AbilityLookup.groupName(slot.group()) + " is not learned");
                     }
@@ -129,10 +125,8 @@ public final class SpellBarInput {
             SpellTrigger.onSpellKey(player, bar, slot, false);
             return;
         }
-        AbilityTree tree = AbilityLookup.tree(player);
-        SpellBars.followSelection(player, tree, slot);
-        SpecializedSkill selected = tree.getSelected();
-        if (selected == null || !selected.getId().equals(slot.group())) {
+        AbilityTree tree = selectedTree(player, slot);
+        if (tree == null) {
             return;
         }
         SkillContext context = SkillContext.of(player);
@@ -140,5 +134,17 @@ public final class SpellBarInput {
             tree.onKeyDown(context);
             tree.onKeyUp(context);
         });
+    }
+
+    /** The player's tree once its selection follows {@code slot}, or null when the slot's ability did not become selected. */
+    @Nullable
+    private static AbilityTree selectedTree(ServerPlayer player, EffectiveBar.Slot slot) {
+        AbilityTree tree = AbilityLookup.tree(player);
+        SpellBars.followSelection(player, tree, slot);
+        SpecializedSkill selected = tree.getSelected();
+        if (selected == null || !selected.getId().equals(slot.group())) {
+            return null;
+        }
+        return tree;
     }
 }

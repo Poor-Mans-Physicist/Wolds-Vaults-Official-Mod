@@ -5,7 +5,6 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import iskallia.vault.skill.ability.effect.NecromancyAbility;
 import iskallia.vault.skill.ability.effect.spi.core.Ability;
 import iskallia.vault.skill.ability.effect.spi.core.InstantAbility;
-import iskallia.vault.skill.base.Skill;
 import iskallia.vault.skill.base.SkillContext;
 import net.minecraft.server.level.ServerPlayer;
 import org.spongepowered.asm.mixin.Mixin;
@@ -14,6 +13,7 @@ import xyz.iwolfking.woldsvaults.api.cast.CastTag;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.DeferredGlyphs;
 import xyz.iwolfking.woldsvaults.spellcraft.buff.BuffGlyphs;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.DeferredReach;
+import xyz.iwolfking.woldsvaults.spellcraft.ability.AbilityLookup;
 
 /**
  * Opens a cast context for every instant ability a player casts, covering the mana check, the hits
@@ -31,9 +31,9 @@ public class MixinInstantAbilityCast {
             return original.call(context);
         }
         InstantAbility self = (InstantAbility) (Object) this;
-        Skill parent = self.getParent();
+        String spec = AbilityLookup.specId(self);
         CastTag tag = new CastTag(player, self);
-        tag.setGlyphs(DeferredGlyphs.fromScope(player, parent == null ? null : parent.getId()));
+        tag.setGlyphs(DeferredGlyphs.fromScope(player, spec));
         Ability.ActionResult result = CastContext.run(tag, () -> original.call(context));
         if (result.isSuccess()) {
             BuffGlyphs.onInstantCast(player, self, tag.glyphs());

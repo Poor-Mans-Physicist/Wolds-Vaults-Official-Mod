@@ -32,8 +32,8 @@ public final class AimOverride {
         float xRotO = player.xRotO;
         float yHeadRot = player.getYHeadRot();
         Vec3 unit = direction.normalize();
-        float newYRot = (float) Math.toDegrees(Math.atan2(-unit.x, unit.z));
-        float newXRot = (float) Math.toDegrees(Math.asin(-unit.y));
+        float newYRot = yaw(unit);
+        float newXRot = pitch(unit);
         Vec3 outer = REAL_LOOK.get(player.getUUID());
         if (outer == null) {
             REAL_LOOK.put(player.getUUID(), player.getLookAngle());
@@ -55,5 +55,13 @@ public final class AimOverride {
             player.xRotO = xRotO;
             player.setYHeadRot(yHeadRot);
         }
+    }
+
+    public static float yaw(Vec3 unit) {
+        return (float) Math.toDegrees(Math.atan2(-unit.x, unit.z));
+    }
+
+    public static float pitch(Vec3 unit) {
+        return (float) Math.toDegrees(Math.asin(-unit.y));
     }
 }

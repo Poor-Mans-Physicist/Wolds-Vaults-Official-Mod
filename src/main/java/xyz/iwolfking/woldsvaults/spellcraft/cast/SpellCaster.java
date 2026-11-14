@@ -127,21 +127,7 @@ public final class SpellCaster {
             float share = chargeShare < config.tuning.chargeMinShare ? 0.0F : Math.min(1.0F, chargeShare);
             modifiers = base.withDamageFactor(1.0F + base.chargeBonus() * share);
         }
-        List<Vec3> aims = ShotgunPattern.fan(baseDirection(player, origin), modifiers.shotgunCopies(), config.tuning.shotgunSpreadDegrees);
-        long volley = aims.size() > 1 ? ShotgunHits.newGroup() : 0L;
-        ShotgunShot nativeShot = volley > 0 ? new ShotgunShot(volley, 0) : null;
-        CastResult result;
-        if (trigger != null) {
-            result = scoped(player, modifiers, aimedOrigin(origin, aims.get(0)), trigger, ability.id(), nativeShot, aims.get(0),
-                    () -> ability.cast(player, aimedOrigin(origin, aims.get(0))));
-        } else {
-            result = scoped(player, modifiers, aimedOrigin(origin, aims.get(0)), CastBilling.free(false), ability.id(), nativeShot,
-                    aims.get(0), () -> ability.castExtra(player, aimedOrigin(origin, aims.get(0))));
-        }
-        afterRail(config, player, ability, modifiers, aims.get(0), result, nativeShot);
-        if (result == CastResult.SUCCESS) {
-            castCopies(config, player, ability, modifiers, origin, aims, volley);
-        }
+        CastResult result = castVolley(config, player, ability, modifiers, origin, trigger);
         report(player, ability, result);
         if (!result.went()) {
             return result;
@@ -158,16 +144,32 @@ public final class SpellCaster {
                 if (current == null) {
                     return;
                 }
-                List<Vec3> echoAims = ShotgunPattern.fan(baseDirection(later, origin), echoed.shotgunCopies(), current.tuning.shotgunSpreadDegrees);
-                long echoVolley = echoAims.size() > 1 ? ShotgunHits.newGroup() : 0L;
-                ShotgunShot echoShot = echoVolley > 0 ? new ShotgunShot(echoVolley, 0) : null;
-                CastResult echo = scoped(later, echoed, aimedOrigin(origin, echoAims.get(0)), CastBilling.free(false), ability.id(),
-                        echoShot, echoAims.get(0), () -> ability.castExtra(later, aimedOrigin(origin, echoAims.get(0))));
-                afterRail(current, later, ability, echoed, echoAims.get(0), echo, echoShot);
-                if (echo == CastResult.SUCCESS) {
-                    castCopies(current, later, ability, echoed, origin, echoAims, echoVolley);
-                }
+                castVolley(current, later, ability, echoed, origin, null);
             });
+        }
+        return result;
+    }
+
+    /**
+     * Casts one volley of a step: the native shot along the first Shotgun aim, its rail widening, then the copies when
+     * it succeeded. A trigger billing casts the native shot as the key press; without one it is a free extra cast.
+     */
+    private static CastResult castVolley(SpellcraftConfig config, ServerPlayer player, SpellAbility ability, CastModifiers modifiers,
+                                         @Nullable CastOrigin origin, @Nullable CastBilling trigger) {
+        List<Vec3> aims = ShotgunPattern.fan(baseDirection(player, origin), modifiers.shotgunCopies(), config.tuning.shotgunSpreadDegrees);
+        long volley = aims.size() > 1 ? ShotgunHits.newGroup() : 0L;
+        ShotgunShot nativeShot = volley > 0 ? new ShotgunShot(volley, 0) : null;
+        CastResult result;
+        if (trigger != null) {
+            result = scoped(player, modifiers, aimedOrigin(origin, aims.get(0)), trigger, ability.id(), nativeShot, aims.get(0),
+                    () -> ability.cast(player, aimedOrigin(origin, aims.get(0))));
+        } else {
+            result = scoped(player, modifiers, aimedOrigin(origin, aims.get(0)), CastBilling.free(false), ability.id(), nativeShot,
+                    aims.get(0), () -> ability.castExtra(player, aimedOrigin(origin, aims.get(0))));
+        }
+        afterRail(config, player, ability, modifiers, aims.get(0), result, nativeShot);
+        if (result == CastResult.SUCCESS) {
+            castCopies(config, player, ability, modifiers, origin, aims, volley);
         }
         return result;
     }
@@ -193,7 +195,7 @@ public final class SpellCaster {
         return AimOverride.call(player, aim, () -> CastScope.call(player, modifiers, origin, billing, spec, shot, action));
     }
 
-    private static Vec3 baseDirection(ServerPlayer player, @Nullable CastOrigin origin) {
+    static Vec3 baseDirection(ServerPlayer player, @Nullable CastOrigin origin) {
         return origin != null && origin.direction().lengthSqr() > 1.0E-6 ? origin.direction() : player.getLookAngle();
     }
 

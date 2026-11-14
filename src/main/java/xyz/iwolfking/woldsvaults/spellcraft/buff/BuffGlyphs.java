@@ -70,7 +70,7 @@ public final class BuffGlyphs {
         if (ability instanceof ToggleAbility) {
             return new Factors(modifiers.intensity(), 1.0F, modifiers.durationUpside(), modifiers.drain(), 1.0F);
         }
-        if (SpellAbilities.isHeal(specOf(ability))) {
+        if (SpellAbilities.isHeal(AbilityLookup.specId(ability))) {
             return new Factors(modifiers.intensity(), 1.0F, 1.0F, 1.0F, modifiers.healMana());
         }
         return new Factors(modifiers.intensity(), modifiers.duration(), 1.0F, 1.0F, 1.0F);
@@ -79,7 +79,7 @@ public final class BuffGlyphs {
     /** The factors of the spell step open right now for {@code ability} (its owner's own instance), or none. */
     public static Factors atCast(Skill ability) {
         CastScope.Active scope = CastScope.current().orElse(null);
-        if (scope == null || scope.spec() == null || !scope.spec().equals(specOf(ability))) {
+        if (scope == null || scope.spec() == null || !scope.spec().equals(AbilityLookup.specId(ability))) {
             return Factors.NONE;
         }
         ServerPlayer player = scope.player();
@@ -125,7 +125,7 @@ public final class BuffGlyphs {
 
     /** An instant cast of {@code ability} went through with {@code glyphs} (null: no spell step): starts its activation. */
     public static void onInstantCast(ServerPlayer player, Skill ability, @Nullable DeferredGlyphs glyphs) {
-        String spec = specOf(ability);
+        String spec = AbilityLookup.specId(ability);
         if (spec != null && TIMED_EFFECTS.containsKey(spec)) {
             start(player, spec, ability, factorsOf(ability, glyphs == null ? null : glyphs.modifiers()));
         }
@@ -133,7 +133,7 @@ public final class BuffGlyphs {
 
     /** A toggle switched: on, it starts an activation with the open step's factors (none outside a step); off, it ends. */
     public static void onToggle(ServerPlayer player, ToggleAbility ability) {
-        String spec = specOf(ability);
+        String spec = AbilityLookup.specId(ability);
         if (spec == null) {
             return;
         }
@@ -169,12 +169,6 @@ public final class BuffGlyphs {
         }
         Supplier<MobEffect> effect = TIMED_EFFECTS.get(live.spec());
         return effect != null && player.hasEffect(effect.get());
-    }
-
-    @Nullable
-    private static String specOf(Skill ability) {
-        Skill parent = ability.getParent();
-        return parent == null ? null : parent.getId();
     }
 
     private static boolean belongs(CastScope.Active scope, ServerPlayer player, Skill ability) {

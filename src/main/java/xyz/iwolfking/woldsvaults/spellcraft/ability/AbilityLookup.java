@@ -44,6 +44,12 @@ public final class AbilityLookup {
     }
 
     @Nullable
+    public static String specId(Skill ability) {
+        Skill parent = ability.getParent();
+        return parent == null ? null : parent.getId();
+    }
+
+    @Nullable
     public static String groupOf(Ability ability) {
         Skill parent = ability.getParent();
         Skill group = parent == null ? null : parent.getParent();

@@ -8,18 +8,9 @@ import xyz.iwolfking.woldsvaults.spellcraft.scope.CastScope;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.ChainScope;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.DeferredReach;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.ProjectileGlyphTags;
-import xyz.iwolfking.woldsvaults.spellcraft.scope.TickingEntity;
-
-import javax.annotation.Nullable;
 
 public final class GlyphDamage {
     private GlyphDamage() {
-    }
-
-    @Nullable
-    static Projectile tickingProjectileOf(Entity owner) {
-        return TickingEntity.current() instanceof Projectile projectile && projectile.getOwner() == owner
-                && ProjectileGlyphTags.isTagged(projectile) ? projectile : null;
     }
 
     @SubscribeEvent
@@ -40,7 +31,7 @@ public final class GlyphDamage {
                 multiplier = scope.modifiers().damage();
                 spec = scope.spec();
             } else {
-                Projectile ticking = tickingProjectileOf(attacker);
+                Projectile ticking = HitAttribution.tickingProjectileOf(attacker);
                 if (ticking != null) {
                     multiplier = ProjectileGlyphTags.damage(ticking);
                     spec = ProjectileGlyphTags.spec(ticking);

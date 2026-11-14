@@ -12,7 +12,6 @@ import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.ProjectileGlyphTags;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.DeferredReach;
-import xyz.iwolfking.woldsvaults.spellcraft.scope.TickingEntity;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.CastScope;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.ShotgunShot;
 import xyz.iwolfking.woldsvaults.api.cast.CastCarrier;
@@ -113,9 +112,9 @@ public final class ShotgunHits {
         if (scope != null) {
             return new Member(scope.spec(), scope.shot());
         }
-        Entity ticking = TickingEntity.current();
-        if (ticking instanceof Projectile projectile && projectile.getOwner() == player && ProjectileGlyphTags.shot(projectile) != null) {
-            return new Member(ProjectileGlyphTags.spec(projectile), ProjectileGlyphTags.shot(projectile));
+        Projectile ticking = HitAttribution.tickingProjectileOf(player);
+        if (ticking != null && ProjectileGlyphTags.shot(ticking) != null) {
+            return new Member(ProjectileGlyphTags.spec(ticking), ProjectileGlyphTags.shot(ticking));
         }
         DeferredReach.Reach reach = DeferredReach.forHit(source);
         if (reach != null && reach.glyphs().shot() != null) {

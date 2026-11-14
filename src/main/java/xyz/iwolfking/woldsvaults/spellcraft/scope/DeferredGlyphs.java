@@ -7,6 +7,7 @@ import net.minecraft.world.entity.player.Player;
 import javax.annotation.Nullable;
 import java.util.UUID;
 import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
+import xyz.iwolfking.woldsvaults.api.cast.CastTag;
 
 /**
  * The glyph state of one spell step, frozen when the step's cast opens: whose cast it is, the ability spec, the step's
@@ -32,6 +33,12 @@ public record DeferredGlyphs(UUID owner, String spec, CastModifiers modifiers, @
             return null;
         }
         return new DeferredGlyphs(player.getUUID(), scope.spec(), scope.modifiers(), scope.shot());
+    }
+
+    /** {@code tag} when it carries a spell step's glyphs, else null (no tag, or a plain cast's tag). */
+    @Nullable
+    public static CastTag spellTag(@Nullable CastTag tag) {
+        return tag != null && tag.glyphs() != null ? tag : null;
     }
 
     public boolean isOwnedBy(@Nullable Player player) {

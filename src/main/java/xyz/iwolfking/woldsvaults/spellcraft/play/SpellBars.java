@@ -65,6 +65,11 @@ public final class SpellBars {
         return SpellBarData.get(player.getServer()).bar(player.getUUID());
     }
 
+    static void select(ServerPlayer player, SpellBarData.PlayerBar saved, int index) {
+        saved.selected = index;
+        SpellBarData.get(player.getServer()).setDirty();
+    }
+
     /**
      * Resolves the player's effective bar from their equipped sources, cancels held keys on slots whose occupant changed
      * since the last resolution, keeps the selected slot and the tree's selection in step, and syncs the client when
@@ -88,8 +93,7 @@ public final class SpellBars {
         if (bar.slot(saved.selected).kind() == EffectiveBar.Kind.EMPTY) {
             int first = firstFilled(bar, saved.selected, 1);
             if (first >= 0) {
-                saved.selected = first;
-                SpellBarData.get(player.getServer()).setDirty();
+                select(player, saved, first);
             }
         }
         followSelection(player, tree, bar.slot(saved.selected));

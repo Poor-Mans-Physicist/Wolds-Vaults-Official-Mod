@@ -11,6 +11,7 @@ import org.spongepowered.asm.mixin.Unique;
 import xyz.iwolfking.woldsvaults.api.cast.CastContext;
 import xyz.iwolfking.woldsvaults.api.cast.CastTag;
 import xyz.iwolfking.woldsvaults.api.cast.CastCarrier;
+import xyz.iwolfking.woldsvaults.spellcraft.scope.DeferredGlyphs;
 
 /**
  * Dash Damage hits during the skill ticks after the dash. A dash cast as a spell step keeps its cast tag for that
@@ -32,8 +33,7 @@ public class MixinDashDamageGlyphWindow {
         Ability.ActionResult result = original.call(context);
         ServerPlayer player = context.getSource().as(ServerPlayer.class).orElse(null);
         if (player != null && result.isSuccess()) {
-            CastTag tag = CastContext.current();
-            this.woldsvaults$window = tag != null && tag.glyphs() != null ? tag : null;
+            this.woldsvaults$window = DeferredGlyphs.spellTag(CastContext.current());
             this.woldsvaults$windowEnd = player.server.getTickCount() + WOLDSVAULTS$WINDOW_TICKS;
         }
         return result;

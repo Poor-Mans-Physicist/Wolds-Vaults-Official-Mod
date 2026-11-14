@@ -24,15 +24,8 @@ public final class BundleLauncher {
 
     public static void launch(SpellcraftConfig config, ServerPlayer player, SpellModel.Bundle bundle, @Nullable CastOrigin origin,
                               float damageFactor) {
-        Vec3 start;
-        Vec3 direction;
-        if (origin != null) {
-            start = origin.position();
-            direction = origin.direction().lengthSqr() > 1.0E-6 ? origin.direction() : player.getLookAngle();
-        } else {
-            start = player.getEyePosition().subtract(0, 0.1, 0);
-            direction = player.getLookAngle();
-        }
+        Vec3 start = origin != null ? origin.position() : player.getEyePosition().subtract(0, 0.1, 0);
+        Vec3 direction = SpellCaster.baseDirection(player, origin);
         CastModifiers orb = CastModifiers.of(config, bundle.glyphs());
         double speed = config.tuning.bundleSpeed * orb.speed();
         int lifetime = Math.max(1, Math.round(bundle.glyph().potency() * 20.0F));

@@ -10,6 +10,7 @@ import xyz.iwolfking.woldsvaults.api.cast.CastContext;
 import xyz.iwolfking.woldsvaults.api.cast.CastTag;
 import xyz.iwolfking.woldsvaults.api.cast.CastCarrier;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.PlacedBlockGlyphs;
+import xyz.iwolfking.woldsvaults.spellcraft.scope.DeferredGlyphs;
 
 /**
  * A landmine is triggered by whatever steps on it, outside its own tick. A mine a spell step placed triggers under that
@@ -30,7 +31,6 @@ public class MixinLandmineGlyphs {
 
     @Unique
     private CastTag woldsvaults$spellTag() {
-        CastTag tag = PlacedBlockGlyphs.tagOrRestore((LandmineBlockEntity) (Object) this);
-        return tag != null && tag.glyphs() != null ? tag : null;
+        return DeferredGlyphs.spellTag(PlacedBlockGlyphs.tagOrRestore((LandmineBlockEntity) (Object) this));
     }
 }

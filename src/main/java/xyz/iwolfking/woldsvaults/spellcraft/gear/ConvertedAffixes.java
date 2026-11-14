@@ -24,7 +24,6 @@ import net.minecraftforge.fml.common.Mod;
 import xyz.iwolfking.woldsvaults.WoldsVaults;
 import xyz.iwolfking.woldsvaults.spellcraft.glyph.GlyphType;
 import xyz.iwolfking.woldsvaults.spellcraft.scope.CastScope;
-import xyz.iwolfking.woldsvaults.spellcraft.scope.DeferredReach;
 import xyz.iwolfking.woldsvaults.api.cast.CastContext;
 import xyz.iwolfking.woldsvaults.api.cast.CastTag;
 import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
@@ -85,15 +84,8 @@ public final class ConvertedAffixes {
         if (!(holder instanceof ServerPlayer player)) {
             return GlyphGrants.NONE;
         }
-        CastScope.Active scope = CastScope.forPlayer(player);
-        if (scope != null) {
-            return scope.modifiers().grants();
-        }
-        DeferredReach.Reach reach = DeferredReach.current(player);
-        if (reach != null) {
-            return reach.glyphs().modifiers().grants();
-        }
-        return toggleGrants(player);
+        GlyphGrants cast = ActiveGrants.ofCast(player);
+        return cast != null ? cast : toggleGrants(player);
     }
 
     /** VH's special modifications for {@code modClass}, with converted ones replaced by the granted glyphs. */
@@ -243,7 +235,7 @@ public final class ConvertedAffixes {
         }
     }
 
-    private static GlyphGrants toggleGrants(ServerPlayer player) {
+    static GlyphGrants toggleGrants(ServerPlayer player) {
         Map<String, GlyphGrants> toggles = TOGGLES.get(player.getUUID());
         if (toggles == null || toggles.isEmpty()) {
             return GlyphGrants.NONE;

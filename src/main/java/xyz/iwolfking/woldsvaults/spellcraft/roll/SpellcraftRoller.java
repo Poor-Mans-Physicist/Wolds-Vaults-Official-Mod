@@ -12,6 +12,7 @@ import xyz.iwolfking.woldsvaults.config.SpellcraftConfig;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.function.ToIntFunction;
 import xyz.iwolfking.woldsvaults.api.core.WoldLogger;
 import xyz.iwolfking.woldsvaults.spellcraft.item.SpellcraftItemData;
 import xyz.iwolfking.woldsvaults.spellcraft.item.GlyphLine;
@@ -194,39 +195,31 @@ public final class SpellcraftRoller {
     }
 
     private static GlyphType draw(SpellcraftConfig config, List<GlyphType> pool, Random random) {
-        int total = pool.stream().mapToInt(type -> config.glyph(type).weight).sum();
-        int pick = random.nextInt(Math.max(1, total));
-        for (GlyphType type : pool) {
-            pick -= config.glyph(type).weight;
-            if (pick < 0) {
-                return type;
-            }
-        }
-        return pool.get(pool.size() - 1);
+        int index = pick(pool, type -> config.glyph(type).weight, random);
+        return index < 0 ? pool.get(pool.size() - 1) : pool.get(index);
     }
 
     private static int noise(SpellcraftConfig config, Random random) {
-        int total = config.rules.costNoise.stream().mapToInt(noise -> noise.weight).sum();
-        int pick = random.nextInt(Math.max(1, total));
-        for (SpellcraftConfig.CostNoise noise : config.rules.costNoise) {
-            pick -= noise.weight;
-            if (pick < 0) {
-                return noise.offset;
-            }
-        }
-        return 0;
+        int index = pick(config.rules.costNoise, noise -> noise.weight, random);
+        return index < 0 ? 0 : config.rules.costNoise.get(index).offset;
     }
 
     private static int weighted(List<Integer> weights, Random random) {
-        int total = weights.stream().mapToInt(Integer::intValue).sum();
+        int index = pick(weights, Integer::intValue, random);
+        return index < 0 ? 0 : index;
+    }
+
+    /** One weighted draw over {@code entries}: the picked index, or -1 when the weights run out before the draw. */
+    private static <T> int pick(List<T> entries, ToIntFunction<T> weight, Random random) {
+        int total = entries.stream().mapToInt(weight).sum();
         int pick = random.nextInt(Math.max(1, total));
-        for (int i = 0; i < weights.size(); i++) {
-            pick -= weights.get(i);
+        for (int i = 0; i < entries.size(); i++) {
+            pick -= weight.applyAsInt(entries.get(i));
             if (pick < 0) {
                 return i;
             }
         }
-        return 0;
+        return -1;
     }
 
     private static float between(Random random, float min, float max) {
