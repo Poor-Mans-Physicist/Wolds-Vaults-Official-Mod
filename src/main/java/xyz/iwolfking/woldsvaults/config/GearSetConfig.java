@@ -27,6 +27,7 @@ public class GearSetConfig extends PackAuthoredConfig {
     @Expose private Lightning lightning;
     @Expose private Simon simon;
     @Expose private BulletBill bulletBill;
+    @Expose private Magatsuhi magatsuhi;
     @Expose private Map<String, GearSet> sets;
 
     private transient Map<ResourceLocation, ResourceLocation> setByPiece;
@@ -103,6 +104,18 @@ public class GearSetConfig extends PackAuthoredConfig {
         @Expose public int prismaticTestRound;
     }
 
+    public static class Magatsuhi {
+        @Expose public int comboHits;
+        @Expose public int comboResetTicks;
+        @Expose public float cutRange;
+        @Expose public float airDistance;
+        @Expose public int markTicks;
+        @Expose public int returnTicks;
+        @Expose public int cooldownTicks;
+        @Expose public float slashRadius;
+        @Expose public float swapBackRange;
+    }
+
     public static class BulletBill {
         @Expose public int cooldownTicks;
         @Expose public int jetUpgrades;
@@ -170,6 +183,7 @@ public class GearSetConfig extends PackAuthoredConfig {
 
         this.documentation.put("simon", "Simon's Set tuning. Planting (simon_crystals grant = planted crystals at once): right click shoots a prism seed seedSpeed blocks a tick, out to seedRange, once per plantCooldownTicks; it plants a Seed-stage crystal where it lands, replacing the oldest planted one. Damage the wearer deals to an enemy within growRadius of a crystal feeds it (once a tick) damage / attack damage points, at most maxGrowthPerHit, and growthPerStage points grow it a stage (Seed, Shard, Cluster, Geode); a crystal unfed for shrinkTicks loses a stage, and a budded Seed vanishes. Crystals also vanish when their owner is more than leashRange away. Brittle: each crystal costs brittleResistance Resistance. Budding (simon_budding grant = most crystals at once, planted, budded and incoming seeds together): a Lucky Hit from the wearer's own swing near any of their crystals (within growRadius) makes their planted crystal throw a new seed on to open ground it can see, up to budRange from it and at least budSpacing from every other crystal and incoming seed. Resonate (simon_sequence grant = burst damage per detonation value, times ability power): sneak right click with resonateMinCrystals Shard-or-bigger crystals lights them one by one, biggest first, each for showTicks with showGapTicks between; then the wearer has inputBaseTicks plus inputTicksPerCrystal per crystal to aim and left click them (within clickRange) in that order. The sequence shows every crystal once, then repeats, until it is one step longer than the last sequence got right, for as long as the streak lasts; each sequence in the streak adds streakDamage to every explosion. Each correct click bursts that crystal on every enemy within burstRadius plus burstRadiusPerValue per detonation value (detonationValues by stage), shattering it on its last turn; a wrong click or running out of time bursts the rest for failDamage of their damage and ends the streak. Facets (simon_facets grant = most facets): a Lucky Hit from a swing near a Geode gives it a facet: 1 = facetDamage more burst damage, 2 = also slows for facetSlowTicks, 3 = also leaves a shard field of shardFieldRadius for shardFieldTicks, hitting every half second for shardFieldDamage of the burst. simon_prismatic = the chance a budded seed is Prismatic (stands in for the next crystal in a sequence); simon_fracture = each correct click rolls the wearer's Lucky Hit chance to burst twice; simon_finale = a finished chain collapses into one blast at its middle for ability power times this times the chain's total detonation value, on a radius of finaleRadius plus finaleRadiusPerValue per value, at most finaleMaxRadius. Arcane beams (Arcane, Arcane Rail and Arcane: Prism) that enter a crystal (a column as wide as reflectRadius for a Geode, less for smaller stages) bounce from its middle to the nearest crystal within reflectRange that they haven't visited, then on to the nearest enemy, dealing arcaneReflectDamage of the beam's damage; where the beam hits the crystal nudges the bounce, landing that far off centre on the next crystal's face (or the enemy's body). Other abilities don't interact with crystals. A wearer's Prism beams reach prismReach times as far. prismaticTestRound is a testing aid (0 = off): in that round (1 = the first sequence, 2 = the one after a sequence got right, and so on), the wearer's first budded seed is Prismatic whatever the chance, unless one of their crystals or seeds already is");
 
+        this.documentation.put("magatsuhi", "Ten Magatsuhi tuning (Daikyo and Shokyo, two katanas dual wielded; a set katana in either hand counts). magatsuhi_combo grant = the finisher's extra damage: every comboHits-th melee hit in a row deals that much more, and the count starts over after comboResetTicks without a hit. magatsuhi_cut grant = the swap slash's damage as a share of attack damage. Right click with either katana in the main hand cuts a 1 wide, 2 tall square out of the block or enemy aimed at within cutRange, or out of the air airDistance ahead; blocks with a tile entity, unbreakable blocks and fluids can't be cut. The cut waits markTicks for the second right click, which swaps: an enemy trades places with the wearer; a wall's blocks move to where the wearer stood (into air only; anything that can't go there waits to be put back) and the wearer steps into the hole; the air just takes them there. The swap slashes every enemy within slashRadius of where the wearer lands. The third right click, or returnTicks after the swap, puts everything back: moved blocks return to the hole (one broken meanwhile stays gone), a swapped enemy within swapBackRange trades places again, and the wearer returns to where they started. Then cooldownTicks before the next cut");
         this.documentation.put("bulletBill","Bullet Bill tuning (bullet_bill grant = ticks the form lasts). Double tapping jump turns the wearer into a Bullet Bill, then cooldownTicks from when the form ends before the next. The flight is PneumaticCraft's jet boots with jump as the thrust key. Holding jump flies where the wearer looks at 0.3 blocks a tick per jetUpgrades (the boots' upgrade count, 1 to 5), times jetPower (0 to 1), times a speed multiplier that starts at 1, rises in a dive and falls four times more slowly in a climb (0.8 to 4.2), spooling up over the first second. With jump let go the jets carry on the same way at cruiseSpeed blocks a tick, speed multiplier included, spooling back down over a second; with cruiseSpeed 0 it hovers instead: sinking at 0.1 less 0.02 per jetUpgrades blocks a tick (5 holds its height), or 0.45 while sneaking, with sideways speed dying off on air drag. flightStabilizers (needs jetUpgrades 4 or more) stops the wearer dead on letting go, and whenever no movement key is held; smartHover only hovers after the first thrust, until the wearer lands. Hitting a wall above 2 blocks a tick with the jets running (speed x1.5 on Normal, x2 on Hard) hurts like flying into a wall. No fall damage while a Bullet Bill, nor on the landing after. bullet_bill_dash grant = more Bullet Dash damage while a Bullet Bill: the dash also fires the jets for boostTicks at boostSpeed times the speed, whether or not jump is held, with a spin over spinTicks and a red pulse. bullet_bill_detonation grant = detonation damage: right click as a Bullet Bill arms it, and the next time it hits a block going at least detonationMinSpeed blocks a tick it explodes and the form ends, hitting every enemy within detonationRadius plus detonationRadiusPerSpeed per block a tick (at most detonationMaxRadius) for one Bullet Dash hit (attack damage times the learned tier's percent, or detonationNoDashPercent if Bullet Dash isn't learned, with damage multipliers and the bullet_bill_dash bonus) times its speed in blocks a tick times the grant. An armed Bullet Bill flies on past the end of its time until it crashes, or explodes where it is once detonationOvertimeTicks more have gone by. Worn in place of the helmet, the Banzai Bill Helmet makes the Bill banzaiScale times larger and the King Bill Helmet kingScale times, tinted light red; the larger size is the drawn model, Bullet Dash's reach and the detonation's radius (and its cap), not the collision box; giantReachShare is how much of the extra size the reach and radius get (1 = all of it, so 5 times the size is 5 times the reach; 0 = none). A King Bill also burns every enemy within kingHeatRadius every kingHeatIntervalTicks, for kingHeatDamage of a Bullet Dash hit per second");
 
         this.riptide = new Riptide();
@@ -239,6 +253,17 @@ public class GearSetConfig extends PackAuthoredConfig {
         this.simon.prismReach = 1.5F;
         // testing aid, off for packs
         this.simon.prismaticTestRound = 0;
+
+        this.magatsuhi = new Magatsuhi();
+        this.magatsuhi.comboHits = 3;
+        this.magatsuhi.comboResetTicks = 60;
+        this.magatsuhi.cutRange = 16.0F;
+        this.magatsuhi.airDistance = 6.0F;
+        this.magatsuhi.markTicks = 200;
+        this.magatsuhi.returnTicks = 400;
+        this.magatsuhi.cooldownTicks = 40;
+        this.magatsuhi.slashRadius = 4.0F;
+        this.magatsuhi.swapBackRange = 32.0F;
 
         this.bulletBill = new BulletBill();
         this.bulletBill.cooldownTicks = 400;
@@ -333,11 +358,23 @@ public class GearSetConfig extends PackAuthoredConfig {
                         grant("woldsvaults:bullet_bill_dash", new JsonPrimitive(1.0F)),
                         grant("woldsvaults:bullet_bill_detonation", new JsonPrimitive(1.0F))));
 
+        GearSet magatsuhi = new GearSet();
+        magatsuhi.name = "Ten Magatsuhi";
+        magatsuhi.color = "#D7263D";
+        magatsuhi.ancientColor = "#D7263D";
+        magatsuhi.pieces = List.of("woldsvaults:daikyo", "woldsvaults:shokyo");
+        magatsuhi.tiers = List.of(
+                tier(1, "Every third hit in a row is a finisher: both katanas cross through the enemy in an X for 100% more damage. The combo drops if you stop attacking for 3 seconds.",
+                        grant("woldsvaults:magatsuhi_combo", new JsonPrimitive(1.0F))),
+                tier(2, "Right click with your katana: its twin cuts a square out of whatever you aim at, a wall, an enemy or the air. Right click again to swap places with the cut: an enemy trades places with you, a wall's blocks are lifted out to where you stood and you step into the hole, and both katanas slash every enemy around where you land for 100% of your attack damage. Right click a third time to put everything back and return to where you started.",
+                        grant("woldsvaults:magatsuhi_cut", new JsonPrimitive(1.0F))));
+
         this.sets = new LinkedHashMap<>();
         this.sets.put("woldsvaults:tidebreaker", tidebreaker);
         this.sets.put("woldsvaults:lightning_fiend", lightningFiend);
         this.sets.put("woldsvaults:simons_set", simon);
         this.sets.put("woldsvaults:bullet_bill", bulletBill);
+        this.sets.put("woldsvaults:ten_magatsuhi", magatsuhi);
     }
 
     private static Tier tier(int pieces, String text, Grant... grants) {
@@ -461,6 +498,16 @@ public class GearSetConfig extends PackAuthoredConfig {
             this.simon = defaults.simon;
         }
         return this.simon;
+    }
+
+    public Magatsuhi getMagatsuhi() {
+        if (this.magatsuhi == null) {
+            WoldsVaults.LOGGER.error("gear_sets.json has no magatsuhi section; using the built-in tuning.");
+            GearSetConfig defaults = new GearSetConfig();
+            defaults.reset();
+            this.magatsuhi = defaults.magatsuhi;
+        }
+        return this.magatsuhi;
     }
 
     public BulletBill getBulletBill() {
