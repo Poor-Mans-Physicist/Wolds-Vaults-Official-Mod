@@ -1,0 +1,18 @@
+{
+  "styles": {
+    "Life_Block": {
+      "x": 105,
+      "y": 265,
+      "specializationStyles": {
+        "Mana_Block": {
+          "icon": "woldsvaults:gui/abilities/mana_block"
+        },
+        "Life_Block_Base": {
+          "icon": "woldsvaults:gui/abilities/life_block"
+        }
+      }
+    }
+  },
+  "labels": [],
+  "lines": []
+}
