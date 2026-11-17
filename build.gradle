@@ -354,6 +354,26 @@ dependencies {
     runtimeOnly fg.deobf("curse.maven:supermartijn642s-core-lib-454372:6034709")
     runtimeOnly fg.deobf("curse.maven:ctm-267602:3933537")
     runtimeOnly fg.deobf("curse.maven:fusion-connected-textures-854949:6923644")
+    // blocks the mythic rooms use that nothing above brings in, at WV33's versions
+    runtimeOnly fg.deobf("curse.maven:create-deco-509285:4554163")
+    runtimeOnly fg.deobf("curse.maven:builders-delight-563734:3857874")
+    // left out: they need FastLoad off, and with that the dev client's title screen stops taking clicks
+    //runtimeOnly fg.deobf("curse.maven:yungs-api-421850:4428184")
+    //runtimeOnly fg.deobf("curse.maven:yungs-cave-biomes-1111586:5772023")
+
+    // Building and testing tools for the dev runs only (never shipped): WorldEdit, WorldEditCUI (its selection
+    // outlines), Tessera and Shadered (the Inverted Pyramid's mirror walls). Each loads from libs/ only when its jar
+    // is there, so a checkout without them still builds.
+    [
+            'worldedit-mod'   : '7.2.10',
+            'WorldEditCUI'    : '1.18+01',
+            'tessera-1.18.2'  : '2.0.0',
+            'shadered-1.18.2' : '1.3.0',
+    ].each { name, version ->
+        if (file("libs/${name}-${version}.jar").exists()) {
+            runtimeOnly fg.deobf("local:${name}:${version}")
+        }
+    }
     implementation fg.deobf("curse.maven:tropicraft-254794:4616839")
     implementation fg.deobf("curse.maven:regions-unexplored-659110:4554212")
     runtimeOnly fg.deobf("curse.maven:selene-499980:6047192")
@@ -407,6 +427,15 @@ dependencies {
     // perf in dev
     runtimeOnly fg.deobf("curse.maven:lazy-dfu-forge-460819:3544496")
     runtimeOnly fg.deobf("curse.maven:embeddium-908741:5322305")
+    // WV33's Embeddium addons and Oculus, so shaders work in dev
+    runtimeOnly fg.deobf("curse.maven:embeddiumplus-931925:5344505")
+    runtimeOnly fg.deobf("curse.maven:rubidium-extra-654373:4513591")
+    runtimeOnly fg.deobf("curse.maven:textrues-embeddium-options-910506:4747651")
+    runtimeOnly fg.deobf("curse.maven:oculus-581495:4578744")
+    runtimeOnly fg.deobf("curse.maven:oculus-flywheel-compat-659897:4631182")
+    // search bar in the controls menu
+    runtimeOnly fg.deobf("curse.maven:controlling-250398:4555742")
+    // its MinecraftServer mixin breaks YUNG's API's, so the two can't run together
     runtimeOnly fg.deobf("curse.maven:fastload-630620:4706140")
     implementation fg.deobf("curse.maven:modernfix-790626:5399365")
 
