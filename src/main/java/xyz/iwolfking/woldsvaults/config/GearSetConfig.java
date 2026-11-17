@@ -115,7 +115,7 @@ public class GearSetConfig extends PackAuthoredConfig {
         this.lightning.formDurationTicks = 200;
         this.lightning.dashDistance = 7.0F;
         this.lightning.dashWidth = 1.5F;
-        this.lightning.dashCooldownTicks = 10;
+        this.lightning.dashCooldownTicks = 0;
         this.lightning.dashTravelTicks = 2;
         this.lightning.arcLashRange = 12.0F;
         this.lightning.arcLashDamage = 0.5F;
