@@ -1,19 +1,20 @@
 package xyz.iwolfking.woldsvaults.init;
 
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.DistExecutor;
-import net.minecraftforge.network.NetworkEvent;
-import java.util.function.Supplier;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.level.Level;
 import net.minecraftforge.network.NetworkDirection;
+import net.minecraftforge.network.NetworkEvent;
 import net.minecraftforge.network.NetworkRegistry;
 import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.simple.SimpleChannel;
 
 import java.util.Optional;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 import xyz.iwolfking.woldsvaults.WoldsVaults;
 import xyz.iwolfking.woldsvaults.network.message.*;
 import xyz.iwolfking.woldsvaults.network.packets.OpenFloatingTextScreenPacket;
@@ -67,6 +68,10 @@ public class ModNetwork {
         CHANNEL.registerMessage(id++, LightningMarkMessage.class, LightningMarkMessage::encode, LightningMarkMessage::decode, LightningMarkMessage::handle, Optional.of(NetworkDirection.PLAY_TO_CLIENT));
         CHANNEL.registerMessage(id++, LightningStrikeFxMessage.class, LightningStrikeFxMessage::encode, LightningStrikeFxMessage::decode, LightningStrikeFxMessage::handle, Optional.of(NetworkDirection.PLAY_TO_CLIENT));
         CHANNEL.registerMessage(id++, LightningLashFxMessage.class, LightningLashFxMessage::encode, LightningLashFxMessage::decode, LightningLashFxMessage::handle, Optional.of(NetworkDirection.PLAY_TO_CLIENT));
+        CHANNEL.registerMessage(id++, SimonSetMessage.class, SimonSetMessage::encode, SimonSetMessage::decode, SimonSetMessage::handle, Optional.of(NetworkDirection.PLAY_TO_CLIENT));
+        CHANNEL.registerMessage(id++, SimonActionMessage.class, SimonActionMessage::encode, SimonActionMessage::decode, SimonActionMessage::handle, Optional.of(NetworkDirection.PLAY_TO_SERVER));
+        CHANNEL.registerMessage(id++, SimonSequenceMessage.class, SimonSequenceMessage::encode, SimonSequenceMessage::decode, SimonSequenceMessage::handle, Optional.of(NetworkDirection.PLAY_TO_CLIENT));
+        CHANNEL.registerMessage(id++, SimonFxMessage.class, SimonFxMessage::encode, SimonFxMessage::decode, SimonFxMessage::handle, Optional.of(NetworkDirection.PLAY_TO_CLIENT));
         CHANNEL.registerMessage(id++, ArcaneBeamMessage.class, ArcaneBeamMessage::encode, ArcaneBeamMessage::decode, ArcaneBeamMessage::handle, Optional.of(NetworkDirection.PLAY_TO_CLIENT));
         CHANNEL.registerMessage(id++, ArcanePrismMessage.class, ArcanePrismMessage::encode, ArcanePrismMessage::decode, ArcanePrismMessage::handle, Optional.of(NetworkDirection.PLAY_TO_CLIENT));
         CHANNEL.registerMessage(id++, ArcanePrismSeedMessage.class, ArcanePrismSeedMessage::encode, ArcanePrismSeedMessage::decode, ArcanePrismSeedMessage::handle, Optional.of(NetworkDirection.PLAY_TO_CLIENT));
@@ -96,6 +101,17 @@ public class ModNetwork {
     // client is a () -> () -> ... lambda: naming client classes only inside the inner one keeps them off dedicated servers
     public static void onClient(Supplier<NetworkEvent.Context> context, Supplier<Runnable> client) {
         context.get().enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, client));
+        context.get().setPacketHandled(true);
+    }
+
+    // runs the work on the server thread for the player who sent the packet
+    public static void onServer(Supplier<NetworkEvent.Context> context, Consumer<ServerPlayer> work) {
+        context.get().enqueueWork(() -> {
+            ServerPlayer player = context.get().getSender();
+            if (player != null) {
+                work.accept(player);
+            }
+        });
         context.get().setPacketHandled(true);
     }
 }

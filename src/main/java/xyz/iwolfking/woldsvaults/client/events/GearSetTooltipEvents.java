@@ -86,7 +86,7 @@ public class GearSetTooltipEvents {
         if (minecraft.player == null) {
             return Collections.emptySet();
         }
-        return GearSetHelper.wornPieces(AttributeSnapshotHelper.getInstance().getSnapshot(minecraft.player))
+        return GearSetHelper.wornPieces(AttributeSnapshotHelper.getInstance().getSnapshot(minecraft.player), minecraft.player)
                 .getOrDefault(setId, Collections.emptySet());
     }
 

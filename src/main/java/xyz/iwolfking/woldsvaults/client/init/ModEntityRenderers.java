@@ -44,6 +44,8 @@ public class ModEntityRenderers {
         EntityRenderers.register(ModEntities.CUSTOM_FANGS, EvokerFangsRenderer::new);
         EntityRenderers.register(ModEntities.VAULT_METEOR, FireballRenderer::new);
         EntityRenderers.register(ModEntities.MAGIC_MISSILE, NoopRenderer::new);
+        EntityRenderers.register(ModEntities.SIMON_CRYSTAL, xyz.iwolfking.woldsvaults.client.simon.SimonCrystalRenderer::new);
+        EntityRenderers.register(ModEntities.PRISM_SEED, xyz.iwolfking.woldsvaults.client.simon.PrismSeedRenderer::new);
         EntityRenderers.register(ModEntities.EXTRACTOR, xyz.iwolfking.woldsvaults.entities.extraction.client.ExtractorGeoRenderer::new);
     }
 }

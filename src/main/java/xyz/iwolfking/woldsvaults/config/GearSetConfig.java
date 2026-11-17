@@ -25,9 +25,11 @@ public class GearSetConfig extends PackAuthoredConfig {
     @Expose private Map<String, String> documentation;
     @Expose private Riptide riptide;
     @Expose private Lightning lightning;
+    @Expose private Simon simon;
     @Expose private Map<String, GearSet> sets;
 
     private transient Map<ResourceLocation, ResourceLocation> setByPiece;
+    private transient Map<ResourceLocation, ResourceLocation> basePieces;
     private transient Map<ResourceLocation, GearSet> setsById;
 
     public static class Riptide {
@@ -62,11 +64,50 @@ public class GearSetConfig extends PackAuthoredConfig {
         @Expose public float thunderRadius;
     }
 
+    public static class Simon {
+        @Expose public int plantCooldownTicks;
+        @Expose public float seedSpeed;
+        @Expose public float seedRange;
+        @Expose public float growRadius;
+        @Expose public float growthPerStage;
+        @Expose public float maxGrowthPerHit;
+        @Expose public int shrinkTicks;
+        @Expose public float leashRange;
+        @Expose public float budRange;
+        @Expose public float budSpacing;
+        @Expose public int resonateMinCrystals;
+        @Expose public int showTicks;
+        @Expose public int showGapTicks;
+        @Expose public int inputBaseTicks;
+        @Expose public int inputTicksPerCrystal;
+        @Expose public float clickRange;
+        @Expose public float[] detonationValues;
+        @Expose public float burstRadius;
+        @Expose public float burstRadiusPerValue;
+        @Expose public float failDamage;
+        @Expose public float streakDamage;
+        @Expose public float facetDamage;
+        @Expose public int facetSlowTicks;
+        @Expose public int shardFieldTicks;
+        @Expose public float shardFieldRadius;
+        @Expose public float shardFieldDamage;
+        @Expose public float finaleRadius;
+        @Expose public float finaleRadiusPerValue;
+        @Expose public float finaleMaxRadius;
+        @Expose public float brittleResistance;
+        @Expose public float reflectRadius;
+        @Expose public float reflectRange;
+        @Expose public float arcaneReflectDamage;
+        @Expose public float prismReach;
+        @Expose public int prismaticTestRound;
+    }
+
     public static class GearSet {
         @Expose public String name;
         @Expose public String color;
         @Expose public String ancientColor;
         @Expose public List<String> pieces;
+        @Expose public Map<String, String> variants;
         @Expose public List<Tier> tiers;
 
         public int colorRgb() {
@@ -97,10 +138,12 @@ public class GearSetConfig extends PackAuthoredConfig {
     @Override
     protected void reset() {
         this.documentation = new LinkedHashMap<>();
-        this.documentation.put("sets", "Set id -> name, colours, pieces (unique ids from unique_gear) and tiers. A piece counts while it sits in the player's attribute snapshot (worn in its intended slot, not broken, not above the player's level). Each unique counts once.");
+        this.documentation.put("sets", "Set id -> name, colours, pieces (unique ids from unique_gear) and tiers. A piece counts while it sits in the player's attribute snapshot (worn in its intended slot, not broken, not above the player's level). Each unique counts once. variants (optional) = unique id -> the piece of the set it stands in for, counting as that piece.");
         this.documentation.put("tiers", "pieces = pieces needed; text = the tooltip line; grants = gear attributes added to the wearer's snapshot while the tier is active (values in the attribute's own units, 1.0 = 100%)");
         this.documentation.put("riptide", "Shared riptide tuning: hover friction is the extra per-tick horizontal speed multiplier during the hover, vertical damping the per-tick vertical one; the shock cone spans shockConeAhead blocks ahead of the player to shockConeBehind blocks behind, widening to shockConeRadius");
         this.documentation.put("lightning", "Shared lightning tuning: chainRange = how far a channeling strike jumps to the next enemy; throwing a trident with the lightning dash grant turns the thrower into lightning for formDurationTicks, during which each tap of a movement key sends them dashDistance blocks that way as a bolt of lightning, taking dashTravelTicks, striking enemies within dashWidth of the path, then waiting dashCooldownTicks after reappearing before the next dash. Left click is Arc Lash: arcLashBolts spinning lightning bolts thrown out evenly across arcLashConeAngle degrees either side of the look, flying arcLashSpeed blocks a tick for up to arcLashRange, striking each enemy they pass through (once per throw) for arcLashDamage of the trident's damage and calling a channeling strike (vanilla lightning) down on it for arcLashStrikeDamage of a channeling strike's damage, once per arcLashCooldownTicks. Right click is Lightning Rod: marks the enemy aimed at within rodRange (once per rodCooldownTicks); a dash within rodLockAngle degrees of the target locks on, running through it and on for rodOvershoot of a dash, and strikes it for rodDamageMultiplier of the dash damage. Middle click is Thunderstrike: ends the form with a giant bolt on the player striking every enemy within thunderRadius (across) for the trident's damage times thunderDamagePerSecond per second of form left");
+
+        this.documentation.put("simon", "Simon's Set tuning. Planting (simon_crystals grant = planted crystals at once): right click shoots a prism seed seedSpeed blocks a tick, out to seedRange, once per plantCooldownTicks; it plants a Seed-stage crystal where it lands, replacing the oldest planted one. Damage the wearer deals to an enemy within growRadius of a crystal feeds it (once a tick) damage / attack damage points, at most maxGrowthPerHit, and growthPerStage points grow it a stage (Seed, Shard, Cluster, Geode); a crystal unfed for shrinkTicks loses a stage, and a budded Seed vanishes. Crystals also vanish when their owner is more than leashRange away. Brittle: each crystal costs brittleResistance Resistance. Budding (simon_budding grant = most crystals at once, planted, budded and incoming seeds together): a Lucky Hit from the wearer's own swing near any of their crystals (within growRadius) makes their planted crystal throw a new seed on to open ground it can see, up to budRange from it and at least budSpacing from every other crystal and incoming seed. Resonate (simon_sequence grant = burst damage per detonation value, times ability power): sneak right click with resonateMinCrystals Shard-or-bigger crystals lights them one by one, biggest first, each for showTicks with showGapTicks between; then the wearer has inputBaseTicks plus inputTicksPerCrystal per crystal to aim and left click them (within clickRange) in that order. The sequence shows every crystal once, then repeats, until it is one step longer than the last sequence got right, for as long as the streak lasts; each sequence in the streak adds streakDamage to every explosion. Each correct click bursts that crystal on every enemy within burstRadius plus burstRadiusPerValue per detonation value (detonationValues by stage), shattering it on its last turn; a wrong click or running out of time bursts the rest for failDamage of their damage and ends the streak. Facets (simon_facets grant = most facets): a Lucky Hit from a swing near a Geode gives it a facet: 1 = facetDamage more burst damage, 2 = also slows for facetSlowTicks, 3 = also leaves a shard field of shardFieldRadius for shardFieldTicks, hitting every half second for shardFieldDamage of the burst. simon_prismatic = the chance a budded seed is Prismatic (stands in for the next crystal in a sequence); simon_fracture = each correct click rolls the wearer's Lucky Hit chance to burst twice; simon_finale = a finished chain collapses into one blast at its middle for ability power times this times the chain's total detonation value, on a radius of finaleRadius plus finaleRadiusPerValue per value, at most finaleMaxRadius. Arcane beams (Arcane, Arcane Rail and Arcane: Prism) that enter a crystal (a column as wide as reflectRadius for a Geode, less for smaller stages) bounce from its middle to the nearest crystal within reflectRange that they haven't visited, then on to the nearest enemy, dealing arcaneReflectDamage of the beam's damage; where the beam hits the crystal nudges the bounce, landing that far off centre on the next crystal's face (or the enemy's body). Other abilities don't interact with crystals. A wearer's Prism beams reach prismReach times as far. prismaticTestRound is a testing aid (0 = off): in that round (1 = the first sequence, 2 = the one after a sequence got right, and so on), the wearer's first budded seed is Prismatic whatever the chance, unless one of their crystals or seeds already is");
 
         this.riptide = new Riptide();
         this.riptide.hoverHorizontalFriction = 0.8F;
@@ -131,6 +174,44 @@ public class GearSetConfig extends PackAuthoredConfig {
         this.lightning.rodCooldownTicks = 10;
         this.lightning.thunderDamagePerSecond = 1.0F;
         this.lightning.thunderRadius = 10.0F;
+
+        this.simon = new Simon();
+        this.simon.plantCooldownTicks = 80;
+        this.simon.seedSpeed = 1.5F;
+        this.simon.seedRange = 32.0F;
+        this.simon.growRadius = 6.0F;
+        this.simon.growthPerStage = 4.0F;
+        this.simon.maxGrowthPerHit = 1.5F;
+        this.simon.shrinkTicks = 200;
+        this.simon.leashRange = 48.0F;
+        this.simon.budRange = 6.0F;
+        this.simon.budSpacing = 3.0F;
+        this.simon.resonateMinCrystals = 3;
+        this.simon.showTicks = 8;
+        this.simon.showGapTicks = 4;
+        this.simon.inputBaseTicks = 60;
+        this.simon.inputTicksPerCrystal = 30;
+        this.simon.clickRange = 24.0F;
+        this.simon.detonationValues = new float[]{0.0F, 1.0F, 2.0F, 3.5F};
+        this.simon.burstRadius = 3.0F;
+        this.simon.burstRadiusPerValue = 0.75F;
+        this.simon.failDamage = 0.5F;
+        this.simon.streakDamage = 0.1F;
+        this.simon.facetDamage = 0.25F;
+        this.simon.facetSlowTicks = 40;
+        this.simon.shardFieldTicks = 80;
+        this.simon.shardFieldRadius = 3.0F;
+        this.simon.shardFieldDamage = 0.15F;
+        this.simon.finaleRadius = 4.0F;
+        this.simon.finaleRadiusPerValue = 0.75F;
+        this.simon.finaleMaxRadius = 14.0F;
+        this.simon.brittleResistance = 0.02F;
+        this.simon.reflectRadius = 1.25F;
+        this.simon.reflectRange = 24.0F;
+        this.simon.arcaneReflectDamage = 1.0F;
+        this.simon.prismReach = 1.5F;
+        // testing aid, off for packs
+        this.simon.prismaticTestRound = 0;
 
         GearSet tidebreaker = new GearSet();
         tidebreaker.name = "Tidebreaker";
@@ -167,9 +248,29 @@ public class GearSetConfig extends PackAuthoredConfig {
                 tier(6, "Throwing your trident turns you into lightning for 10 seconds: tap a movement key, jump or sneak to dash 7 blocks that way, striking every enemy in your path for 10% of a channeling strike's damage (0.5 second cooldown between dashes). Left click throws a fan of spinning lightning bolts that strike everything they pass through and call lightning down on it; right click marks one as a lightning rod your dashes lock on to; middle click ends the form with a giant lightning strike around you, stronger the more time you have left.",
                         grant("woldsvaults:lightning_dash", new JsonPrimitive(0.1F))));
 
+        GearSet simon = new GearSet();
+        simon.name = "Simon's Set";
+        simon.color = "#FFD23F";
+        simon.ancientColor = "#FFD23F";
+        simon.pieces = List.of(
+                "woldsvaults:simons_helmet", "woldsvaults:simons_chestplate", "woldsvaults:simons_leggings",
+                "woldsvaults:simons_boots");
+        simon.tiers = List.of(
+                tier(2, "Right click to shoot a prism seed: it grows into a crystal where it lands (one at a time, 4 second cooldown). Damage you deal within 6 blocks of a crystal grows it: Seed, Shard, Cluster, Geode. Unfed crystals shrink a stage every 10 seconds. Arcane, Rail and Prism beams refract from crystal to crystal, and your Prism beams reach 50% further. Brittle: each crystal you have costs 2% Resistance.",
+                        grant("woldsvaults:simon_crystals", new JsonPrimitive(1))),
+                tier(3, "Lucky Hits from your swings near your crystals make the one you planted bud a new seed around it (up to 4 crystals). With 3 or more Shards, sneak and right click to Resonate: the crystals light up biggest first, then repeat; aim and left click them in that order and each turn bursts for 100% of your ability power per detonation value (Shard 1, Cluster 2, Geode 3.5). Every sequence you get right in a row makes the next one a step longer and the explosions 10% stronger. A wrong click shatters the rest for half and ends the streak.",
+                        grant("woldsvaults:simon_budding", new JsonPrimitive(4)),
+                        grant("woldsvaults:simon_sequence", new JsonPrimitive(1.0F))),
+                tier(4, "Lucky Hits from your swings near a Geode give it a facet (up to 3): +25% burst damage, then a slowing burst, then a Flawless crystal that leaves a shard field. Budded seeds have a 5% chance to be Prismatic, standing in for any crystal in the sequence. A Lucky Hit roll on each correct click fractures the crystal so it bursts twice, and finishing a chain collapses every burst into one final blast.",
+                        grant("woldsvaults:simon_facets", new JsonPrimitive(3)),
+                        grant("woldsvaults:simon_prismatic", new JsonPrimitive(0.05F)),
+                        grant("woldsvaults:simon_fracture", new JsonPrimitive(true)),
+                        grant("woldsvaults:simon_finale", new JsonPrimitive(1.0F))));
+
         this.sets = new LinkedHashMap<>();
         this.sets.put("woldsvaults:tidebreaker", tidebreaker);
         this.sets.put("woldsvaults:lightning_fiend", lightningFiend);
+        this.sets.put("woldsvaults:simons_set", simon);
     }
 
     private static Tier tier(int pieces, String text, Grant... grants) {
@@ -205,6 +306,7 @@ public class GearSetConfig extends PackAuthoredConfig {
         }
         Map<ResourceLocation, ResourceLocation> byPiece = new LinkedHashMap<>();
         Map<ResourceLocation, GearSet> byId = new LinkedHashMap<>();
+        Map<ResourceLocation, ResourceLocation> bases = new LinkedHashMap<>();
         if (this.sets != null) {
             this.sets.forEach((id, set) -> {
                 ResourceLocation setId = ResourceLocation.tryParse(id);
@@ -224,8 +326,21 @@ public class GearSetConfig extends PackAuthoredConfig {
                         WoldsVaults.LOGGER.error("gear_sets.json: {} is listed in both {} and {}; it counts for {} only.", pieceId, previous, setId, setId);
                     }
                 }
+                if (set.variants != null) {
+                    set.variants.forEach((variant, piece) -> {
+                        ResourceLocation variantId = ResourceLocation.tryParse(variant);
+                        ResourceLocation pieceId = ResourceLocation.tryParse(piece);
+                        if (variantId == null || pieceId == null) {
+                            WoldsVaults.LOGGER.error("gear_sets.json: set {} has an invalid variant {} -> {}; skipping it.", id, variant, piece);
+                            return;
+                        }
+                        byPiece.put(variantId, setId);
+                        bases.put(variantId, pieceId);
+                    });
+                }
             });
         }
+        this.basePieces = bases;
         this.setByPiece = byPiece;
         this.setsById = byId;
     }
@@ -233,6 +348,12 @@ public class GearSetConfig extends PackAuthoredConfig {
     public Optional<ResourceLocation> getSetOf(ResourceLocation uniqueKey) {
         this.index();
         return Optional.ofNullable(this.setByPiece.get(uniqueKey));
+    }
+
+    // the piece of its set that a unique counts as: itself, unless it's a variant of another
+    public ResourceLocation basePiece(ResourceLocation uniqueKey) {
+        this.index();
+        return this.basePieces.getOrDefault(uniqueKey, uniqueKey);
     }
 
     public Optional<GearSet> getSet(ResourceLocation setId) {
@@ -263,6 +384,16 @@ public class GearSetConfig extends PackAuthoredConfig {
             this.lightning = defaults.lightning;
         }
         return this.lightning;
+    }
+
+    public Simon getSimon() {
+        if (this.simon == null) {
+            WoldsVaults.LOGGER.error("gear_sets.json has no simon section; using the built-in tuning.");
+            GearSetConfig defaults = new GearSetConfig();
+            defaults.reset();
+            this.simon = defaults.simon;
+        }
+        return this.simon;
     }
 
     /** The grants of one tier resolved to registered attributes; unknown attributes are logged and skipped. */

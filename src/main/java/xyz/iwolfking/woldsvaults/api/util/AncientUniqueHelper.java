@@ -113,6 +113,10 @@ public class AncientUniqueHelper {
         woldsUnique("lightning_fiend_talons", "Ancient Lightning Fiend's Talons");
         woldsUnique("lightning_fiend_orb", "Ancient Lightning Orb");
         woldsUnique("lightning_fiend_pure_lightning", "Ancient Pure Lightning");
+        woldsUnique("simons_helmet", "Ancient Simon's Helmet");
+        woldsUnique("simons_chestplate", "Ancient Simon's Chestplate");
+        woldsUnique("simons_leggings", "Ancient Simon's Leggings");
+        woldsUnique("simons_boots", "Ancient Simon's Boots");
     }
 
     private AncientUniqueHelper() {

@@ -18,6 +18,8 @@ import xyz.iwolfking.woldsvaults.entities.ghosts.*;
 import xyz.iwolfking.woldsvaults.entities.projectiles.CustomFangEntity;
 import xyz.iwolfking.woldsvaults.entities.projectiles.MagicMissileEntity;
 import xyz.iwolfking.woldsvaults.entities.projectiles.VaultMeteor;
+import xyz.iwolfking.woldsvaults.entities.simon.PrismSeedEntity;
+import xyz.iwolfking.woldsvaults.entities.simon.SimonCrystalEntity;
 import xyz.iwolfking.woldsvaults.entities.thanksgiving.CranberrySlimeEntity;
 import xyz.iwolfking.woldsvaults.entities.thanksgiving.HaturkeyEntity;
 import xyz.iwolfking.woldsvaults.entities.thanksgiving.HostileTurkeyEntity;
@@ -57,6 +59,8 @@ public class ModEntities {
     public static EntityType<xyz.iwolfking.woldsvaults.entities.extraction.ExtractorEntity> EXTRACTOR;
     public static EntityType<VaultMeteor> VAULT_METEOR;
     public static EntityType<MagicMissileEntity> MAGIC_MISSILE;
+    public static EntityType<SimonCrystalEntity> SIMON_CRYSTAL;
+    public static EntityType<PrismSeedEntity> PRISM_SEED;
 
     public static void register(RegistryEvent.Register<EntityType<?>> event) {
         WOLD = registerLiving("wold", EntityType.Builder.of(WoldBoss::new, MobCategory.MONSTER)
@@ -86,6 +90,8 @@ public class ModEntities {
         EXTRACTOR = registerLivingWV("extractor", EntityType.Builder.of(xyz.iwolfking.woldsvaults.entities.extraction.ExtractorEntity::new, MobCategory.MISC).sized(4.0F, 4.0F).clientTrackingRange(10).fireImmune().setCustomClientFactory(((spawnEntity, level) -> new xyz.iwolfking.woldsvaults.entities.extraction.ExtractorEntity(EXTRACTOR, level))), xyz.iwolfking.woldsvaults.entities.extraction.ExtractorEntity::createAttributes, event);
         VAULT_METEOR = registerWV("vault_meteor", EntityType.Builder.<VaultMeteor>of(VaultMeteor::new, MobCategory.MISC).sized(1.0F, 1.0F).clientTrackingRange(16).fireImmune().setCustomClientFactory(((spawnEntity, level) -> new VaultMeteor(VAULT_METEOR, level))), event);
         MAGIC_MISSILE = registerWV("magic_missile", EntityType.Builder.<MagicMissileEntity>of(MagicMissileEntity::new, MobCategory.MISC).sized(0.5F, 0.5F).clientTrackingRange(8).updateInterval(2).fireImmune().setCustomClientFactory(((spawnEntity, level) -> new MagicMissileEntity(MAGIC_MISSILE, level))), event);
+        SIMON_CRYSTAL = registerWV("simon_crystal", EntityType.Builder.<SimonCrystalEntity>of(SimonCrystalEntity::new, MobCategory.MISC).sized(1.3F, 2.0F).clientTrackingRange(8).updateInterval(20).noSave().fireImmune().setCustomClientFactory(((spawnEntity, level) -> new SimonCrystalEntity(SIMON_CRYSTAL, level))), event);
+        PRISM_SEED = registerWV("prism_seed", EntityType.Builder.<PrismSeedEntity>of(PrismSeedEntity::new, MobCategory.MISC).sized(0.25F, 0.25F).clientTrackingRange(4).updateInterval(10).noSave().fireImmune().setCustomClientFactory(((spawnEntity, level) -> new PrismSeedEntity(PRISM_SEED, level))), event);
         VAULT_RANG = registerWV("rang", EntityType.Builder.<VaultRangEntity>of(VaultRangEntity::new, MobCategory.MISC)
                 .sized(0.4F, 0.4F)
                 .clientTrackingRange(4)
